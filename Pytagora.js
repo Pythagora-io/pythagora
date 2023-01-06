@@ -7,6 +7,18 @@ import express from "express";
 import FS from "fs";
 import _ from "lodash";
 import { AsyncLocalStorage, AsyncResource } from 'node:async_hooks';
+import RedisInterceptor from './RedisInterceptor.js';
+
+// let  mongoose = require("mongoose");
+// let  {v4} = require('uuid');
+// let  { createHook, triggerAsyncId, executionAsyncId } = require('async_hooks');
+// let  { BatchInterceptor } = require('@mswjs/interceptors');
+// let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
+// let  express = require("express");
+// let  FS = require("fs");
+// let  _ = require("lodash");
+// let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
+// const RedisInterceptor = require("pytagora/RedisInterceptor");
 
 const asyncLocalStorage = new AsyncLocalStorage({onPropagate: (store, triggerAsyncId) => {
         console.log('----')
@@ -21,64 +33,23 @@ function logWithStoreId(msg) {
 let idSeq = 0;
 let loggingEnabled = true;
 let requests = {};
+let testingRequests = {};
 let methods = ['find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'init', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
-mongo.plugin((schema) => {
-    schema.pre(methods, function() {
-        if (asyncLocalStorage.getStore() === undefined) return;
-        logWithStoreId('mongo pre');
-        // createHook({ init() {} }).enable();
-        // this.preAsyncId = executionAsyncId();
-        this.asyncStore = asyncLocalStorage.getStore();
-        this.mongoReqId = v4();
-        try {
-            // requests[Pytagora.getRequestKeyByTrace()].intermediateData.push({
-            requests[Pytagora.getRequestKeyByAsyncStore()].intermediateData.push({
-                type: 'mongo',
-                req: _.pick(this, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']),
-                // preAsyncId: this.preAsyncId,
-                mongoReqId: this.mongoReqId
-            });
-        } catch (e) {
-            console.log(e);
-        }
-    });
+let app;
+let MODES = {
+    'capture': 'capture',
+    'test': 'test'
+}
 
-    schema.post(methods, function(doc, next) {
-        if (this.asyncStore === undefined) return;
-        try {
-            asyncLocalStorage.enterWith(this.asyncStore);
-            logWithStoreId('mongo post');
-            let request = requests[Pytagora.getRequestKeyByAsyncStore()];
-            // Pytagora.mergeTraces(triggerAsyncId(), executionAsyncId(), this.preAsyncId);
-            request.intermediateData.forEach((intData, i) => {
-                if (intData.mongoReqId === this.mongoReqId) {
-                    request.intermediateData[i].res = doc;
-                }
-            });
-            if (!request.intermediateData.find(intData => intData.mongoReqId === this.mongoReqId)) {
-                console.log('---')
-            }
-        } catch (e) {
-            console.log(e);
-        }
-        if (next) next();
-    });
-});
-let app = express();
+class Pytagora {
 
-export default class Pytagora {
+    constructor(mongoose, mode) {
+        if (!MODES[mode]) throw new Error('Invalid mode');
+        else this.mode = mode;
 
-    constructor() {
-        this.setUpExpressMiddleware(app);
+        if (!FS.existsSync('./pytagora_data/')) FS.mkdirSync('./pytagora_data/');
 
-        createHook({
-            init: (asyncId, type, triggerAsyncId, resource) => {
-                this.updateTrace(asyncId, triggerAsyncId);
-            },
-            before: (asyncId) => {
-                this.updateTrace(asyncId, triggerAsyncId());
-            }
-        }).enable();
+        if (mongoose) this.configureMongoosePlugin(mongoose);
 
         this.setUpHttpInterceptor();
     }
@@ -105,29 +76,69 @@ export default class Pytagora {
     }
 
     httpRequestInterceptor(request, requestId, pytagora) {
+        if (pytagora.mode === MODES.test) {
+            let mockResponse = pytagora.getHttpMockResponse(request);
+            if (!mockResponse) return console.error('No mock response found for request!');
+
+            request.respondWith(
+                new Response(
+                    JSON.stringify(mockResponse.responseData),
+                    {
+                        status: mockResponse.response.status,
+                        statusText: mockResponse.response.statusText,
+                        // TODO headers: mockResponse.response.headers
+                    }
+                )
+            )
+        }
     }
 
-    httpResponseInterceptor(response, request, pytagora) {
-        pytagora.requests[this.getRequestKeyByTrace()].intermediateData.push({
+    async httpResponseInterceptor(response, request, pytagora) {
+        if (pytagora.mode !== MODES.capture) return;
+        async function readStream(reader) {
+            let result;
+            let values = [];
+            while (!result || !result.done) {
+                result = await reader.read();
+                values.push(result.value);
+            }
+
+            let finalResult = values.join('').toString('utf8');
+            try { finalResult = JSON.parse(finalResult); } catch (e) {}
+            return finalResult;
+        }
+
+        let reader = response.body.getReader();
+        let responseBody = await readStream(reader);
+        if (!requests[Pytagora.getRequestKeyByAsyncStore()]) return console.error('No TRACE found for response!');
+        requests[Pytagora.getRequestKeyByAsyncStore()].intermediateData.push({
             type: 'outgoing_request',
-            request, response
+            url: request.url,
+            method: request.method,
+            responseData: responseBody,
+            response: {
+                status: response.status,
+                statusText: response.statusText,
+                // TODO headers: response.headers
+            }
+        });
+    }
+
+    // TODO track request order and make sure the correct ones get chosen
+    getHttpMockResponse(request) {
+        return testingRequests[asyncLocalStorage.getStore()].intermediateData.find(intData => {
+            // TODO add more checks (body, query, params)
+            return intData.type === 'outgoing_request' &&
+                intData.url === request.url &&
+                intData.method === request.method;
         });
     }
 
     setUpExpressMiddleware(app) {
-        app.use((req, res, next) => {
-            this.apiInterceptor(req, res, next, this);
-        });
-    }
-
-    logStackTrace() {
-        return new Error().stack;
-        // return Error.captureStackTrace(new Error(), logStackTrace);
-    }
-
-    static getRequestKeyByTrace() {
-        return Object.keys(requests).find(key => {
-            return requests[key].trace.includes(triggerAsyncId());
+        app.use(async (req, res, next) => {
+            this.RedisInterceptor.setMode(this.mode);
+            if (this.mode === MODES.capture) await this.apiCaptureInterceptor(req, res, next, this);
+            else if (this.mode === MODES.test) await this.apiTestInterceptor(req, res, next, this);
         });
     }
 
@@ -146,23 +157,58 @@ export default class Pytagora {
         }
     }
 
-    static mergeTraces(triggerAsyncId, asyncId, preAsyncId) {
-        let reqIdToAddTo = Object.keys(requests).find(key => {
-            return requests[key].trace.includes(preAsyncId || triggerAsyncId);
+    configureMongoosePlugin(mongoose) {
+        mongoose.plugin((schema) => {
+            schema.pre(methods, function() {
+                if (asyncLocalStorage.getStore() === undefined) return;
+                logWithStoreId('mongo pre');
+                this.asyncStore = asyncLocalStorage.getStore();
+                this.mongoReqId = v4();
+                try {
+                    requests[Pytagora.getRequestKeyByAsyncStore()].intermediateData.push({
+                        type: 'mongo',
+                        req: _.pick(this, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']),
+                        mongoReqId: this.mongoReqId
+                    });
+                } catch (e) {
+                    console.log(_.pick(this, ['op', '_conditions', '_doc']), e);
+                }
+            });
+
+            schema.post(methods, function(...args) {
+                let doc = args[0];
+                let next = args[1];
+                if (this.asyncStore === undefined) return;
+                try {
+                    asyncLocalStorage.enterWith(this.asyncStore);
+                    logWithStoreId('mongo post');
+                    let request = requests[Pytagora.getRequestKeyByAsyncStore()];
+                    request.intermediateData.forEach((intData, i) => {
+                        if (intData.mongoReqId === this.mongoReqId) {
+                            request.intermediateData[i].res = doc;
+                        }
+                    });
+                    if (!request.intermediateData.find(intData => intData.mongoReqId === this.mongoReqId)) {
+                        console.log('---')
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
+                if (next) next();
+            });
         });
-        requests[reqIdToAddTo].trace.push(triggerAsyncId);
-        requests[reqIdToAddTo].trace.push(asyncId);
     }
 
-    apiInterceptor(req, res, next) {
+    async apiCaptureInterceptor(req, res, next) {
 
         let eid = executionAsyncId();
-        createHook({ init() {} }).enable();
+        // createHook({ init() {} }).enable();
         req.id = v4();
         requests[req.id] = {
             id: req.id,
-            endpoint: req.url,
+            endpoint: req.path,
             body: req.body,
+            method: req.method,
             responseData: null,
             traceId: eid,
             trace: [eid],
@@ -179,7 +225,7 @@ export default class Pytagora {
             requests[req.id].responseData = body;
             requests[req.id].traceLegacy = requests[req.id].trace;
             requests[req.id].trace = [];
-            if (loggingEnabled) FS.appendFileSync('pytagoraDebug.json', JSON.stringify(requests[req.id]) + ',\n');
+            if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
             _send.call(this, body);
         };
 
@@ -190,34 +236,72 @@ export default class Pytagora {
         });
     }
 
-    logRequest(req) {
-        FS.appendFileSync('pytagoraDebug.json', JSON.stringify(req) + ',\n');
+    static saveCaptureToFile(reqData) {
+        let endpointFileName = `./pytagora_data/${reqData.endpoint.replace(/\//g, '|')}.json`;
+        if (!FS.existsSync(endpointFileName)) FS.writeFileSync(endpointFileName, JSON.stringify([reqData]));
+        else {
+            let fileContent = JSON.parse(FS.readFileSync(endpointFileName));
+            let identicalRequestIndex = fileContent.findIndex(req => {
+                return _.isEqual(req.body, reqData.body) &&
+                    req.method === reqData.method &&
+                    _.isEqual(req.query, reqData.query) &&
+                    _.isEqual(req.params, reqData.params);
+            });
+
+            if (identicalRequestIndex === -1) {
+                FS.writeFileSync(endpointFileName, JSON.stringify(fileContent.concat([reqData])));
+            } else {
+                fileContent[identicalRequestIndex] = reqData;
+                FS.writeFileSync(endpointFileName, JSON.stringify(fileContent));
+            }
+        }
     }
 
-    mongoPreInterceptor() {
-        requests[this.getRequestKeyByTrace()].intermediateData.push(this._queryLog);
-    }
-
-    mongoInterceptor(schema) {
-        // TODO we need to see if this can only be done by iterating through ALL
-        // Mongoose hooks (find, update, etc.) or we can connect directly to Mongoose
-        schema.pre('find', function() {
-            // Save the query object
-            this._queryLog = this.getQuery();
+    async apiTestInterceptor(req, res, next) {
+        let capturedRequests = JSON.parse(await FS.promises.readFile(`./pytagora_data/${req.path.replace(/\//g, '|')}.json`, 'utf8'));
+        let request = this.getRequestMockData(capturedRequests, req.path, req.method, req.body, req.query, req.params);
+        if (!request) return console.error('No request found for', req.path, req.method, req.body, req.query, req.params);
+        this.RedisInterceptor.setIntermediateData(request.intermediateData);
+        let reqId = idSeq++;
+        testingRequests[reqId] = request;
+        asyncLocalStorage.run(reqId, () => {
+            logWithStoreId('Starting testing...');
+            next();
         });
+    }
 
-        schema.post('find', function(docs) {
-            // Save the response object (the documents returned by the query)
-            this._queryLog.response = docs;
-            // TODO save the query log (not sure if this works or you need to save the req first and then save only the response here
+    getRequestMockData(capturedRequests, endpoint, method, body, query, params) {
+        return capturedRequests.find(request => {
+            return request.endpoint === endpoint &&
+                request.method === method &&
+                _.isEqual(request.body, body) &&
+                _.isEqual(request.query, query) &&
+                _.isEqual(request.params, params);
         });
     }
 
-    endRecording() {
+    async runRedisInterceptor(intermediateData) {
+        this.RedisInterceptor = new RedisInterceptor(
+            this,
+            16379,
+            6379,
+            intermediateData
+        );
+
+        await this.RedisInterceptor.init();
 
     }
+
+    saveRedisData(request, response) {
+        _.keys(requests).forEach(k => requests[k].intermediateData.push({
+            type: 'redis',
+            request, response
+        }));
+    }
+
+
 }
 
-exports.printMsg = function() {
-  console.log("This is a message from the demo package");
-}
+export default Pytagora;
+
+module.exports = Pytagora;

@@ -1,29 +1,24 @@
-import {v4} from 'uuid';
-import { createHook, triggerAsyncId, executionAsyncId } from 'async_hooks';
-import { BatchInterceptor } from '@mswjs/interceptors';
-import nodeInterceptors from '@mswjs/interceptors/lib/presets/node.js';
-import mongo from "mongoose";
-import express from "express";
-import FS from "fs";
-import _ from "lodash";
-import { AsyncLocalStorage, AsyncResource } from 'node:async_hooks';
-import RedisInterceptor from './RedisInterceptor.js';
+// import {v4} from 'uuid';
+// import { createHook, triggerAsyncId, executionAsyncId } from 'async_hooks';
+// import { BatchInterceptor } from '@mswjs/interceptors';
+// import nodeInterceptors from '@mswjs/interceptors/lib/presets/node.js';
+// import mongoose from "mongoose";
+// import FS from "fs";
+// import _ from "lodash";
+// import { AsyncLocalStorage, AsyncResource } from 'node:async_hooks';
+// import RedisInterceptor from './RedisInterceptor.js';
 
-// let  mongoose = require("mongoose");
-// let  {v4} = require('uuid');
-// let  { createHook, triggerAsyncId, executionAsyncId } = require('async_hooks');
-// let  { BatchInterceptor } = require('@mswjs/interceptors');
-// let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
-// let  express = require("express");
-// let  FS = require("fs");
-// let  _ = require("lodash");
-// let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
-// const RedisInterceptor = require("pytagora/RedisInterceptor");
+let  mongoose = require("mongoose");
+let  {v4} = require('uuid');
+let  { createHook, triggerAsyncId, executionAsyncId } = require('async_hooks');
+let  { BatchInterceptor } = require('@mswjs/interceptors');
+let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
+let  FS = require("fs");
+let  _ = require("lodash");
+let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
+const RedisInterceptor = require("./RedisInterceptor.js");
 
-const asyncLocalStorage = new AsyncLocalStorage({onPropagate: (store, triggerAsyncId) => {
-        console.log('----')
-    }
-});
+const asyncLocalStorage = new AsyncLocalStorage();
 
 function logWithStoreId(msg) {
     const id = asyncLocalStorage.getStore();
@@ -31,25 +26,26 @@ function logWithStoreId(msg) {
 }
 
 let idSeq = 0;
-let loggingEnabled = true;
+let loggingEnabled;
 let requests = {};
 let testingRequests = {};
-let methods = ['find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'init', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
+let methods = ['find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
 let app;
 let MODES = {
     'capture': 'capture',
     'test': 'test'
-}
+};
 
 class Pytagora {
 
-    constructor(mongoose, mode) {
+    constructor(mode) {
         if (!MODES[mode]) throw new Error('Invalid mode');
         else this.mode = mode;
+        loggingEnabled = mode === 'capture';
 
         if (!FS.existsSync('./pytagora_data/')) FS.mkdirSync('./pytagora_data/');
 
-        if (mongoose) this.configureMongoosePlugin(mongoose);
+        this.configureMongoosePlugin();
 
         this.setUpHttpInterceptor();
     }
@@ -67,9 +63,9 @@ class Pytagora {
         const interceptor = new BatchInterceptor({
             name: 'my-interceptor',
             interceptors: nodeInterceptors.default,
-        })
+        });
 
-        interceptor.apply()
+        interceptor.apply();
 
         interceptor.on('request', (req, reqId) => this.httpRequestInterceptor(req, reqId, this));
         interceptor.on('response', (res, req) => this.httpResponseInterceptor(res, req, this));
@@ -157,7 +153,8 @@ class Pytagora {
         }
     }
 
-    configureMongoosePlugin(mongoose) {
+    configureMongoosePlugin() {
+        let self = this;
         mongoose.plugin((schema) => {
             schema.pre(methods, function() {
                 if (asyncLocalStorage.getStore() === undefined) return;
@@ -165,7 +162,8 @@ class Pytagora {
                 this.asyncStore = asyncLocalStorage.getStore();
                 this.mongoReqId = v4();
                 try {
-                    requests[Pytagora.getRequestKeyByAsyncStore()].intermediateData.push({
+                    let request = requests[Pytagora.getRequestKeyByAsyncStore()];
+                    if (request) request.intermediateData.push({
                         type: 'mongo',
                         req: _.pick(this, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']),
                         mongoReqId: this.mongoReqId
@@ -182,14 +180,20 @@ class Pytagora {
                 try {
                     asyncLocalStorage.enterWith(this.asyncStore);
                     logWithStoreId('mongo post');
-                    let request = requests[Pytagora.getRequestKeyByAsyncStore()];
-                    request.intermediateData.forEach((intData, i) => {
-                        if (intData.mongoReqId === this.mongoReqId) {
-                            request.intermediateData[i].res = doc;
+                    if (self.mode === MODES.test) {
+                        let request = testingRequests[this.asyncStore];
+                        doc = request.intermediateData.find(d => d.type === 'mongo');
+                        if (doc) doc = doc.res;
+                    } else {
+                        let request = requests[Pytagora.getRequestKeyByAsyncStore()] || testingRequests[this.asyncStore];
+                        if (request) request.intermediateData.forEach((intData, i) => {
+                            if (intData.mongoReqId === this.mongoReqId) {
+                                request.intermediateData[i].res = doc;
+                            }
+                        });
+                        if (!request || !request.intermediateData.find(intData => intData.mongoReqId === this.mongoReqId)) {
+                            console.log('---');
                         }
-                    });
-                    if (!request.intermediateData.find(intData => intData.mongoReqId === this.mongoReqId)) {
-                        console.log('---')
                     }
                 } catch (e) {
                     console.log(e);
@@ -207,8 +211,10 @@ class Pytagora {
         requests[req.id] = {
             id: req.id,
             endpoint: req.path,
+            url: 'http://' + req.headers.host + req.url,
             body: req.body,
             method: req.method,
+            headers: req.headers,
             responseData: null,
             traceId: eid,
             trace: [eid],
@@ -218,15 +224,28 @@ class Pytagora {
             asyncStore: idSeq
         };
 
+        //todo check what else needs to be added eg. res.json, res.end, res.write,...
         const _send = res.send;
+        const _redirect = res.redirect;
 
         res.send = function(body) {
+            logWithStoreId('send');
             // TODO save response data
             requests[req.id].responseData = body;
             requests[req.id].traceLegacy = requests[req.id].trace;
             requests[req.id].trace = [];
             if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
             _send.call(this, body);
+        };
+
+        res.redirect = function(redirectUrl) {
+            logWithStoreId('redirect');
+            requests[req.id].responseData = {
+                'type': 'redirect',
+                'url': redirectUrl
+            };
+            if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
+            _redirect.call(this, redirectUrl);
         };
 
 
@@ -258,16 +277,65 @@ class Pytagora {
     }
 
     async apiTestInterceptor(req, res, next) {
-        let capturedRequests = JSON.parse(await FS.promises.readFile(`./pytagora_data/${req.path.replace(/\//g, '|')}.json`, 'utf8'));
+        let path = `./pytagora_data/${req.path.replace(/\//g, '|')}.json`;
+        if (!FS.existsSync(path)) return next();
+        let capturedRequests = JSON.parse(await FS.promises.readFile(path, 'utf8'));
         let request = this.getRequestMockData(capturedRequests, req.path, req.method, req.body, req.query, req.params);
         if (!request) return console.error('No request found for', req.path, req.method, req.body, req.query, req.params);
         this.RedisInterceptor.setIntermediateData(request.intermediateData);
         let reqId = idSeq++;
         testingRequests[reqId] = request;
+
+        // const self = this;
+        //todo check what else needs to be added eg. res.json, res.end, res.write,...
+        const _send = res.send;
+        const _redirect = res.redirect;
+
+        res.send = function(body) {
+            logWithStoreId('testing send');
+            // if (!request || !self.compareResponse(request.responseData, body)) console.error('BEEP BEEP! Wrong response in test');
+            _send.call(this, body);
+        };
+
+        res.redirect = function(url) {
+            logWithStoreId('testing redirect');
+            // if (!request ||
+            //     !self.compareResponse(request.responseData, {
+            //         type: 'redirect',
+            //         url
+            //     })) console.error('BEEP BEEP! Wrong response in test');
+            _redirect.call(this, url);
+        };
+
         asyncLocalStorage.run(reqId, () => {
             logWithStoreId('Starting testing...');
             next();
         });
+    }
+
+    compareResponse(a, b) {
+        return typeof a !== typeof b ? false :
+            typeof a === 'string' && a.toLowerCase().includes('<!doctype html>') && b.toLowerCase().includes('<!doctype html>') ? true : //todo make appropriate check
+                typeof a === 'object' ? this.compareJson(a,b) : a === b;
+    }
+
+    compareJson(a, b) {
+        let aProps = Object.getOwnPropertyNames(a);
+        let bProps = Object.getOwnPropertyNames(b);
+        if (aProps.length !== bProps.length) {
+            return false;
+        }
+        for (let i = 0; i < aProps.length; i++) {
+            let propName = aProps[i];
+            if (a[propName] !== b[propName]) {
+                if (typeof a[propName] === 'object') {
+                    if (!this.compareJson(a[propName], b[propName]))
+                        return false;
+                } else
+                    return false;
+            }
+        }
+        return true;
     }
 
     getRequestMockData(capturedRequests, endpoint, method, body, query, params) {
@@ -299,9 +367,8 @@ class Pytagora {
         }));
     }
 
-
 }
 
-export default Pytagora;
+// export default Pytagora;
 
 module.exports = Pytagora;

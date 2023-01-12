@@ -1,10 +1,14 @@
 'use strict';
-const mongoose = require("mongoose");
-const Pytagora = require('pytagora');
-var P = new Pytagora(mongoose, 'test');
+const Pytagora = require('./app/backend/pytagora.js');
+
+const mode = 'test';
+const appPath = './app/app.js';
+
+console.log(`Running ${appPath} using Pytagora in '${mode.toUpperCase()}' mode.`);
+const P = new Pytagora(mode);
 global.Pytagora = P;
 (async () => {
     await P.runRedisInterceptor();
-    const app = require('./app/app');
+    const app = require(appPath);
 })();
 

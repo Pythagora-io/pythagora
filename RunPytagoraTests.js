@@ -1,20 +1,23 @@
 const axios = require('axios');
 const fs = require('fs');
+const qs = require('querystring');
+const _ = require('lodash');
 
 async function makeRequest(test) {
     try {
         const response = await axios({
             method: test.method,
             url: test.url,
-            headers: test.headers,
-            data: test.body || {},
+            headers: _.omit(test.headers, ['content-length']),
+            body: qs.parse(test.pytagoraBody) || {},
+            maxRedirects: 0,
             validateStatus: function (status) {
                 return status >= 100 && status < 600;
             }
         });
 
-        let testResult = response.status >= 200 && response.status < 300 ? compareResponse(response.data, test.responseData) :
-            response.status >= 300 && response.status < 400 ? compareResponse(response.data, test.responseData) : compareResponse(response.data, test.responseData);
+        let testResult = response.status >= 300 && response.status < 400 ? compareResponse({type: 'redirect', url: `${response.headers.location}`}, test.responseData)
+            : compareResponse(response.data, test.responseData);
 
         testResult ? console.log(`Test for ${test.url} PASSED!`) : console.error(`Test for ${test.url} FAILED!`);
     } catch (error) {

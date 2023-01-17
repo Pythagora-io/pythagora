@@ -17,6 +17,7 @@ let  FS = require("fs");
 let  _ = require("lodash");
 let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
 const RedisInterceptor = require("./RedisInterceptor.js");
+const { getInitLinesOfCode, getCurrentlyExecutedLines } = require('./instrumenter');
 
 const asyncLocalStorage = new AsyncLocalStorage();
 
@@ -48,6 +49,8 @@ class Pytagora {
         this.configureMongoosePlugin();
 
         this.setUpHttpInterceptor();
+
+        this.codeCoverage = {};
     }
 
     setApp(newApp) {
@@ -204,7 +207,7 @@ class Pytagora {
     }
 
     async apiCaptureInterceptor(req, res, next) {
-
+        if (!this.codeCoverage.initLines) this.codeCoverage.initLines = await getInitLinesOfCode();
         let eid = executionAsyncId();
         // createHook({ init() {} }).enable();
         req.id = v4();
@@ -235,6 +238,7 @@ class Pytagora {
             requests[req.id].trace = [];
             if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
             _send.call(this, body);
+            console.log("Lines covered: " + getCurrentlyExecutedLines() + ` (${getCurrentlyExecutedLines(false, true)}%)\n`);
         };
 
         res.redirect = function(redirectUrl) {

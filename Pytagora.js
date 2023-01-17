@@ -67,8 +67,8 @@ class Pytagora {
 
         interceptor.apply();
 
-        interceptor.on('request', (req, reqId) => this.httpRequestInterceptor(req, reqId, this));
-        interceptor.on('response', (res, req) => this.httpResponseInterceptor(res, req, this));
+        // interceptor.on('request', (req, reqId) => this.httpRequestInterceptor(req, reqId, this));
+        // interceptor.on('response', (res, req) => this.httpResponseInterceptor(res, req, this));
     }
 
     httpRequestInterceptor(request, requestId, pytagora) {
@@ -230,7 +230,6 @@ class Pytagora {
 
         res.send = function(body) {
             logWithStoreId('send');
-            // TODO save response data
             requests[req.id].responseData = body;
             requests[req.id].traceLegacy = requests[req.id].trace;
             requests[req.id].trace = [];

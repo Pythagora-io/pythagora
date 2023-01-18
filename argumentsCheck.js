@@ -2,9 +2,9 @@ const AVAILABLE_MODES = ['capture', 'test'];
 let { mode, initScript } = require('minimist')(process.argv.slice(2));
 if (!initScript) {
     console.error(`
-Please provide the script that you use to start your Node.js app by adding --initScript=<relative path to the file you would usually run to start your app>.
+Please provide the script that you use to start your Node.js app by adding --initScript <relative path to the file you would usually run to start your app>.
 
-Eg. --initScript=./app.js
+Eg. --initScript ./app.js
 `);
     process.exit(1);
 } else if (!mode) {

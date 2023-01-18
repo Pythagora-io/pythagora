@@ -2,6 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const qs = require('querystring');
 const _ = require('lodash');
+const { logTestPassed, logTestFailed, logTestsFinished, logTestsStarting } = require('./src/utils/cmdPrint');
 
 async function makeRequest(test) {
     try {
@@ -19,7 +20,9 @@ async function makeRequest(test) {
         let testResult = response.status >= 300 && response.status < 400 ? compareResponse({type: 'redirect', url: `${response.headers.location}`}, test.responseData)
             : compareResponse(response.data, test.responseData);
 
-        testResult ? console.log(`Test for ${test.url} PASSED!`) : console.error(`Test for ${test.url} FAILED!`);
+        // TODO add query
+        (testResult ? logTestPassed : logTestFailed)(test.endpoint, test.method, test.pytagoraBody, undefined, test.responseData);
+        return testResult;
     } catch (error) {
         console.error(error);
     }
@@ -52,20 +55,24 @@ function compareJson(a, b) {
 
 (async () => {
     const directory = './pytagora_data';
+    const results = [];
 
     try {
         let files = fs.readdirSync(directory);
         files = files.filter(f => f[0] !== '.' && !(f[0] === '|' && f[1] === '.'));
-        console.log(files);
-        console.log(`Starting tests on ${files.length} endpoints...`);
+        logTestsStarting(files);
         for (let file of files) {
             let tests = JSON.parse(fs.readFileSync(`./pytagora_data/${file}`));
-            console.log(`Testing ${tests.length} tests for ${file.replace('|', '/')}...`);
             for (let test of tests) {
-                await makeRequest(test);
+                results.push(await makeRequest(test) || false);
             }
         }
-        console.log('Finished all tests!');
+
+        let passedCount = results.filter(r => r).length,
+            failedCount = results.filter(r => !r).length,
+            linesExecuted = global.Pytagora.instrumenter.getCurrentlyExecutedLines(),
+            codeCoverage = global.Pytagora.instrumenter.getCurrentlyExecutedLines(false, true);
+        logTestsFinished(passedCount, failedCount, linesExecuted, codeCoverage);
     } catch (err) {
         console.error("Error occured while running Pytagora tests: ", err);
     }

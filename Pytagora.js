@@ -17,13 +17,14 @@ let  FS = require("fs");
 let  _ = require("lodash");
 let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
 const RedisInterceptor = require("./RedisInterceptor.js");
-const { getInitLinesOfCode, getCurrentlyExecutedLines } = require('./instrumenter');
+const instrumenter = require('./instrumenter');
+const { logEndpointCaptured, logTestFailed, logTestPassed, logTestsFinished } = require('./src/utils/cmdPrint.js');
 
 const asyncLocalStorage = new AsyncLocalStorage();
 
 function logWithStoreId(msg) {
     const id = asyncLocalStorage.getStore();
-    console.log(`${id !== undefined ? id : '-'}:`, msg);
+    // console.log(`${id !== undefined ? id : '-'}:`, msg);
 }
 
 let idSeq = 0;
@@ -51,6 +52,8 @@ class Pytagora {
         this.setUpHttpInterceptor();
 
         this.codeCoverage = {};
+
+        this.instrumenter = instrumenter;
     }
 
     setApp(newApp) {
@@ -172,7 +175,7 @@ class Pytagora {
                         mongoReqId: this.mongoReqId
                     });
                 } catch (e) {
-                    console.log(_.pick(this, ['op', '_conditions', '_doc']), e);
+                    console.error(_.pick(this, ['op', '_conditions', '_doc']), e);
                 }
             });
 
@@ -194,12 +197,9 @@ class Pytagora {
                                 request.intermediateData[i].res = doc;
                             }
                         });
-                        if (!request || !request.intermediateData.find(intData => intData.mongoReqId === this.mongoReqId)) {
-                            console.log('---');
-                        }
                     }
                 } catch (e) {
-                    console.log(e);
+                    console.error(e);
                 }
                 if (next) next();
             });
@@ -207,7 +207,7 @@ class Pytagora {
     }
 
     async apiCaptureInterceptor(req, res, next) {
-        if (!this.codeCoverage.initLines) this.codeCoverage.initLines = await getInitLinesOfCode();
+        if (!this.codeCoverage.initLines) this.codeCoverage.initLines = await this.instrumenter.getInitLinesOfCode();
         let eid = executionAsyncId();
         // createHook({ init() {} }).enable();
         req.id = v4();
@@ -230,6 +230,9 @@ class Pytagora {
         //todo check what else needs to be added eg. res.json, res.end, res.write,...
         const _send = res.send;
         const _redirect = res.redirect;
+        const finishCapture = (responseBody) => {
+            logEndpointCaptured(req.path, req.method, req.body, req.query, responseBody);
+        }
 
         res.send = function(body) {
             logWithStoreId('send');
@@ -238,7 +241,7 @@ class Pytagora {
             requests[req.id].trace = [];
             if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
             _send.call(this, body);
-            console.log("Lines covered: " + getCurrentlyExecutedLines() + ` (${getCurrentlyExecutedLines(false, true)}%)\n`);
+            finishCapture(body);
         };
 
         res.redirect = function(redirectUrl) {
@@ -249,6 +252,7 @@ class Pytagora {
             };
             if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
             _redirect.call(this, redirectUrl);
+            finishCapture();
         };
 
 

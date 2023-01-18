@@ -15,7 +15,6 @@ global.Pytagora = new Pytagora(mode);
             // TODO run tests once the app loads
             console.log('Running tests in 3 seconds...');
             setTimeout(() => {
-                console.log('Running tests...');
                 require('./RunPytagoraTests.js');
             }, 3000);
         }

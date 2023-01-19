@@ -2,7 +2,7 @@
 
 1. Install Pytagora globally by running
    ```
-   npm install -g pytagora
+   npm install pytagora
    ```
 2. Integrate Pytagora by adding the Express app to `global.Pytagora` right after you initialize express. Eg. if you initialize Express with `let app = express();` than add this on the next line:
     ```
@@ -13,11 +13,11 @@
 
 1. <b>From the root directory</b> run Pytagora in a capture mode first to capture test data and mocks.
       ```
-      pytagora --mode capture --script <path to the file you use to start the server>
+      npx pytagora --mode capture --initScript <path to the file you use to start the server>
       ```
    Eg. if you start the server with `node server.js` than the command would be:
       ```
-      pytagora --mode capture --script server.js
+      npx pytagora --mode capture --initScript server.js
       ```
 2. Click around your application or make requests to your API. Pytagora will capture all requests and responses.
 <br><br>

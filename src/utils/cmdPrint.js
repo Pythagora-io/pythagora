@@ -15,12 +15,13 @@ let logEndpointCaptured = (endpoint, method, body, query, responseBody = {}) => 
 ${blue+bold}-----------------------------------------------${reset}`);
 }
 
-let logTestFailed = (endpoint, method, body = {}, query = {}, response) => {
+let logTestFailed = (endpoint, method, body = {}, query = {}, response, expectedResponse) => {
     console.log(`❌ Test ${red+bold}FAILED!${reset}
    ${red+bold}${method} ${endpoint} ${reset}
    ${red+bold}Body:   ${reset}${cutWithDots(JSON.stringify(body))}
    ${red+bold}Query:   ${reset}${cutWithDots(JSON.stringify(query))}
    ${red+bold}Response:   ${reset}${cutWithDots(JSON.stringify(response))}
+   ${red+bold}Expected Response:   ${reset}${cutWithDots(JSON.stringify(expectedResponse))}
 ${red+bold}-----------------------------------------------${reset}`);
 }
 

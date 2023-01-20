@@ -21,7 +21,7 @@ async function makeRequest(test) {
             : compareResponse(response.data, test.responseData);
 
         // TODO add query
-        (testResult ? logTestPassed : logTestFailed)(test.endpoint, test.method, test.pytagoraBody, undefined, test.responseData);
+        (testResult ? logTestPassed : logTestFailed)(test.endpoint, test.method, test.pytagoraBody, undefined, response.data, test.responseData);
         return testResult;
     } catch (error) {
         console.error(error);

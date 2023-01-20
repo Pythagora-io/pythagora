@@ -4,11 +4,15 @@
    ```
    npm install pytagora
    ```
-2. Integrate Pytagora by adding the Express app to `global.Pytagora` right after you initialize express. Eg. if you initialize Express with `let app = express();` than add this on the next line:
+2. Integrate Pytagora by adding the Express app and mongoose instance to `global.Pytagora` right after you initialize express/mongoose. Eg. if you initialize Express with `let app = express();` than add this on the next line:
     ```
     if (global.Pytagora) global.Pytagora.setApp(app);
    ```
-<br><br>
+   For mongoose, right after <b>first</b> import of mongoose `const mongoose =  require('mongoose');` add this on next line:
+    ```
+    if (global.Pytagora) global.Pytagora.setMongoose(mongoose);
+   ```
+   <br><br>
 <h1>Capturing requests</h1>
 
 1. <b>From the root directory</b> run Pytagora in a capture mode first to capture test data and mocks.

@@ -8,7 +8,6 @@
 // import { AsyncLocalStorage, AsyncResource } from 'node:async_hooks';
 // import RedisInterceptor from './RedisInterceptor.js';
 
-let  mongoose = require("mongoose");
 let  {v4} = require('uuid');
 let  { createHook, triggerAsyncId, executionAsyncId } = require('async_hooks');
 let  { BatchInterceptor } = require('@mswjs/interceptors');
@@ -33,14 +32,13 @@ let loggingEnabled;
 let requests = {};
 let testingRequests = {};
 let methods = ['save','find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
-let app;
+let app, mongoose, ObjectId;
 let MODES = {
     'capture': 'capture',
     'test': 'test'
 };
 let pytagoraDb = 'pytagoraDb';
 let pytagoraDbConnection;
-const ObjectId = mongoose.Types.ObjectId;
 
 class Pytagora {
 
@@ -50,8 +48,6 @@ class Pytagora {
         loggingEnabled = mode === 'capture';
 
         if (!FS.existsSync('./pytagora_data/')) FS.mkdirSync('./pytagora_data/');
-
-        this.configureMongoosePlugin();
 
         this.setUpHttpInterceptor();
 
@@ -67,6 +63,17 @@ class Pytagora {
 
     getApp() {
         return app;
+    }
+
+    setMongoose(newMongoose) {
+        // we need to use users mongoose version to be able to setup plugin and pre/post hooks properly
+        mongoose = newMongoose;
+        ObjectId = mongoose.Types.ObjectId;
+        this.configureMongoosePlugin();
+    }
+
+    getMongoose() {
+        return mongoose;
     }
 
     setUpHttpInterceptor() {
@@ -156,7 +163,6 @@ class Pytagora {
                 let uniqueIds = [];
                 for (const data of testReq.intermediateData) {
                     if (data.type !== 'mongo') continue;
-                    console.log('---------- INSERT MANY ', data.preQueryRes.length)
                     let insertData = [];
                     for (let doc of data.preQueryRes) {
                         if (!uniqueIds.includes(doc._id)) {

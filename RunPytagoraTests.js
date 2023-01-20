@@ -9,8 +9,9 @@ async function makeRequest(test) {
         let options = {
             method: test.method,
             url: addIdToUrl(test.url, test.id),
-            headers: _.extend({'cache-control': 'no-cache'}, _.omit(test.headers, ['content-length'])),
+            headers: _.extend({'cache-control': 'no-cache'}, _.omit(test.headers, ['content-length', 'cache-control'])),
             maxRedirects: 0,
+            cache: false,
             validateStatus: function (status) {
                 return status >= 100 && status < 600;
             }
@@ -18,11 +19,14 @@ async function makeRequest(test) {
         if (test.method !== 'GET') options.data = qs.parse(test.pytagoraBody) || {};
         const response = await axios(options);
 
-        let testResult = response.status >= 300 && response.status < 400 ? compareResponse({type: 'redirect', url: `${response.headers.location}`}, test.responseData)
-            : compareResponse(response.data, test.responseData);
+        if(response.status >= 300 && response.status < 400) {
+            response.data = {type: 'redirect', url: `${response.headers.location}`};
+        };
+        let testResult = compareResponse(response.data, test.responseData);
 
+        testResult = global.Pytagora.request.id === test.id && global.Pytagora.request.errors.length ? false : testResult;
         // TODO add query
-        (testResult ? logTestPassed : logTestFailed)(test.endpoint, test.method, test.pytagoraBody, undefined, test.responseData);
+        (testResult ? logTestPassed : logTestFailed)(test.endpoint, test.method, test.pytagoraBody, undefined, test.responseData, response.data, global.Pytagora.request.errors);
         return testResult;
     } catch (error) {
         console.error(error);

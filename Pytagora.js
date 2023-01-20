@@ -236,27 +236,13 @@ class Pytagora {
                 try {
                     let request = requests[Pytagora.getRequestKeyByAsyncStore()];
                     if (self.mode === MODES.capture && request) {
-                        let collection, req;
-                        let query = this._conditions;
-                        if (this instanceof mongoose.Query) {
-                            collection = _.get(this, '_collection.collectionName');
-                            req = _.extend({collection}, _.pick(this, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']));
-                        } else if (this instanceof mongoose.Model) {
-                            collection = this.constructor.collection.collectionName;
-                            req = {
-                                collection,
-                                op: this.$__.op,
-                                options: this.$__.saveOptions,
-                                _doc: this._doc
-                            }
-                        }
+                        var mongoRes = await self.getMongoDocs(this);
 
-                        var preQueryRes = await mongoose.connection.db.collection(collection).find(self.convertObjectId(query || {})).toArray();
                         request.intermediateData.push({
                             type: 'mongo',
-                            req,
+                            req: mongoRes.req,
                             mongoReqId: this.mongoReqId,
-                            preQueryRes
+                            preQueryRes: mongoRes.mongoDocs
                         });
                     }
                 } catch (e) {
@@ -264,29 +250,38 @@ class Pytagora {
                 }
             });
 
-            schema.post(methods, function(...args) {
+            schema.post(methods, async function(...args) {
                 let doc = args[0];
                 let next = args[1];
                 if (this.asyncStore === undefined) return;
                 try {
                     asyncLocalStorage.enterWith(this.asyncStore);
                     logWithStoreId('mongo post');
+                    var mongoRes = await self.getMongoDocs(this);
+
                     if (self.mode === MODES.test) {
+                        testingRequests[this.asyncStore].mongoQueriesTest++;
                         let request = testingRequests[this.asyncStore];
                         let data = request.intermediateData.find(d => d.type === 'mongo' &&
                             d.req.op === this.op &&
                             JSON.stringify(d.req.options) === JSON.stringify(this.options) &&
                             JSON.stringify(d.req._conditions) === JSON.stringify(this._conditions));
-                        if (data && JSON.stringify(data.postQueryRes) !== JSON.stringify(doc)) {
-                            console.error('MONGO NOT WORKING CORRECTLY');
+                        if (data &&
+                            (JSON.stringify(data.mongoRes) !== JSON.stringify(doc) || JSON.stringify(data.postQueryRes) !== JSON.stringify(mongoRes.mongoDocs))) {
+                            let error = 'Mongo query gave different result!';
+                            testingRequests[this.asyncStore].errors.push(error);
                         }
-                    } else {
+                    } else if (self.mode === MODES.capture) {
                         let request = requests[Pytagora.getRequestKeyByAsyncStore()];
-                        if (request) request.intermediateData.forEach((intData, i) => {
-                            if (intData.mongoReqId === this.mongoReqId) {
-                                request.intermediateData[i].postQueryRes = doc;
-                            }
-                        });
+                        if (request) {
+                            request.mongoQueriesCapture++;
+                            request.intermediateData.forEach((intData, i) => {
+                                if (intData.mongoReqId === this.mongoReqId) {
+                                    request.intermediateData[i].mongoRes = doc;
+                                    request.intermediateData[i].postQueryRes = mongoRes.mongoDocs;
+                                }
+                            });
+                        }
                     }
                 } catch (e) {
                     console.error(e);
@@ -294,6 +289,27 @@ class Pytagora {
                 if (next) next();
             });
         });
+    }
+
+    async getMongoDocs(self) {
+        let collection, req;
+        let query = self._conditions;
+        if (self instanceof mongoose.Query) {
+            collection = _.get(self, '_collection.collectionName');
+            req = _.extend({collection}, _.pick(self, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']));
+        } else if (self instanceof mongoose.Model) {
+            collection = self.constructor.collection.collectionName;
+            req = {
+                collection,
+                op: self.$__.op,
+                options: self.$__.saveOptions,
+                _doc: self._doc
+            }
+        }
+
+        let mongoDocs = await mongoose.connection.db.collection(collection).find(this.convertObjectId(query || {})).toArray();
+
+        return {req, mongoDocs}
     }
 
     convertObjectId(obj) {
@@ -327,7 +343,8 @@ class Pytagora {
             intermediateData: [],
             query: req.query,
             params: req.params,
-            asyncStore: idSeq
+            asyncStore: idSeq,
+            mongoQueriesCapture: 0
         });
 
         //todo check what else needs to be added eg. res.json, res.end, res.write,...
@@ -392,7 +409,10 @@ class Pytagora {
         if (!request) return console.error('No request found for', req.path, req.method, req.body, req.query, req.params);
         this.RedisInterceptor.setIntermediateData(request.intermediateData);
         let reqId = idSeq++;
-        testingRequests[reqId] = request;
+        testingRequests[reqId] = _.extend({
+            mongoQueriesTest: 0,
+            errors: []
+        }, request);
 
         // const self = this;
         //todo check what else needs to be added eg. res.json, res.end, res.write,...
@@ -401,17 +421,21 @@ class Pytagora {
 
         res.send = function(body) {
             logWithStoreId('testing send');
-            // if (!request || !self.compareResponse(request.responseData, body)) console.error('BEEP BEEP! Wrong response in test');
+            if (testingRequests[reqId].mongoQueriesCapture !== testingRequests[reqId].mongoQueriesTest) testingRequests[reqId].errors.push('Some mongo queries have not been executed!');
+            global.Pytagora.request = {
+                id: testingRequests[reqId].id,
+                errors: testingRequests[reqId].errors
+            };
             _send.call(this, body);
         };
 
         res.redirect = function(url) {
             logWithStoreId('testing redirect');
-            // if (!request ||
-            //     !self.compareResponse(request.responseData, {
-            //         type: 'redirect',
-            //         url
-            //     })) console.error('BEEP BEEP! Wrong response in test');
+            if (testingRequests[reqId].mongoQueriesCapture !== testingRequests[reqId].mongoQueriesTest) testingRequests[reqId].errors.push('Some mongo queries have not been executed!');
+            global.Pytagora.request = {
+                id: testingRequests[reqId].id,
+                errors: testingRequests[reqId].errors
+            };
             _redirect.call(this, url);
         };
 

@@ -6,16 +6,17 @@ const { logTestPassed, logTestFailed, logTestsFinished, logTestsStarting } = req
 
 async function makeRequest(test) {
     try {
-        const response = await axios({
+        let options = {
             method: test.method,
-            url: test.url,
-            headers: _.omit(test.headers, ['content-length']),
-            body: qs.parse(test.pytagoraBody) || {},
+            url: addIdToUrl(test.url, test.id),
+            headers: _.extend({'cache-control': 'no-cache'}, _.omit(test.headers, ['content-length'])),
             maxRedirects: 0,
             validateStatus: function (status) {
                 return status >= 100 && status < 600;
             }
-        });
+        };
+        if (test.method !== 'GET') options.data = qs.parse(test.pytagoraBody) || {};
+        const response = await axios(options);
 
         let testResult = response.status >= 300 && response.status < 400 ? compareResponse({type: 'redirect', url: `${response.headers.location}`}, test.responseData)
             : compareResponse(response.data, test.responseData);
@@ -26,6 +27,10 @@ async function makeRequest(test) {
     } catch (error) {
         console.error(error);
     }
+}
+
+function addIdToUrl(url, id) {
+    return `${url}${url.includes('?') ? '&' : '?'}reqId=${id}`;
 }
 
 function compareResponse(a, b) {
@@ -59,7 +64,7 @@ function compareJson(a, b) {
 
     try {
         let files = fs.readdirSync(directory);
-        files = files.filter(f => f[0] !== '.' && !(f[0] === '|' && f[1] === '.'));
+        files = files.filter(f => f[0] !== '.');
         logTestsStarting(files);
         for (let file of files) {
             let tests = JSON.parse(fs.readFileSync(`./pytagora_data/${file}`));

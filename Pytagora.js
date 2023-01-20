@@ -19,6 +19,7 @@ let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
 const RedisInterceptor = require("./RedisInterceptor.js");
 const instrumenter = require('./instrumenter');
 const { logEndpointCaptured, logTestFailed, logTestPassed, logTestsFinished } = require('./src/utils/cmdPrint.js');
+const duplexify = require('duplexify');
 
 const asyncLocalStorage = new AsyncLocalStorage();
 
@@ -31,12 +32,15 @@ let idSeq = 0;
 let loggingEnabled;
 let requests = {};
 let testingRequests = {};
-let methods = ['find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
+let methods = ['save','find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
 let app;
 let MODES = {
     'capture': 'capture',
     'test': 'test'
 };
+let pytagoraDb = 'pytagoraDb';
+let pytagoraDbConnection;
+const ObjectId = mongoose.Types.ObjectId;
 
 class Pytagora {
 
@@ -137,6 +141,68 @@ class Pytagora {
     }
 
     setUpExpressMiddleware(app) {
+        app.use(async (req,res,next) => {
+            if (this.mode !== MODES.test) return next();
+
+            let prepareDB = async() => {
+                const collections = await mongoose.connection.db.collections();
+                for (const collection of collections) {
+                    await collection.drop();
+                }
+
+                const testReq = await this.getRequestMockDataById(req);
+                if (!testReq) return next();
+
+                let uniqueIds = [];
+                for (const data of testReq.intermediateData) {
+                    if (data.type !== 'mongo') continue;
+                    console.log('---------- INSERT MANY ', data.preQueryRes.length)
+                    let insertData = [];
+                    for (let doc of data.preQueryRes) {
+                        if (!uniqueIds.includes(doc._id)) {
+                            uniqueIds.push(doc._id);
+                            insertData.push(this.convertObjectId(doc));
+                        }
+                    }
+                    if(insertData.length) await mongoose.connection.db.collection(data.req.collection).insertMany(insertData);
+                }
+                return next();
+            }
+
+            let pytagoraConnection = mongoose.connections.filter((c) => c.name === pytagoraDb);
+            if (pytagoraConnection.length) return await prepareDB();
+
+            let connection = mongoose.connections[0];
+            mongoose.disconnect();
+            pytagoraDbConnection = await mongoose.connect(`mongodb://${connection.host}:${connection.port}/${pytagoraDb}`, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true
+            });
+            for (const connection of mongoose.connections) {
+                if (connection.name !== pytagoraDb) connection.close();
+            }
+            await prepareDB();
+        });
+
+        app.use((req, res, next) => {
+            if (this.mode !== MODES.capture) return next();
+            if (!req.id) req.id = v4();
+            if (!requests[req.id]) requests[req.id] = {};
+            let data = '';
+            const inputStream = req;
+            const duplexStream = duplexify();
+
+            duplexStream.setReadable(inputStream);
+            req.duplexStream = duplexStream;
+            duplexStream.on('data', (chunk) => {
+                data+=chunk.toString();
+            });
+            duplexStream.on('end', () => {
+                requests[req.id].pytagoraBody = data;
+            });
+            next();
+        });
+
         app.use(async (req, res, next) => {
             this.RedisInterceptor.setMode(this.mode);
             if (this.mode === MODES.capture) await this.apiCaptureInterceptor(req, res, next, this);
@@ -162,18 +228,37 @@ class Pytagora {
     configureMongoosePlugin() {
         let self = this;
         mongoose.plugin((schema) => {
-            schema.pre(methods, function() {
+            schema.pre(methods, async function() {
                 if (asyncLocalStorage.getStore() === undefined) return;
                 logWithStoreId('mongo pre');
                 this.asyncStore = asyncLocalStorage.getStore();
                 this.mongoReqId = v4();
                 try {
                     let request = requests[Pytagora.getRequestKeyByAsyncStore()];
-                    if (request) request.intermediateData.push({
-                        type: 'mongo',
-                        req: _.pick(this, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']),
-                        mongoReqId: this.mongoReqId
-                    });
+                    if (self.mode === MODES.capture && request) {
+                        let collection, req;
+                        let query = this._conditions;
+                        if (this instanceof mongoose.Query) {
+                            collection = _.get(this, '_collection.collectionName');
+                            req = _.extend({collection}, _.pick(this, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']));
+                        } else if (this instanceof mongoose.Model) {
+                            collection = this.constructor.collection.collectionName;
+                            req = {
+                                collection,
+                                op: this.$__.op,
+                                options: this.$__.saveOptions,
+                                _doc: this._doc
+                            }
+                        }
+
+                        var preQueryRes = await mongoose.connection.db.collection(collection).find(self.convertObjectId(query || {})).toArray();
+                        request.intermediateData.push({
+                            type: 'mongo',
+                            req,
+                            mongoReqId: this.mongoReqId,
+                            preQueryRes
+                        });
+                    }
                 } catch (e) {
                     console.error(_.pick(this, ['op', '_conditions', '_doc']), e);
                 }
@@ -188,13 +273,18 @@ class Pytagora {
                     logWithStoreId('mongo post');
                     if (self.mode === MODES.test) {
                         let request = testingRequests[this.asyncStore];
-                        doc = request.intermediateData.find(d => d.type === 'mongo');
-                        if (doc) doc = doc.res;
+                        let data = request.intermediateData.find(d => d.type === 'mongo' &&
+                            d.req.op === this.op &&
+                            JSON.stringify(d.req.options) === JSON.stringify(this.options) &&
+                            JSON.stringify(d.req._conditions) === JSON.stringify(this._conditions));
+                        if (data && JSON.stringify(data.postQueryRes) !== JSON.stringify(doc)) {
+                            console.error('MONGO NOT WORKING CORRECTLY');
+                        }
                     } else {
-                        let request = requests[Pytagora.getRequestKeyByAsyncStore()] || testingRequests[this.asyncStore];
+                        let request = requests[Pytagora.getRequestKeyByAsyncStore()];
                         if (request) request.intermediateData.forEach((intData, i) => {
                             if (intData.mongoReqId === this.mongoReqId) {
-                                request.intermediateData[i].res = doc;
+                                request.intermediateData[i].postQueryRes = doc;
                             }
                         });
                     }
@@ -206,12 +296,25 @@ class Pytagora {
         });
     }
 
+    convertObjectId(obj) {
+        for (let key in obj) {
+            if (key === "_id") {
+                if(ObjectId.isValid(obj[key])){
+                    obj[key] = new ObjectId(obj[key]);
+                }
+            } else if (typeof obj[key] === 'object') {
+                convertObjectId(obj[key]);
+            }
+        }
+        return obj;
+    }
+
     async apiCaptureInterceptor(req, res, next) {
         if (!this.codeCoverage.initLines) this.codeCoverage.initLines = await this.instrumenter.getInitLinesOfCode();
         let eid = executionAsyncId();
         // createHook({ init() {} }).enable();
         req.id = v4();
-        requests[req.id] = {
+        requests[req.id] = _.extend(requests[req.id], {
             id: req.id,
             endpoint: req.path,
             url: 'http://' + req.headers.host + req.url,
@@ -225,7 +328,7 @@ class Pytagora {
             query: req.query,
             params: req.params,
             asyncStore: idSeq
-        };
+        });
 
         //todo check what else needs to be added eg. res.json, res.end, res.write,...
         const _send = res.send;
@@ -268,7 +371,7 @@ class Pytagora {
         else {
             let fileContent = JSON.parse(FS.readFileSync(endpointFileName));
             let identicalRequestIndex = fileContent.findIndex(req => {
-                return _.isEqual(req.body, reqData.body) &&
+                return _.isEqual(req.pytagoraBody, reqData.pytagoraBody) &&
                     req.method === reqData.method &&
                     _.isEqual(req.query, reqData.query) &&
                     _.isEqual(req.params, reqData.params);
@@ -278,16 +381,14 @@ class Pytagora {
                 FS.writeFileSync(endpointFileName, JSON.stringify(fileContent.concat([reqData])));
             } else {
                 fileContent[identicalRequestIndex] = reqData;
-                FS.writeFileSync(endpointFileName, JSON.stringify(fileContent));
+                let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent);
+                FS.writeFileSync(endpointFileName, storeData);
             }
         }
     }
 
     async apiTestInterceptor(req, res, next) {
-        let path = `./pytagora_data/${req.path.replace(/\//g, '|')}.json`;
-        if (!FS.existsSync(path)) return next();
-        let capturedRequests = JSON.parse(await FS.promises.readFile(path, 'utf8'));
-        let request = this.getRequestMockData(capturedRequests, req.path, req.method, req.body, req.query, req.params);
+        let request = await this.getRequestMockDataById(req);
         if (!request) return console.error('No request found for', req.path, req.method, req.body, req.query, req.params);
         this.RedisInterceptor.setIntermediateData(request.intermediateData);
         let reqId = idSeq++;
@@ -345,6 +446,13 @@ class Pytagora {
         return true;
     }
 
+    async getRequestMockDataById(req) {
+        let path = `./pytagora_data/${req.path.replace(/\//g, '|')}.json`;
+        if (!FS.existsSync(path)) return;
+        let capturedRequests = JSON.parse(await FS.promises.readFile(path, 'utf8'));
+        return capturedRequests.find(request => request.id === req.query.reqId);
+    }
+
     getRequestMockData(capturedRequests, endpoint, method, body, query, params) {
         return capturedRequests.find(request => {
             return request.endpoint === endpoint &&
@@ -371,6 +479,19 @@ class Pytagora {
         _.keys(requests).forEach(k => requests[k].intermediateData.push({
             type: 'redis',
             request, response
+        }));
+    }
+
+    convertToRegularObject(obj) {
+        let seen = [];
+        return JSON.parse(JSON.stringify(obj, function(key, value) {
+            if (typeof value === 'object' && value !== null) {
+                if (seen.indexOf(value) !== -1) {
+                    return;
+                }
+                seen.push(value);
+            }
+            return value;
         }));
     }
 

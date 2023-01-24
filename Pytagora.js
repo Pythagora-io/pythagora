@@ -274,13 +274,21 @@ class Pytagora {
                     if (self.mode === MODES.test) {
                         testingRequests[this.asyncStore].mongoQueriesTest++;
                         let request = testingRequests[this.asyncStore];
-                        let data = request.intermediateData.find(d => d.type === 'mongo' &&
-                            d.req.op === this.op &&
-                            JSON.stringify(d.req.options) === JSON.stringify(this.options) &&
-                            JSON.stringify(d.req._conditions) === JSON.stringify(this._conditions));
+                        // TODO improve finding the correct mongo request
+                        let data = request.intermediateData.find(d => {
+                            return !d.processed &&
+                                d.type === 'mongo' &&
+                                d.req.op === this.op &&
+                                JSON.stringify(d.req.options) === JSON.stringify(this.options) &&
+                                JSON.stringify(d.req._conditions) === JSON.stringify(this._conditions);
+                        });
+                        if (data) data.processed = true;
                         if (data &&
                             (JSON.stringify(data.mongoRes) !== JSON.stringify(doc) || JSON.stringify(data.postQueryRes) !== JSON.stringify(mongoRes.mongoDocs))) {
                             let error = 'Mongo query gave different result!';
+                            testingRequests[this.asyncStore].errors.push(error);
+                        } else if (!data) {
+                            let error = 'Mongo query was not found!';
                             testingRequests[this.asyncStore].errors.push(error);
                         }
                     } else if (self.mode === MODES.capture) {

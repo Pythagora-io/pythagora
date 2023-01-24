@@ -167,7 +167,7 @@ class Pytagora {
                     for (let doc of data.preQueryRes) {
                         if (!uniqueIds.includes(doc._id)) {
                             uniqueIds.push(doc._id);
-                            insertData.push(this.convertObjectId(doc));
+                            insertData.push(this.jsonObjToMongo(doc));
                         }
                     }
                     if(insertData.length) await mongoose.connection.db.collection(data.req.collection).insertMany(insertData);
@@ -248,7 +248,7 @@ class Pytagora {
                             type: 'mongo',
                             req: mongoRes.req,
                             mongoReqId: this.mongoReqId,
-                            preQueryRes: mongoRes.mongoDocs
+                            preQueryRes: self.mongoObjToJson(mongoRes.mongoDocs)
                         });
                     }
                 } catch (e) {
@@ -299,7 +299,10 @@ class Pytagora {
 
     async getMongoDocs(self) {
         let collection, req;
-        let query = self._conditions;
+        let query = _.mapValues(self._conditions, (v, k) => {
+            return self.schema.paths[k] && self.schema.paths[k].instance === 'ObjectID' ? ObjectId(v) :
+                v;
+        });
         if (self instanceof mongoose.Query) {
             collection = _.get(self, '_collection.collectionName');
             req = _.extend({collection}, _.pick(self, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']));
@@ -313,19 +316,34 @@ class Pytagora {
             }
         }
 
-        let mongoDocs = await mongoose.connection.db.collection(collection).find(this.convertObjectId(query || {})).toArray();
+        let mongoDocs = await mongoose.connection.db.collection(collection).find(this.jsonObjToMongo(query || {})).toArray();
 
         return {req, mongoDocs}
     }
 
-    convertObjectId(obj) {
+    mongoObjToJson(obj) {
         for (let key in obj) {
-            if (key === "_id") {
-                if(ObjectId.isValid(obj[key])){
-                    obj[key] = new ObjectId(obj[key]);
+            if (obj[key]._bsontype === "ObjectID") {
+                // TODO label a key as ObjectId better (not through a string)
+                obj[key] = `ObjectId("${obj[key].toString()}")`;
+            } else if (typeof obj[key] === 'object') {
+                this.mongoObjToJson(obj[key]);
+            }
+        }
+        return obj;
+    }
+
+    jsonObjToMongo(obj) {
+        const mongoIdPattern = /ObjectId\("([a-z0-9]{24})"\)/;
+        for (let key in obj) {
+            if (typeof obj[key] === 'string' && mongoIdPattern.test(obj[key])) {
+                // TODO label a key as ObjectId better (not through a string)
+                let idValue = obj[key].match(mongoIdPattern);
+                if (idValue && idValue[1] && ObjectId.isValid(idValue[1])) {
+                    obj[key] = new ObjectId(idValue[1]);
                 }
             } else if (typeof obj[key] === 'object') {
-                convertObjectId(obj[key]);
+                this.jsonObjToMongo(obj[key]);
             }
         }
         return obj;

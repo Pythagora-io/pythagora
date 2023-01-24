@@ -297,7 +297,7 @@ class Pytagora {
                             request.mongoQueriesCapture++;
                             request.intermediateData.forEach((intData, i) => {
                                 if (intData.mongoReqId === this.mongoReqId) {
-                                    request.intermediateData[i].mongoRes = doc;
+                                    request.intermediateData[i].mongoRes = doc.toObject();
                                     request.intermediateData[i].postQueryRes = mongoRes.mongoDocs;
                                 }
                             });
@@ -324,7 +324,7 @@ class Pytagora {
             collection = self.constructor.collection.collectionName;
             req = {
                 collection,
-                op: self.$__.op,
+                op: self.$op || self.$__.op,
                 options: self.$__.saveOptions,
                 _doc: self._doc
             }

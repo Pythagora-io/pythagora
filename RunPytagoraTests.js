@@ -14,14 +14,23 @@ async function makeRequest(test) {
             cache: false,
             validateStatus: function (status) {
                 return status >= 100 && status < 600;
-            }
+            },
+            transformResponse: (r) => r
         };
-        if (test.method !== 'GET') options.data = qs.parse(test.pytagoraBody) || {};
+        if (test.method !== 'GET') {
+            // TODO create more comprehensive check for body when parsing pytagoraBody
+            try {
+                options.data = JSON.parse(test.pytagoraBody);
+            } catch (e) {
+                options.data = qs.parse(test.pytagoraBody) || {};
+            }
+        }
         const response = await axios(options);
 
         if(response.status >= 300 && response.status < 400) {
             response.data = {type: 'redirect', url: `${response.headers.location}`};
-        };
+        }
+        // TODO trebamo uspoređivati JSON fileove i ignorirati _id prilikom createa jer se on mijenja svaki put
         let testResult = compareResponse(response.data, test.responseData);
 
         testResult = global.Pytagora.request.id === test.id && global.Pytagora.request.errors.length ? false : testResult;

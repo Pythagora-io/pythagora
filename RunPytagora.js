@@ -19,7 +19,7 @@ global.Pytagora = new Pytagora(mode);
             }, 3000);
         }
     } catch (e) {
-        console.error('Pytagora isn\'t able to find the initScript you provided. Please make sure the path is correct.');
+        console.error('Pytagora came across error: ', e);
     }
 })();
 

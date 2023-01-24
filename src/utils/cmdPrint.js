@@ -30,7 +30,7 @@ let logTestPassed = (endpoint, method) => {
     console.log(`✅ Test ${method} ${endpoint} ${green+bold}PASSED!${reset}`);
 }
 
-let logTestsFinished = (passed, failed, linesExecuted, codeCoverage) => {
+let logTestsFinished = (passed, failed, linesExecuted = undefined, codeCoverage = undefined) => {
     console.log(`
 ${blue+bold}************************************************************${reset}
 ${green+bold}Pytagora finished testing!${reset}

@@ -16,7 +16,7 @@ let  FS = require("fs");
 let  _ = require("lodash");
 let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
 const RedisInterceptor = require("./RedisInterceptor.js");
-const instrumenter = require('./instrumenter');
+// const instrumenter = require('./instrumenter');
 const { logEndpointCaptured, logTestFailed, logTestPassed, logTestsFinished } = require('./src/utils/cmdPrint.js');
 const duplexify = require('duplexify');
 
@@ -59,7 +59,7 @@ class Pytagora {
 
         this.codeCoverage = {};
 
-        this.instrumenter = instrumenter;
+        // this.instrumenter = instrumenter;
     }
 
     setApp(newApp) {
@@ -199,7 +199,23 @@ class Pytagora {
         app.use((req, res, next) => {
             if (this.mode !== MODES.capture) return next();
             if (!req.id) req.id = v4();
-            if (!requests[req.id]) requests[req.id] = {};
+            let eid = executionAsyncId();
+            if (!requests[req.id]) requests[req.id] = {
+                id: req.id,
+                endpoint: req.path,
+                url: 'http://' + req.headers.host + req.url,
+                body: req.body,
+                method: req.method,
+                headers: req.headers,
+                responseData: null,
+                traceId: eid,
+                trace: [eid],
+                intermediateData: [],
+                query: req.query,
+                params: req.params,
+                asyncStore: idSeq,
+                mongoQueriesCapture: 0
+            };
             let data = '';
             const inputStream = req;
             const duplexStream = duplexify();
@@ -289,7 +305,7 @@ class Pytagora {
                             request.mongoQueriesCapture++;
                             request.intermediateData.forEach((intData, i) => {
                                 if (intData.mongoReqId === this.mongoReqId) {
-                                    request.intermediateData[i].mongoRes = doc;
+                                    request.intermediateData[i].mongoRes = doc.toObject();
                                     request.intermediateData[i].postQueryRes = mongoRes.mongoDocs;
                                 }
                             });
@@ -356,26 +372,7 @@ class Pytagora {
     }
 
     async apiCaptureInterceptor(req, res, next) {
-        if (!this.codeCoverage.initLines) this.codeCoverage.initLines = await this.instrumenter.getInitLinesOfCode();
-        let eid = executionAsyncId();
-        // createHook({ init() {} }).enable();
-        req.id = v4();
-        requests[req.id] = _.extend(requests[req.id], {
-            id: req.id,
-            endpoint: req.path,
-            url: 'http://' + req.headers.host + req.url,
-            body: req.body,
-            method: req.method,
-            headers: req.headers,
-            responseData: null,
-            traceId: eid,
-            trace: [eid],
-            intermediateData: [],
-            query: req.query,
-            params: req.params,
-            asyncStore: idSeq,
-            mongoQueriesCapture: 0
-        });
+        // if (!this.codeCoverage.initLines) this.codeCoverage.initLines = await this.instrumenter.getInitLinesOfCode();
 
         //todo check what else needs to be added eg. res.json, res.end, res.write,...
         const _send = res.send;

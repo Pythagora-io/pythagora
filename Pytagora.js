@@ -40,6 +40,12 @@ let MODES = {
 let pytagoraDb = 'pytagoraDb';
 let pytagoraDbConnection;
 
+process.on('exit', (code) => {
+    console.log(`Exiting with code: ${code}`);
+    // TODO erase all data from pytagoraDb
+
+});
+
 class Pytagora {
 
     constructor(mode) {

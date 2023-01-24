@@ -94,4 +94,6 @@ function compareJson(a, b) {
     } catch (err) {
         console.error("Error occured while running Pytagora tests: ", err);
     }
+
+    process.exit(0);
 })();

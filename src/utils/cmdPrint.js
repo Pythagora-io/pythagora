@@ -44,7 +44,7 @@ ${blue+bold}************************************************************${reset}
 
 let logTestsStarting = (files) => {
     console.log(`Starting tests on endpoints:${blue+bold}
-${files.map(file => file.replaceAll('|', '/').replace('.json', '')).join('\n')}
+${files.map(file => file.replace(/\|/g, '/').replace('.json', '')).join('\n')}
 ${reset}`);
 }
 

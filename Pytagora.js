@@ -19,7 +19,7 @@ const RedisInterceptor = require("./RedisInterceptor.js");
 // const instrumenter = require('./instrumenter');
 const { logEndpointCaptured } = require('./src/utils/cmdPrint.js');
 const duplexify = require('duplexify');
-const {compareJson} = require('./src/utils/common.js')
+const {compareJson, isObjectId} = require('./src/utils/common.js')
 
 const asyncLocalStorage = new AsyncLocalStorage();
 
@@ -590,8 +590,8 @@ class Pytagora {
     }
 
     convertToRegularObject(obj) {
+        if (obj === null) return obj;
         let seen = [];
-        const isObjectId = value => value.constructor.name === 'ObjectId' || (value.toString().length === 24 && /^[0-9a-fA-F]{24}$/.test(value.toString()))
         const replacer = (key, value) => {
             if (isObjectId(value)) {
                 return value.toString();

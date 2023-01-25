@@ -1,3 +1,15 @@
+const mongoObjectIdPattern = /ObjectId\("([0-9a-fA-F]{24})"\)/;
+const mongoIdPattern = /^[0-9a-fA-F]{24}$/;
+
+const isObjectId = (value) => {
+    return (!value || !value.toString) ? false :
+        (
+            value.constructor.name === 'ObjectId' ||
+            mongoIdPattern.test(value.toString()) ||
+            mongoObjectIdPattern.test(value.toString())
+        );
+}
+
 const cutWithDots = (string, cutAtChar = 100) => {
     return (string && string.length > cutAtChar) ? string.slice(0, cutAtChar) + '...' : string;
 }
@@ -29,6 +41,7 @@ function isDate(date) {
 }
 
 function compareJson(a, b) {
+    // TODO make more complex by running tests right after capture
     let ignoreKeys = ['_id'];
     // let ignoreIfKeyContains = ['token'];
     let aProps = Object.getOwnPropertyNames(a);
@@ -41,7 +54,8 @@ function compareJson(a, b) {
         if (
             a[propName] !== b[propName] &&
             (!isDate(a[propName]) && !isDate(a[propName])) &&
-            !ignoreKeys.includes(propName)// &&
+            !ignoreKeys.includes(propName) &&
+            !(isObjectId(a[propName]) && isObjectId(b[propName]))// &&
             // !ignoreIfKeyContains.some(function(v) { return propName.indexOf(v) >= 0; })
         ) {
             if (typeof a[propName] === 'object') {
@@ -59,5 +73,6 @@ module.exports = {
     addIdToUrl,
     compareResponse,
     isDate,
-    compareJson
+    compareJson,
+    isObjectId
 }

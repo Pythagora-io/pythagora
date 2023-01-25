@@ -362,8 +362,8 @@ class Pytagora {
         return {req, mongoDocs}
     }
 
-    mongoObjToJson(obj) {
-        obj = _.clone(obj);
+    mongoObjToJson(originalObj) {
+        let obj = _.clone(originalObj);
         obj = this.convertToRegularObject(obj);
         if (obj === null) return;
         if (Array.isArray(obj)) return obj.map(d => this.mongoObjToJson(d));
@@ -380,8 +380,8 @@ class Pytagora {
         return obj;
     }
 
-    jsonObjToMongo(obj) {
-        obj = _.clone(obj);
+    jsonObjToMongo(originalObj) {
+        let obj = _.clone(originalObj);
         if (obj === null) return;
         if (Array.isArray(obj)) return obj.map(d => this.jsonObjToMongo(d));
 
@@ -403,8 +403,8 @@ class Pytagora {
     }
 
     // TODO remove later
-    jsonObjToMongoWeird(obj, reference) {
-        obj = _.clone(obj);
+    jsonObjToMongoWeird(originalObj, reference) {
+        let obj = _.clone(originalObj);
         for (let key in obj) {
             if (reference === true || (reference[key] && reference[key].instance === 'ObjectID')) {
                 if (typeof obj[key] === 'object' && !ObjectId.isValid(obj[key])) {

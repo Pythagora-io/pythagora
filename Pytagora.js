@@ -291,17 +291,16 @@ class Pytagora {
                     if (self.mode === MODES.test) {
                         testingRequests[this.asyncStore].mongoQueriesTest++;
                         let request = testingRequests[this.asyncStore];
-                        // TODO improve finding the correct mongo request
                         let data = request.intermediateData.find(d => {
                             return !d.processed &&
                                 d.type === 'mongo' &&
-                                d.req.op === this.op &&
-                                JSON.stringify(d.req.options) === JSON.stringify(this.options) &&
-                                JSON.stringify(d.req._conditions) === JSON.stringify(this._conditions);
+                                d.req.op === mongoRes.req.op &&
+                                JSON.stringify(d.req.options) === JSON.stringify(mongoRes.req.options) &&
+                                JSON.stringify(d.req._conditions) === JSON.stringify(mongoRes.req._conditions);
                         });
                         if (data) data.processed = true;
                         if (data &&
-                            (!compareJson(data.mongoRes, doc) || !compareJson(data.postQueryRes, mongoRes.mongoDocs))
+                            (!compareJson(data.mongoRes, self.mongoObjToJson(doc)) || !compareJson(data.postQueryRes, self.mongoObjToJson(mongoRes.mongoDocs)))
                         ) {
                             let error = 'Mongo query gave different result!';
                             testingRequests[this.asyncStore].errors.push(error);
@@ -315,12 +314,8 @@ class Pytagora {
                             request.mongoQueriesCapture++;
                             request.intermediateData.forEach((intData, i) => {
                                 if (intData.mongoReqId === this.mongoReqId) {
-                                    try {
-                                        request.intermediateData[i].mongoRes = (doc.toObject ? doc.toObject() : Array.isArray(doc) ? doc.map(d => d.toObject()) : doc);
-                                    } catch (e) {
-                                        request.intermediateData[i].mongoRes = doc;
-                                    }
-                                    request.intermediateData[i].postQueryRes = mongoRes.mongoDocs;
+                                    request.intermediateData[i].mongoRes = self.mongoObjToJson(doc);
+                                    request.intermediateData[i].postQueryRes = self.mongoObjToJson(mongoRes.mongoDocs);
                                 }
                             });
                         }
@@ -361,14 +356,19 @@ class Pytagora {
         }
 
         let mongoDocs = query ?
-            await mongoose.connection.db.collection(collection).find(this.jsonObjToMongo(query || {})).toArray() :
+            this.mongoObjToJson(await mongoose.connection.db.collection(collection).find(this.jsonObjToMongo(query || {})).toArray()) :
             [];
 
         return {req, mongoDocs}
     }
 
     mongoObjToJson(obj) {
+        obj = this.convertToRegularObject(obj);
+        if (obj === null) return;
+        if (Array.isArray(obj)) return obj.map(d => this.mongoObjToJson(d));
+
         for (let key in obj) {
+            if (!obj[key]) continue;
             if (obj[key]._bsontype === "ObjectID") {
                 // TODO label a key as ObjectId better (not through a string)
                 obj[key] = `ObjectId("${obj[key].toString()}")`;
@@ -585,7 +585,11 @@ class Pytagora {
 
     convertToRegularObject(obj) {
         let seen = [];
-        return JSON.parse(JSON.stringify(obj, function(key, value) {
+        const isObjectId = value => value.constructor.name === 'ObjectId' || (value.toString().length === 24 && /^[0-9a-fA-F]{24}$/.test(value.toString()))
+        const replacer = (key, value) => {
+            if (isObjectId(value)) {
+                return value.toString();
+            }
             if (typeof value === 'object' && value !== null) {
                 if (seen.indexOf(value) !== -1) {
                     return;
@@ -593,7 +597,14 @@ class Pytagora {
                 seen.push(value);
             }
             return value;
-        }));
+        }
+        const reviver = (key, value) => {
+            if (typeof value === 'string' && value.length === 24 && /^[0-9a-fA-F]{24}$/.test(value)) {
+                return new ObjectId(value);
+            }
+            return value;
+        }
+        return JSON.parse(JSON.stringify(obj, replacer), reviver);
     }
 
 }

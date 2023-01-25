@@ -315,7 +315,11 @@ class Pytagora {
                             request.mongoQueriesCapture++;
                             request.intermediateData.forEach((intData, i) => {
                                 if (intData.mongoReqId === this.mongoReqId) {
-                                    request.intermediateData[i].mongoRes = doc.toObject();
+                                    try {
+                                        request.intermediateData[i].mongoRes = (doc.toObject ? doc.toObject() : Array.isArray(doc) ? doc.map(d => d.toObject()) : doc);
+                                    } catch (e) {
+                                        request.intermediateData[i].mongoRes = doc;
+                                    }
                                     request.intermediateData[i].postQueryRes = mongoRes.mongoDocs;
                                 }
                             });
@@ -330,11 +334,10 @@ class Pytagora {
     }
 
     async getMongoDocs(self) {
-        let collection, req;
-        let query = _.mapValues(self._conditions, (v, k) => {
-            return self.schema.paths[k] && self.schema.paths[k].instance === 'ObjectID' ? ObjectId(v) :
-                v;
-        });
+        let collection,
+            req,
+            conditions = self._conditions || self._doc;
+        let query = this.jsonObjToMongoWeird(conditions, (self.schema || self._model.schema).paths);
         if (self instanceof mongoose.Query) {
             collection = _.get(self, '_collection.collectionName');
             req = _.extend({collection}, _.pick(self, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']));
@@ -346,9 +349,20 @@ class Pytagora {
                 options: self.$__.saveOptions,
                 _doc: self._doc
             }
+        } else if (self instanceof mongoose.Aggregate) {
+            collection = _.get(self, '_model.collection.collectionName');
+            req = {
+                collection,
+                op: 'aggregate',
+                _pipeline: self._pipeline,
+                _doc: self._doc
+            };
+            // query = aggregationToFind(self._pipeline);
         }
 
-        let mongoDocs = await mongoose.connection.db.collection(collection).find(this.jsonObjToMongo(query || {})).toArray();
+        let mongoDocs = query ?
+            await mongoose.connection.db.collection(collection).find(this.jsonObjToMongo(query || {})).toArray() :
+            [];
 
         return {req, mongoDocs}
     }
@@ -374,8 +388,34 @@ class Pytagora {
                 if (idValue && idValue[1] && ObjectId.isValid(idValue[1])) {
                     obj[key] = new ObjectId(idValue[1]);
                 }
-            } else if (typeof obj[key] === 'object') {
+            } else if (obj[key]._bsontype === "ObjectID") {
+                continue;
+            } else if (Object.prototype.toString.call(obj[key]) === "[object Object]") {
                 this.jsonObjToMongo(obj[key]);
+            }
+        }
+        return obj;
+    }
+
+    // TODO remove later
+    jsonObjToMongoWeird(obj, reference) {
+        for (let key in obj) {
+            if (reference === true || (reference[key] && reference[key].instance === 'ObjectID')) {
+                if (typeof obj[key] === 'object' && !ObjectId.isValid(obj[key])) {
+                    obj[key] = this.jsonObjToMongoWeird(obj[key], true);
+                } else {
+                    try {
+                        obj[key] = new ObjectId(obj[key]);
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+            } else if (Object.prototype.toString.call(obj[key]) === "[object Object]") {
+                try {
+                    obj[key] = this.jsonObjToMongoWeird(obj[key], reference);
+                } catch (e) {
+                    console.error(e);
+                }
             }
         }
         return obj;
@@ -461,7 +501,7 @@ class Pytagora {
             if (testingRequests[reqId].mongoQueriesCapture !== testingRequests[reqId].mongoQueriesTest) testingRequests[reqId].errors.push('Some mongo queries have not been executed!');
             global.Pytagora.request = {
                 id: testingRequests[reqId].id,
-                errors: testingRequests[reqId].errors
+                errors: _.clone(testingRequests[reqId].errors)
             };
             _send.call(this, body);
         };
@@ -471,7 +511,7 @@ class Pytagora {
             if (testingRequests[reqId].mongoQueriesCapture !== testingRequests[reqId].mongoQueriesTest) testingRequests[reqId].errors.push('Some mongo queries have not been executed!');
             global.Pytagora.request = {
                 id: testingRequests[reqId].id,
-                errors: testingRequests[reqId].errors
+                errors: _.clone(testingRequests[reqId].errors)
             };
             _redirect.call(this, url);
         };

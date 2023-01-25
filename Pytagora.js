@@ -363,6 +363,7 @@ class Pytagora {
     }
 
     mongoObjToJson(obj) {
+        obj = _.clone(obj);
         obj = this.convertToRegularObject(obj);
         if (obj === null) return;
         if (Array.isArray(obj)) return obj.map(d => this.mongoObjToJson(d));
@@ -373,13 +374,17 @@ class Pytagora {
                 // TODO label a key as ObjectId better (not through a string)
                 obj[key] = `ObjectId("${obj[key].toString()}")`;
             } else if (typeof obj[key] === 'object') {
-                this.mongoObjToJson(obj[key]);
+                obj[key] = this.mongoObjToJson(obj[key]);
             }
         }
         return obj;
     }
 
     jsonObjToMongo(obj) {
+        obj = _.clone(obj);
+        if (obj === null) return;
+        if (Array.isArray(obj)) return obj.map(d => this.jsonObjToMongo(d));
+
         const mongoIdPattern = /ObjectId\("([a-z0-9]{24})"\)/;
         for (let key in obj) {
             if (typeof obj[key] === 'string' && mongoIdPattern.test(obj[key])) {
@@ -390,8 +395,8 @@ class Pytagora {
                 }
             } else if (obj[key]._bsontype === "ObjectID") {
                 continue;
-            } else if (Object.prototype.toString.call(obj[key]) === "[object Object]") {
-                this.jsonObjToMongo(obj[key]);
+            } else if (Object.prototype.toString.call(obj[key]) === "[object Object]" || Array.isArray(obj[key])) {
+                obj[key] = this.jsonObjToMongo(obj[key]);
             }
         }
         return obj;
@@ -399,6 +404,7 @@ class Pytagora {
 
     // TODO remove later
     jsonObjToMongoWeird(obj, reference) {
+        obj = _.clone(obj);
         for (let key in obj) {
             if (reference === true || (reference[key] && reference[key].instance === 'ObjectID')) {
                 if (typeof obj[key] === 'object' && !ObjectId.isValid(obj[key])) {

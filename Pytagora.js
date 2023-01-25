@@ -17,8 +17,9 @@ let  _ = require("lodash");
 let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
 const RedisInterceptor = require("./RedisInterceptor.js");
 // const instrumenter = require('./instrumenter');
-const { logEndpointCaptured, logTestFailed, logTestPassed, logTestsFinished } = require('./src/utils/cmdPrint.js');
+const { logEndpointCaptured } = require('./src/utils/cmdPrint.js');
 const duplexify = require('duplexify');
+const {compareJson} = require('./src/utils/common.js')
 
 const asyncLocalStorage = new AsyncLocalStorage();
 
@@ -295,7 +296,8 @@ class Pytagora {
                             JSON.stringify(d.req.options) === JSON.stringify(this.options) &&
                             JSON.stringify(d.req._conditions) === JSON.stringify(this._conditions));
                         if (data &&
-                            (JSON.stringify(data.mongoRes) !== JSON.stringify(doc) || JSON.stringify(data.postQueryRes) !== JSON.stringify(mongoRes.mongoDocs))) {
+                            (!compareJson(data.mongoRes, doc) || !compareJson(data.postQueryRes, mongoRes.mongoDocs))
+                        ) {
                             let error = 'Mongo query gave different result!';
                             testingRequests[this.asyncStore].errors.push(error);
                         }

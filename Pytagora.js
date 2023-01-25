@@ -497,14 +497,14 @@ class Pytagora {
             errors: []
         }, request);
 
-        // const self = this;
+        const self = this;
         //todo check what else needs to be added eg. res.json, res.end, res.write,...
         const _send = res.send;
         const _redirect = res.redirect;
 
         res.send = function(body) {
             logWithStoreId('testing send');
-            if (testingRequests[reqId].mongoQueriesCapture !== testingRequests[reqId].mongoQueriesTest) testingRequests[reqId].errors.push('Some mongo queries have not been executed!');
+            self.checkForFinalErrors(reqId);
             global.Pytagora.request = {
                 id: testingRequests[reqId].id,
                 errors: _.clone(testingRequests[reqId].errors)
@@ -514,7 +514,7 @@ class Pytagora {
 
         res.redirect = function(url) {
             logWithStoreId('testing redirect');
-            if (testingRequests[reqId].mongoQueriesCapture !== testingRequests[reqId].mongoQueriesTest) testingRequests[reqId].errors.push('Some mongo queries have not been executed!');
+            self.checkForFinalErrors(reqId);
             global.Pytagora.request = {
                 id: testingRequests[reqId].id,
                 errors: _.clone(testingRequests[reqId].errors)
@@ -526,6 +526,11 @@ class Pytagora {
             logWithStoreId('Starting testing...');
             next();
         });
+    }
+
+    checkForFinalErrors(reqId) {
+        if (testingRequests[reqId].mongoQueriesCapture > testingRequests[reqId].mongoQueriesTest) testingRequests[reqId].errors.push('Some mongo queries have not been executed!');
+        if (testingRequests[reqId].mongoQueriesCapture < testingRequests[reqId].mongoQueriesTest) testingRequests[reqId].errors.push('More mongo queries were made than when capturing!');
     }
 
     compareResponse(a, b) {

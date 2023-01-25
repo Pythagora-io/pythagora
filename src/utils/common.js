@@ -42,6 +42,8 @@ function isDate(date) {
 
 function compareJson(a, b) {
     // TODO make more complex by running tests right after capture
+    if (a === b) return true;
+    else if (typeof a !== typeof b) return false;
     let ignoreKeys = ['_id'];
     // let ignoreIfKeyContains = ['token'];
     let aProps = Object.getOwnPropertyNames(a);

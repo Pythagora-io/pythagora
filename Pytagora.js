@@ -460,7 +460,7 @@ class Pytagora {
 
         res.send = function(body) {
             logWithStoreId('send');
-            requests[req.id].responseData = body;
+            requests[req.id].responseData = body || '';
             requests[req.id].traceLegacy = requests[req.id].trace;
             requests[req.id].trace = [];
             if (!requests[req.id].finished) finishCapture(requests[req.id], body);
@@ -631,7 +631,7 @@ class Pytagora {
             }
             return value;
         }
-        return JSON.parse(JSON.stringify(obj, replacer), reviver);
+        return JSON.parse(JSON.stringify(obj || {}, replacer), reviver);
     }
 
 }

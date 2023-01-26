@@ -295,20 +295,20 @@ class Pytagora {
                     if (self.mode === MODES.test) {
                         testingRequests[this.asyncStore].mongoQueriesTest++;
                         let request = testingRequests[this.asyncStore];
-                        let data = request.intermediateData.find(d => {
+                        let capturedData = request.intermediateData.find(d => {
                             return !d.processed &&
                                 d.type === 'mongo' &&
                                 d.req.op === mongoRes.req.op &&
                                 JSON.stringify(d.req.options) === JSON.stringify(mongoRes.req.options) &&
                                 JSON.stringify(d.req._conditions) === JSON.stringify(mongoRes.req._conditions);
                         });
-                        if (data) data.processed = true;
-                        if (data &&
-                            (!compareJson(data.mongoRes, self.mongoObjToJson(doc)) || !compareJson(data.postQueryRes, self.mongoObjToJson(mongoRes.mongoDocs)))
+                        if (capturedData) capturedData.processed = true;
+                        if (capturedData &&
+                            (!compareJson(capturedData.mongoRes, self.mongoObjToJson(doc)) || !compareJson(capturedData.postQueryRes, self.mongoObjToJson(mongoRes.mongoDocs)))
                         ) {
                             let error = 'Mongo query gave different result!';
                             testingRequests[this.asyncStore].errors.push(error);
-                        } else if (!data) {
+                        } else if (!capturedData) {
                             let error = 'Mongo query was not found!';
                             testingRequests[this.asyncStore].errors.push(error);
                         }
@@ -360,9 +360,15 @@ class Pytagora {
             return { error: new Error('Aggregation not supported yet!') };
         }
 
-        let mongoDocs = query ?
-            this.mongoObjToJson(await mongoose.connection.db.collection(collection).find(this.jsonObjToMongo(query || {})).toArray()) :
-            [];
+        let mongoDocs;
+        // TODO make a better way to ignore some queries
+        if (query && req && req.op) {
+            let findQuery = query || {};//this.jsonObjToMongo(query || {});
+            let mongoRes = await mongoose.connection.db.collection(collection).find(findQuery).toArray();
+            mongoDocs = this.mongoObjToJson(mongoRes);
+        } else {
+            mongoDocs = [];
+        }
 
         return {req, mongoDocs}
     }

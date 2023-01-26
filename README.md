@@ -8,10 +8,6 @@
     ```
     if (global.Pytagora) global.Pytagora.setApp(app);
    ```
-   For mongoose, right after <b>first</b> import of mongoose `const mongoose =  require('mongoose');` add this on next line:
-    ```
-    if (global.Pytagora) global.Pytagora.setMongoose(mongoose);
-   ```
    <br><br>
 <h1>Capturing requests</h1>
 

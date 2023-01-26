@@ -14,6 +14,7 @@ let  { BatchInterceptor } = require('@mswjs/interceptors');
 let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
 let  FS = require("fs");
 let  _ = require("lodash");
+let mongoose = require("../mongoose");
 let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
 const RedisInterceptor = require("./RedisInterceptor.js");
 // const instrumenter = require('./instrumenter');
@@ -28,18 +29,18 @@ function logWithStoreId(msg) {
     // console.log(`${id !== undefined ? id : '-'}:`, msg);
 }
 
+let app, pytagoraDbConnection;
 let idSeq = 0;
 let loggingEnabled;
 let requests = {};
 let testingRequests = {};
+let ObjectId = mongoose.Types.ObjectId;
+let pytagoraDb = 'pytagoraDb';
 let methods = ['save','find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
-let app, mongoose, ObjectId;
 let MODES = {
     'capture': 'capture',
     'test': 'test'
 };
-let pytagoraDb = 'pytagoraDb';
-let pytagoraDbConnection;
 
 process.on('exit', (code) => {
     console.log(`Exiting with code: ${code}`);
@@ -58,6 +59,8 @@ class Pytagora {
 
         this.setUpHttpInterceptor();
 
+        this.configureMongoosePlugin();
+
         this.codeCoverage = {};
 
         // this.instrumenter = instrumenter;
@@ -73,7 +76,6 @@ class Pytagora {
     }
 
     setMongoose(newMongoose) {
-        // we need to use users mongoose version to be able to setup plugin and pre/post hooks properly
         mongoose = newMongoose;
         ObjectId = mongoose.Types.ObjectId;
         this.configureMongoosePlugin();

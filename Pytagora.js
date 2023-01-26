@@ -258,7 +258,8 @@ class Pytagora {
         let self = this;
         mongoose.plugin((schema) => {
             schema.pre(methods, async function() {
-                if (asyncLocalStorage.getStore() === undefined) return;
+                if (asyncLocalStorage.getStore() === undefined ||
+                    this instanceof mongoose.Types.Embedded) return;
                 logWithStoreId('mongo pre');
                 this.asyncStore = asyncLocalStorage.getStore();
                 this.mongoReqId = v4();
@@ -284,7 +285,8 @@ class Pytagora {
             schema.post(methods, async function(...args) {
                 let doc = args[0];
                 let next = args[1];
-                if (this.asyncStore === undefined) return;
+                if (this.asyncStore === undefined ||
+                    this instanceof mongoose.Types.Embedded) return;
                 try {
                     asyncLocalStorage.enterWith(this.asyncStore);
                     logWithStoreId('mongo post');

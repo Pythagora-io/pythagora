@@ -16,7 +16,7 @@ async function makeRequest(test) {
             validateStatus: function (status) {
                 return status >= 100 && status < 600;
             },
-            transformResponse: (r) => r
+            // transformResponse: (r) => r
         };
         if (test.method !== 'GET') {
             // TODO create more comprehensive check for body when parsing pytagoraBody

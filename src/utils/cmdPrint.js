@@ -15,6 +15,12 @@ let logEndpointCaptured = (endpoint, method, body, query, responseBody = {}) => 
 ${blue+bold}-----------------------------------------------${reset}`);
 }
 
+let logEndpointNotCaptured = (endpoint, method, error) => {
+    console.log(`
+❌ ${red+bold}${method} ${endpoint} ${reset}NOT captured because of: ${red+bold}${error}${reset}
+`);
+}
+
 let logTestFailed = (endpoint, method, body = {}, query = {}, response, expectedResponse, errors) => {
     console.log(`❌ Test ${red+bold}FAILED!${reset}
     ${red+bold}${method} ${endpoint} ${reset}
@@ -54,5 +60,6 @@ module.exports = {
     logTestFailed,
     logTestPassed,
     logTestsFinished,
-    logTestsStarting
+    logTestsStarting,
+    logEndpointNotCaptured
 }

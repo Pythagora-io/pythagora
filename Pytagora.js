@@ -17,7 +17,7 @@ let  _ = require("lodash");
 let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
 const RedisInterceptor = require("./RedisInterceptor.js");
 // const instrumenter = require('./instrumenter');
-const { logEndpointCaptured } = require('./src/utils/cmdPrint.js');
+const { logEndpointCaptured, logEndpointNotCaptured } = require('./src/utils/cmdPrint.js');
 const duplexify = require('duplexify');
 const {compareJson, isObjectId} = require('./src/utils/common.js')
 
@@ -265,7 +265,9 @@ class Pytagora {
                 try {
                     let request = requests[Pytagora.getRequestKeyByAsyncStore()];
                     if (self.mode === MODES.capture && request) {
-                        var mongoRes = await self.getMongoDocs(this);
+                        let mongoRes = await self.getMongoDocs(this);
+
+                        if (mongoRes.error) request.error = mongoRes.error.message;
 
                         request.intermediateData.push({
                             type: 'mongo',
@@ -353,6 +355,7 @@ class Pytagora {
                 _doc: self._doc
             };
             // query = aggregationToFind(self._pipeline);
+            return { error: new Error('Aggregation not supported yet!') };
         }
 
         let mongoDocs = query ?
@@ -433,8 +436,18 @@ class Pytagora {
         //todo check what else needs to be added eg. res.json, res.end, res.write,...
         const _send = res.send;
         const _redirect = res.redirect;
-        const finishCapture = (responseBody) => {
-            logEndpointCaptured(req.path, req.method, req.body, req.query, responseBody);
+        const _status = res.status;
+        const finishCapture = (request, responseBody) => {
+            if (request.error) {
+                return logEndpointNotCaptured(req.originalUrl, req.method, request.error);
+            }
+            if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
+            logEndpointCaptured(req.originalUrl, req.method, req.body, req.query, responseBody);
+        }
+
+        res.status = function(code) {
+            requests[req.id].responseStatus = code;
+            return _status.call(this, code);
         }
 
         res.send = function(body) {
@@ -442,9 +455,9 @@ class Pytagora {
             requests[req.id].responseData = body;
             requests[req.id].traceLegacy = requests[req.id].trace;
             requests[req.id].trace = [];
-            if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
+            if (!requests[req.id].finished) finishCapture(requests[req.id], body);
+            requests[req.id].finished = true;
             _send.call(this, body);
-            finishCapture(body);
         };
 
         res.redirect = function(redirectUrl) {
@@ -453,9 +466,9 @@ class Pytagora {
                 'type': 'redirect',
                 'url': redirectUrl
             };
-            if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
+            if (!requests[req.id].finished) finishCapture(requests[req.id]);
+            requests[req.id].finished = true;
             _redirect.call(this, redirectUrl);
-            finishCapture();
         };
 
 

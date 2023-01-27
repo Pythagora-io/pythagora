@@ -27,19 +27,24 @@ function addIdToUrl(url, id) {
     return `${url}${url.includes('?') ? '&' : '?'}reqId=${id}`;
 }
 
-function compareResponse(a, b) {
-    if (typeof a === 'string' && typeof b === 'string') {
+function parseString(s) {
+    if (typeof s === 'string') {
         try {
-            let tempA = JSON.parse(a);
-            let tempB = JSON.parse(b);
-            if (typeof tempA === 'object' && typeof tempB === 'object') {
-                a = tempA;
-                b = tempB;
+            let tempS = JSON.parse(s);
+            if (typeof tempS === 'object' || typeof tempS === 'boolean') {
+                s = tempS;
             }
         } catch (e) {
             //dummy catch
         }
     }
+    return s
+}
+
+function compareResponse(a, b) {
+    a = parseString(a);
+    b = parseString(b);
+
     return typeof a !== typeof b ? false :
         typeof a === 'string' && a.toLowerCase().includes('<!doctype html>') && b.toLowerCase().includes('<!doctype html>') ? true : //todo make appropriate check
             typeof a === 'object' && typeof b === 'object' ? compareJson(a,b) : a === b;

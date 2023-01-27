@@ -20,7 +20,7 @@ const RedisInterceptor = require("./RedisInterceptor.js");
 // const instrumenter = require('./instrumenter');
 const { logEndpointCaptured, logEndpointNotCaptured } = require('./src/utils/cmdPrint.js');
 const duplexify = require('duplexify');
-const {compareJson, isObjectId} = require('./src/utils/common.js')
+const {compareJson, isObjectId, isLegacyObjectId} = require('./src/utils/common.js')
 
 const asyncLocalStorage = new AsyncLocalStorage();
 
@@ -377,9 +377,12 @@ class Pytagora {
 
     mongoObjToJson(originalObj) {
         let obj = _.clone(originalObj);
-        obj = this.convertToRegularObject(obj);
         if (obj === null) return;
-        if (Array.isArray(obj)) return obj.map(d => this.mongoObjToJson(d));
+        else if (obj._bsontype === 'ObjectID') return `ObjectId("${obj.toString()}")`;
+        if (Array.isArray(obj)) return obj.map(d => {
+            return this.mongoObjToJson(d)
+        });
+        obj = Pytagora.convertToRegularObject(obj);
 
         for (let key in obj) {
             if (!obj[key]) continue;
@@ -490,21 +493,21 @@ class Pytagora {
 
     static saveCaptureToFile(reqData) {
         let endpointFileName = `./pytagora_data/${reqData.endpoint.replace(/\//g, '|')}.json`;
-        if (!FS.existsSync(endpointFileName)) FS.writeFileSync(endpointFileName, JSON.stringify([reqData]));
+        if (!FS.existsSync(endpointFileName)) FS.writeFileSync(endpointFileName, JSON.stringify(Pytagora.convertToRegularObject([reqData])));
         else {
             let fileContent = JSON.parse(FS.readFileSync(endpointFileName));
             let identicalRequestIndex = fileContent.findIndex(req => {
-                return _.isEqual(req.pytagoraBody, reqData.pytagoraBody) &&
+                return req && _.isEqual(req.pytagoraBody, reqData.pytagoraBody) &&
                     req.method === reqData.method &&
                     _.isEqual(req.query, reqData.query) &&
                     _.isEqual(req.params, reqData.params);
             });
 
             if (identicalRequestIndex === -1) {
-                FS.writeFileSync(endpointFileName, JSON.stringify(fileContent.concat([reqData])));
+                FS.writeFileSync(endpointFileName, JSON.stringify(Pytagora.convertToRegularObject(fileContent.concat([reqData]))));
             } else {
                 fileContent[identicalRequestIndex] = reqData;
-                let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent);
+                let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(Pytagora.convertToRegularObject(fileContent));
                 FS.writeFileSync(endpointFileName, storeData);
             }
         }
@@ -617,28 +620,35 @@ class Pytagora {
         }));
     }
 
-    convertToRegularObject(obj) {
+    static convertToRegularObject(obj) {
         if (obj === null) return obj;
         let seen = [];
-        const replacer = (key, value) => {
-            if (isObjectId(value)) {
-                return value.toString();
-            }
-            if (typeof value === 'object' && value !== null) {
-                if (seen.indexOf(value) !== -1) {
-                    return;
-                }
-                seen.push(value);
-            }
-            return value;
-        }
+
         const reviver = (key, value) => {
             if (typeof value === 'string' && value.length === 24 && /^[0-9a-fA-F]{24}$/.test(value)) {
                 return new ObjectId(value);
             }
             return value;
         }
-        return JSON.parse(JSON.stringify(obj || {}, replacer), reviver);
+
+        const getCircularReplacer = () => {
+            const seen = new WeakSet();
+            return (key, value) => {
+                if (isLegacyObjectId(value)) value = (new ObjectId(Buffer.from(value.id.data))).toString();
+                else if (Array.isArray(value) && value.find(v => isLegacyObjectId(v))) {
+                    value = value.map(v => isLegacyObjectId(v) ? (new ObjectId(Buffer.from(v.id.data))).toString() : v);
+                } if (typeof value === "object" && value !== null) {
+                    if (seen.has(value)) {
+                        return;
+                    }
+                    seen.add(value);
+                }
+                return value;
+            };
+        };
+
+        let stringified = JSON.stringify(obj || {}, getCircularReplacer());
+        return JSON.parse(stringified, reviver);
     }
 
 }

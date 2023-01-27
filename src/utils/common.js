@@ -2,12 +2,22 @@ const mongoObjectIdPattern = /ObjectId\("([0-9a-fA-F]{24})"\)/;
 const mongoIdPattern = /^[0-9a-fA-F]{24}$/;
 
 const isObjectId = (value) => {
-    return (!value || !value.toString) ? false :
-        (
-            value.constructor.name === 'ObjectId' ||
-            mongoIdPattern.test(value.toString()) ||
-            mongoObjectIdPattern.test(value.toString())
-        );
+    try {
+        return (!value || !value.toString) ? false :
+            (
+                value.constructor.name === 'ObjectId' ||
+                value.constructor.name === 'ObjectID' ||
+                mongoIdPattern.test(value.toString()) ||
+                mongoObjectIdPattern.test(value.toString())
+            );
+    } catch (e) {
+        console.error('Error while checking if value is ObjectId', e);
+        return false;
+    }
+}
+
+const isLegacyObjectId = (value) => {
+    return !value ? false : value.constructor.name === 'ObjectID' && Object.prototype.toString.call(value.id) === "[object Object]";
 }
 
 const cutWithDots = (string, cutAtChar = 100) => {
@@ -18,24 +28,19 @@ function addIdToUrl(url, id) {
     return `${url}${url.includes('?') ? '&' : '?'}reqId=${id}`;
 }
 
-function parseString(s) {
-    if (typeof s === 'string') {
+function compareResponse(a, b) {
+    if (typeof a === 'string' && typeof b === 'string') {
         try {
-            let tempS = JSON.parse(s);
-            if (typeof tempS === 'object' || typeof tempS === 'boolean') {
-                s = tempS;
+            let tempA = JSON.parse(a);
+            let tempB = JSON.parse(b);
+            if (typeof tempA === 'object' && typeof tempB === 'object') {
+                a = tempA;
+                b = tempB;
             }
         } catch (e) {
             //dummy catch
         }
     }
-    return s
-}
-
-function compareResponse(a, b) {
-    a = parseString(a);
-    b = parseString(b);
-
     return typeof a !== typeof b ? false :
         typeof a === 'string' && a.toLowerCase().includes('<!doctype html>') && b.toLowerCase().includes('<!doctype html>') ? true : //todo make appropriate check
             typeof a === 'object' && typeof b === 'object' ? compareJson(a,b) : a === b;
@@ -49,6 +54,7 @@ function compareJson(a, b) {
     // TODO make more complex by running tests right after capture
     if (a === b) return true;
     else if (typeof a !== typeof b) return false;
+    else if (!a || !b) return false;
     let ignoreKeys = ['_id'];
     // let ignoreIfKeyContains = ['token'];
     let aProps = Object.getOwnPropertyNames(a);
@@ -81,5 +87,6 @@ module.exports = {
     compareResponse,
     isDate,
     compareJson,
-    isObjectId
+    isObjectId,
+    isLegacyObjectId
 }

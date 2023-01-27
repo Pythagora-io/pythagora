@@ -282,7 +282,8 @@ class Pytagora {
 
                         request.intermediateData.push({
                             type: 'mongo',
-                            req: mongoRes.req,
+                            // req: mongoRes.req,
+                            req: self.mongoObjToJson(_.omit(mongoRes.req, '_doc')),
                             mongoReqId: this.mongoReqId,
                             preQueryRes: self.mongoObjToJson(mongoRes.mongoDocs)
                         });
@@ -305,12 +306,13 @@ class Pytagora {
                     if (self.mode === MODES.test) {
                         testingRequests[this.asyncStore].mongoQueriesTest++;
                         let request = testingRequests[this.asyncStore];
+                        let mongoReq = self.mongoObjToJson(_.omit(mongoRes.req, '_doc'));
                         let capturedData = request.intermediateData.find(d => {
                             return !d.processed &&
                                 d.type === 'mongo' &&
-                                d.req.op === mongoRes.req.op &&
-                                JSON.stringify(d.req.options) === JSON.stringify(mongoRes.req.options) &&
-                                JSON.stringify(d.req._conditions) === JSON.stringify(mongoRes.req._conditions);
+                                d.req.op === mongoReq.op &&
+                                JSON.stringify(d.req.options) === JSON.stringify(mongoReq.options) &&
+                                JSON.stringify(d.req._conditions) === JSON.stringify(mongoReq._conditions);
                         });
                         if (capturedData) capturedData.processed = true;
                         if (capturedData &&

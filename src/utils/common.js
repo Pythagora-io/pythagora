@@ -1,5 +1,5 @@
-const mongoObjectIdPattern = /ObjectId\("([0-9a-fA-F]{24})"\)/;
-const mongoIdPattern = /^[0-9a-fA-F]{24}$/;
+const objectIdAsStringRegex = /ObjectId\("([0-9a-fA-F]{24})"\)/;
+const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
 
 const isObjectId = (value) => {
     try {
@@ -7,17 +7,16 @@ const isObjectId = (value) => {
             (
                 value.constructor.name === 'ObjectId' ||
                 value.constructor.name === 'ObjectID' ||
-                mongoIdPattern.test(value.toString()) ||
-                mongoObjectIdPattern.test(value.toString())
+                mongoIdRegex.test(value.toString()) ||
+                objectIdAsStringRegex.test(value.toString())
             );
     } catch (e) {
-        console.error('Error while checking if value is ObjectId', e);
         return false;
     }
 }
 
 const isLegacyObjectId = (value) => {
-    return !value ? false : value.constructor.name === 'ObjectID' && Object.prototype.toString.call(value.id) === "[object Object]";
+    return !value ? false : value.constructor.name === 'ObjectID' && isJSONObject(value.id);
 }
 
 const cutWithDots = (string, cutAtChar = 100) => {
@@ -48,6 +47,10 @@ function compareResponse(a, b) {
 
 function isDate(date) {
     return (new Date(date) !== "Invalid Date") && !isNaN(new Date(date));
+}
+
+function isJSONObject(value) {
+    return Object.prototype.toString.call(value) === "[object Object]";
 }
 
 function compareJson(a, b) {
@@ -81,6 +84,10 @@ function compareJson(a, b) {
     return true;
 }
 
+function noUndefined(value, replaceValue = {}) {
+    return value === undefined || value === null ? replaceValue : value;
+}
+
 module.exports = {
     cutWithDots,
     addIdToUrl,
@@ -88,5 +95,9 @@ module.exports = {
     isDate,
     compareJson,
     isObjectId,
-    isLegacyObjectId
+    isLegacyObjectId,
+    isJSONObject,
+    objectIdAsStringRegex,
+    mongoIdRegex,
+    noUndefined
 }

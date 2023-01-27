@@ -20,7 +20,15 @@ const RedisInterceptor = require("./RedisInterceptor.js");
 // const instrumenter = require('./instrumenter');
 const { logEndpointCaptured, logEndpointNotCaptured } = require('./src/utils/cmdPrint.js');
 const duplexify = require('duplexify');
-const {compareJson, isObjectId, isLegacyObjectId} = require('./src/utils/common.js')
+const {
+    compareJson,
+    isObjectId,
+    isLegacyObjectId,
+    isJSONObject,
+    objectIdAsStringRegex,
+    noUndefined,
+    mongoIdRegex
+} = require('./src/utils/common.js')
 
 const asyncLocalStorage = new AsyncLocalStorage();
 
@@ -358,14 +366,13 @@ class Pytagora {
                 _pipeline: self._pipeline,
                 _doc: self._doc
             };
-            // query = aggregationToFind(self._pipeline);
             return { error: new Error('Aggregation not supported yet!') };
         }
 
         let mongoDocs;
         // TODO make a better way to ignore some queries
         if (query && req && req.op) {
-            let findQuery = query || {};//this.jsonObjToMongo(query || {});
+            let findQuery = noUndefined(query);//this.jsonObjToMongo(noUndefined(query));
             let mongoRes = await mongoose.connection.db.collection(collection).find(findQuery).toArray();
             mongoDocs = this.mongoObjToJson(mongoRes);
         } else {
@@ -432,7 +439,7 @@ class Pytagora {
                         console.error(e);
                     }
                 }
-            } else if (Object.prototype.toString.call(obj[key]) === "[object Object]") {
+            } else if (isJSONObject(obj[key])) {
                 try {
                     obj[key] = this.jsonObjToMongoWeird(obj[key], reference);
                 } catch (e) {
@@ -625,7 +632,7 @@ class Pytagora {
         let seen = [];
 
         const reviver = (key, value) => {
-            if (typeof value === 'string' && value.length === 24 && /^[0-9a-fA-F]{24}$/.test(value)) {
+            if (typeof value === 'string' && value.length === 24 && mongoIdRegex.test(value)) {
                 return new ObjectId(value);
             }
             return value;
@@ -647,7 +654,7 @@ class Pytagora {
             };
         };
 
-        let stringified = JSON.stringify(obj || {}, getCircularReplacer());
+        let stringified = JSON.stringify(noUndefined(obj), getCircularReplacer());
         return JSON.parse(stringified, reviver);
     }
 

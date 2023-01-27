@@ -347,16 +347,21 @@ class Pytagora {
     async getMongoDocs(self) {
         let collection,
             req,
+            op,
+            query,
             conditions = self._conditions || self._doc;
-        let query = this.jsonObjToMongoWeird(conditions, (self.schema || self._model.schema).paths);
         if (self instanceof mongoose.Query) {
             collection = _.get(self, '_collection.collectionName');
+            query = this.jsonObjToMongoWeird(conditions, (self.schema || self._model.schema).paths);
             req = _.extend({collection}, _.pick(self, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']));
         } else if (self instanceof mongoose.Model) {
+            op = self.$op || self.$__.op;
+            if (op !== 'validate') conditions = _.pick(self._doc, '_id');
+            query = this.jsonObjToMongoWeird(conditions, (self.schema || self._model.schema).paths)
             collection = self.constructor.collection.collectionName;
             req = {
                 collection,
-                op: self.$op || self.$__.op,
+                op: op,
                 options: self.$__.saveOptions,
                 _doc: self._doc
             }

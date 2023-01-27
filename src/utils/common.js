@@ -58,6 +58,10 @@ function compareJson(a, b) {
     if (a === b) return true;
     else if (typeof a !== typeof b) return false;
     else if (!a || !b) return false;
+    else if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length !== b.length) return false;
+        return a.reduce((acc, item, index) => acc && compareJson(item, b[index]), true);
+    }
     let ignoreKeys = ['_id'];
     // let ignoreIfKeyContains = ['token'];
     let aProps = Object.getOwnPropertyNames(a);

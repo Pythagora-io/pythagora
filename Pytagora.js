@@ -486,7 +486,7 @@ class Pytagora {
 
         res.send = function(body) {
             logWithStoreId('send');
-            requests[req.id].responseData = body || '';
+            requests[req.id].responseData = !body ? '' : typeof body === 'string' ? body : JSON.stringify(body);
             requests[req.id].traceLegacy = requests[req.id].trace;
             requests[req.id].trace = [];
             if (!requests[req.id].finished) finishCapture(requests[req.id], body);

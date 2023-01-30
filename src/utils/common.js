@@ -1,9 +1,9 @@
-const objectIdAsStringRegex = /ObjectId\("([0-9a-fA-F]{24})"\)/;
+const objectIdAsStringRegex = /^ObjectId\("([0-9a-fA-F]{24})"\)$/;
 const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
 
 const isObjectId = (value) => {
     try {
-        return (!value || !value.toString) ? false :
+        return (!value || !value.toString || Array.isArray(value)) ? false :
             (
                 value.constructor.name === 'ObjectId' ||
                 value.constructor.name === 'ObjectID' ||
@@ -66,6 +66,8 @@ function compareJson(a, b) {
     else if (Array.isArray(a) && Array.isArray(b)) {
         if (a.length !== b.length) return false;
         return a.reduce((acc, item, index) => acc && compareJson(item, b[index]), true);
+    } else if (typeof a === 'string' && typeof b === 'string') {
+        return objectIdAsStringRegex.test(a) && objectIdAsStringRegex.test(b) ? true : a === b;
     }
     let ignoreKeys = ['_id'];
     // let ignoreIfKeyContains = ['token'];

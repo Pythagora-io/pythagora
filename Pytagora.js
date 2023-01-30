@@ -311,8 +311,9 @@ class Pytagora {
                             return !d.processed &&
                                 d.type === 'mongo' &&
                                 d.req.op === mongoReq.op &&
-                                JSON.stringify(d.req.options) === JSON.stringify(mongoReq.options) &&
-                                JSON.stringify(d.req._conditions) === JSON.stringify(mongoReq._conditions);
+                                d.req.collection === mongoReq.collection &&
+                                compareJson(d.req.options, self.mongoObjToJson(mongoReq.options)) &&
+                                compareJson(d.req._conditions, self.mongoObjToJson(mongoReq._conditions));
                         });
                         if (capturedData) capturedData.processed = true;
                         if (capturedData &&

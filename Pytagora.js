@@ -351,6 +351,9 @@ class Pytagora {
             op,
             query,
             conditions = self._conditions || self._doc;
+
+        if (self._mongooseOptions && self._mongooseOptions.populate) return { error: new Error('Mongoose "populate" not supported yet!') };
+
         if (self instanceof mongoose.Query) {
             collection = _.get(self, '_collection.collectionName');
             query = this.jsonObjToMongoWeird(conditions, (self.schema || self._model.schema).paths);

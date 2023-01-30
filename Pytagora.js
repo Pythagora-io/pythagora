@@ -356,12 +356,12 @@ class Pytagora {
 
         if (self instanceof mongoose.Query) {
             collection = _.get(self, '_collection.collectionName');
-            query = this.jsonObjToMongoWeird(conditions, (self.schema || self._model.schema).paths);
+            query = this.jsonObjToMongo(conditions);
             req = _.extend({collection}, _.pick(self, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']));
         } else if (self instanceof mongoose.Model) {
             op = self.$op || self.$__.op;
             if (op !== 'validate') conditions = _.pick(self._doc, '_id');
-            query = this.jsonObjToMongoWeird(conditions, (self.schema || self._model.schema).paths)
+            query = this.jsonObjToMongo(conditions)
             collection = self.constructor.collection.collectionName;
             req = {
                 collection,
@@ -427,11 +427,14 @@ class Pytagora {
         if (!obj) return obj;
         if (Array.isArray(obj)) return obj.map(d => this.jsonObjToMongo(d));
         else if (typeof obj === 'string' && objectIdAsStringRegex.test(obj)) return this.stringToMongoObjectId(obj);
+        else if (typeof obj === 'string' && mongoIdRegex.test(obj)) return this.stringToMongoObjectId(`ObjectId("${obj}")`);
         else if (isJSONObject(obj)) {
             for (let key in obj) {
-                if (typeof obj[key] === 'string' && objectIdAsStringRegex.test(obj[key])) {
+                if (typeof obj[key] === 'string') {
                     // TODO label a key as ObjectId better (not through a string)
-                    obj[key] = this.stringToMongoObjectId(obj[key]);
+                    // TODO we should check if a field is a Mongo object by it's schema, not from a string
+                    if (objectIdAsStringRegex.test(obj[key])) obj[key] = this.stringToMongoObjectId(obj[key]);
+                    else if (mongoIdRegex.test(obj[key])) obj[key] = this.stringToMongoObjectId(`ObjectId("${obj[key]}")`);
                 } else if (obj[key]._bsontype === "ObjectID") {
                     continue;
                 } else if (isJSONObject(obj[key]) || Array.isArray(obj[key])) {

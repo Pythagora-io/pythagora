@@ -81,7 +81,7 @@ function compareJson(a, b) {
         if (
             a[propName] !== b[propName] &&
             (!isDate(a[propName]) && !isDate(a[propName])) &&
-            !ignoreKeys.includes(propName) &&
+            // !ignoreKeys.includes(propName) &&
             !(isObjectId(a[propName]) && isObjectId(b[propName]))// &&
             // !ignoreIfKeyContains.some(function(v) { return propName.indexOf(v) >= 0; })
         ) {

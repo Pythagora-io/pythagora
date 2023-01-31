@@ -58,16 +58,16 @@ function isJSONObject(value) {
     return Object.prototype.toString.call(value) === "[object Object]";
 }
 
-function compareJson(a, b) {
+function compareJson(a, b, strict) {
     // TODO make more complex by running tests right after capture
     if (a === b) return true;
     else if (typeof a !== typeof b) return false;
     else if (!a || !b) return false;
     else if (Array.isArray(a) && Array.isArray(b)) {
         if (a.length !== b.length) return false;
-        return a.reduce((acc, item, index) => acc && compareJson(item, b[index]), true);
+        return a.reduce((acc, item, index) => acc && compareJson(item, b[index], strict), true);
     } else if (typeof a === 'string' && typeof b === 'string') {
-        return objectIdAsStringRegex.test(a) && objectIdAsStringRegex.test(b) ? true : a === b;
+        return objectIdAsStringRegex.test(a) && objectIdAsStringRegex.test(b) && !strict ? true : a === b;
     }
     let ignoreKeys = ['_id'];
     // let ignoreIfKeyContains = ['token'];
@@ -86,7 +86,7 @@ function compareJson(a, b) {
             // !ignoreIfKeyContains.some(function(v) { return propName.indexOf(v) >= 0; })
         ) {
             if (typeof a[propName] === 'object') {
-                if (!compareJson(a[propName], b[propName]))
+                if (!compareJson(a[propName], b[propName], strict))
                     return false;
             } else
                 return false;

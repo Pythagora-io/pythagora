@@ -287,6 +287,8 @@ class Pytagora {
                             mongoReqId: this.mongoReqId,
                             preQueryRes: self.mongoObjToJson(mongoRes.mongoDocs)
                         });
+                    } else {
+                        this.originalConditions = self.mongoObjToJson(this._conditions);
                     }
                 } catch (e) {
                     console.error(_.pick(this, ['op', '_conditions', '_doc']), e);
@@ -312,8 +314,8 @@ class Pytagora {
                                 d.type === 'mongo' &&
                                 d.req.op === mongoReq.op &&
                                 d.req.collection === mongoReq.collection &&
-                                compareJson(d.req.options, self.mongoObjToJson(mongoReq.options)) &&
-                                compareJson(d.req._conditions, self.mongoObjToJson(mongoReq._conditions));
+                                compareJson(d.req.options, self.mongoObjToJson(mongoReq.options), true) &&
+                                compareJson(d.req._conditions, this.originalConditions, true);
                         });
                         if (capturedData) capturedData.processed = true;
                         if (capturedData &&

@@ -531,7 +531,7 @@ class Pytagora {
             requests[req.id].trace = [];
             if (!requests[req.id].finished) finishCapture(requests[req.id], body);
             requests[req.id].finished = true;
-            _send.call(this, body);
+            _send.call(this, requests[req.id].responseData);
         };
 
         res.redirect = function(redirectUrl) {

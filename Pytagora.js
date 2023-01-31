@@ -29,7 +29,8 @@ const {
     regExpRegex,
     noUndefined,
     mongoIdRegex,
-    stringToRegExp
+    stringToRegExp,
+    getCircularReplacer
 } = require('./src/utils/common.js')
 
 const asyncLocalStorage = new AsyncLocalStorage();
@@ -542,7 +543,7 @@ class Pytagora {
 
     static saveCaptureToFile(reqData) {
         let endpointFileName = `./pytagora_data/${reqData.endpoint.replace(/\//g, '|')}.json`;
-        if (!FS.existsSync(endpointFileName)) FS.writeFileSync(endpointFileName, JSON.stringify(Pytagora.convertToRegularObject([reqData])));
+        if (!FS.existsSync(endpointFileName)) FS.writeFileSync(endpointFileName, JSON.stringify([reqData], getCircularReplacer()));
         else {
             let fileContent = JSON.parse(FS.readFileSync(endpointFileName));
             let identicalRequestIndex = fileContent.findIndex(req => {
@@ -553,10 +554,10 @@ class Pytagora {
             });
 
             if (identicalRequestIndex === -1) {
-                FS.writeFileSync(endpointFileName, JSON.stringify(Pytagora.convertToRegularObject(fileContent.concat([reqData]))));
+                FS.writeFileSync(endpointFileName, JSON.stringify(fileContent.concat([reqData]), getCircularReplacer()));
             } else {
                 fileContent[identicalRequestIndex] = reqData;
-                let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(Pytagora.convertToRegularObject(fileContent));
+                let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer());
                 FS.writeFileSync(endpointFileName, storeData);
             }
         }
@@ -680,23 +681,6 @@ class Pytagora {
             }
             return value;
         }
-
-        const getCircularReplacer = () => {
-            const seen = new WeakSet();
-            return (key, value) => {
-                if (isLegacyObjectId(value)) value = (new ObjectId(Buffer.from(value.id.data))).toString();
-                else if (value instanceof RegExp) value = `RegExp("${value.toString()}")`;
-                else if (Array.isArray(value) && value.find(v => isLegacyObjectId(v))) {
-                    value = value.map(v => isLegacyObjectId(v) ? (new ObjectId(Buffer.from(v.id.data))).toString() : v);
-                } if (typeof value === "object" && value !== null) {
-                    if (seen.has(value)) {
-                        return;
-                    }
-                    seen.add(value);
-                }
-                return value;
-            };
-        };
 
         let stringified = JSON.stringify(noUndefined(obj), getCircularReplacer());
         return JSON.parse(stringified, reviver);

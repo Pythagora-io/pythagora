@@ -109,6 +109,23 @@ function stringToRegExp(str) {
     return str;
 }
 
+const getCircularReplacer = () => {
+    const seen = new WeakSet();
+    return (key, value) => {
+        if (isLegacyObjectId(value)) value = (new ObjectId(Buffer.from(value.id.data))).toString();
+        else if (value instanceof RegExp) value = `RegExp("${value.toString()}")`;
+        else if (Array.isArray(value) && value.find(v => isLegacyObjectId(v))) {
+            value = value.map(v => isLegacyObjectId(v) ? (new ObjectId(Buffer.from(v.id.data))).toString() : v);
+        } if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+                return;
+            }
+            seen.add(value);
+        }
+        return value;
+    };
+};
+
 module.exports = {
     cutWithDots,
     addIdToUrl,
@@ -122,5 +139,6 @@ module.exports = {
     mongoIdRegex,
     regExpRegex,
     noUndefined,
-    stringToRegExp
+    stringToRegExp,
+    getCircularReplacer
 }

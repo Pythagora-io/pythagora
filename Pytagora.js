@@ -352,15 +352,19 @@ class Pytagora {
             req,
             op,
             query,
+            model,
+            isModel = self instanceof mongoose.Model,
+            isQuery = self instanceof mongoose.Query,
             conditions = self._conditions || self._doc;
 
         if (self._mongooseOptions && self._mongooseOptions.populate) return { error: new Error('Mongoose "populate" not supported yet!') };
 
-        if (self instanceof mongoose.Query) {
+        if (isQuery) {
             collection = _.get(self, '_collection.collectionName');
             query = this.jsonObjToMongo(conditions);
+            model = self.model;
             req = _.extend({collection}, _.pick(self, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']));
-        } else if (self instanceof mongoose.Model) {
+        } else if (isModel) {
             op = self.$op || self.$__.op;
             if (op !== 'validate') conditions = _.pick(self._doc, '_id');
             query = this.jsonObjToMongo(conditions)
@@ -371,6 +375,7 @@ class Pytagora {
                 options: self.$__.saveOptions,
                 _doc: self._doc
             }
+            model = mongoose.connection.db.collection(collection);
         } else if (self instanceof mongoose.Aggregate) {
             collection = _.get(self, '_model.collection.collectionName');
             req = {
@@ -386,8 +391,16 @@ class Pytagora {
         // TODO make a better way to ignore some queries
         if (query && req && req.op) {
             let findQuery = noUndefined(query);//this.jsonObjToMongo(noUndefined(query));
-            let mongoRes = await mongoose.connection.db.collection(collection).find(findQuery).toArray();
-            mongoDocs = this.mongoObjToJson(mongoRes);
+            let mongoRes = await new Promise(async (resolve, reject) => {
+                let originalAsyncStore = asyncLocalStorage.getStore();
+                self.asyncStore = undefined;
+                asyncLocalStorage.run(undefined, async () => {
+                    self.asyncStore = originalAsyncStore;
+                    if (isQuery) resolve(await model.find(findQuery).lean().exec());
+                    else if (isModel) resolve(await model.find(findQuery).toArray());
+                });
+            });
+            mongoDocs = this.mongoObjToJson(Array.isArray(mongoRes) ? mongoRes : [mongoRes]);
         } else {
             mongoDocs = [];
         }

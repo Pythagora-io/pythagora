@@ -450,10 +450,11 @@ class Pytagora {
         else if (typeof obj === 'string' && mongoIdRegex.test(obj)) return this.stringToMongoObjectId(`ObjectId("${obj}")`);
         else if (typeof obj === 'string' && regExpRegex.test(obj)) return stringToRegExp(obj);
         else if (isJSONObject(obj)) {
+            obj = Pytagora.convertToRegularObject(obj);
             for (let key in obj) {
-                if (typeof obj[key] === 'string') {
+                if (!obj[key]) continue;
+                else if (typeof obj[key] === 'string') {
                     // TODO label a key as ObjectId better (not through a string)
-                    // TODO we should check if a field is a Mongo object by it's schema, not from a string
                     if (objectIdAsStringRegex.test(obj[key])) obj[key] = this.stringToMongoObjectId(obj[key]);
                     else if (mongoIdRegex.test(obj[key])) obj[key] = this.stringToMongoObjectId(`ObjectId("${obj[key]}")`);
                     else if (regExpRegex.test(obj[key])) obj[key] = stringToRegExp(obj[key]);

@@ -501,6 +501,7 @@ class Pytagora {
         const _send = res.send;
         const _redirect = res.redirect;
         const _status = res.status;
+        const _json = res.json;
         const finishCapture = (request, responseBody) => {
             if (request.error) {
                 return logEndpointNotCaptured(req.originalUrl, req.method, request.error);
@@ -512,6 +513,15 @@ class Pytagora {
         res.status = function(code) {
             requests[req.id].responseStatus = code;
             return _status.call(this, code);
+        }
+
+        res.json = function(json) {
+            requests[req.id].responseData = !json ? '' : typeof json === 'string' ? json : JSON.stringify(json);
+            requests[req.id].traceLegacy = requests[req.id].trace;
+            requests[req.id].trace = [];
+            if (!requests[req.id].finished) finishCapture(requests[req.id], json);
+            requests[req.id].finished = true;
+            return _json.call(this, json);
         }
 
         res.send = function(body) {

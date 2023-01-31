@@ -1,4 +1,5 @@
 const objectIdAsStringRegex = /^ObjectId\("([0-9a-fA-F]{24})"\)$/;
+const regExpRegex = /^RegExp\("(.*)"\)$/;
 const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
 
 const isObjectId = (value) => {
@@ -99,6 +100,15 @@ function noUndefined(value, replaceValue = {}) {
     return value === undefined || value === null ? replaceValue : value;
 }
 
+function stringToRegExp(str) {
+    let idValue = str.match(regExpRegex);
+    if (idValue && idValue[1]) {
+        const [, pattern, flags] = idValue[1].match(/^\/(.*)\/([gimuy]+)$/);
+        return new RegExp(pattern, flags);
+    }
+    return str;
+}
+
 module.exports = {
     cutWithDots,
     addIdToUrl,
@@ -110,5 +120,7 @@ module.exports = {
     isJSONObject,
     objectIdAsStringRegex,
     mongoIdRegex,
-    noUndefined
+    regExpRegex,
+    noUndefined,
+    stringToRegExp
 }

@@ -26,8 +26,10 @@ const {
     isLegacyObjectId,
     isJSONObject,
     objectIdAsStringRegex,
+    regExpRegex,
     noUndefined,
-    mongoIdRegex
+    mongoIdRegex,
+    stringToRegExp
 } = require('./src/utils/common.js')
 
 const asyncLocalStorage = new AsyncLocalStorage();
@@ -422,6 +424,8 @@ class Pytagora {
             if (obj[key]._bsontype === "ObjectID") {
                 // TODO label a key as ObjectId better (not through a string)
                 obj[key] = `ObjectId("${obj[key].toString()}")`;
+            } else if (obj[key] instanceof RegExp) {
+                obj[key] = `RegExp("${obj[key].toString()}")`;
             } else if (typeof obj[key] === 'object') {
                 obj[key] = this.mongoObjToJson(obj[key]);
             }
@@ -443,6 +447,7 @@ class Pytagora {
         if (Array.isArray(obj)) return obj.map(d => this.jsonObjToMongo(d));
         else if (typeof obj === 'string' && objectIdAsStringRegex.test(obj)) return this.stringToMongoObjectId(obj);
         else if (typeof obj === 'string' && mongoIdRegex.test(obj)) return this.stringToMongoObjectId(`ObjectId("${obj}")`);
+        else if (typeof obj === 'string' && regExpRegex.test(obj)) return stringToRegExp(obj);
         else if (isJSONObject(obj)) {
             for (let key in obj) {
                 if (typeof obj[key] === 'string') {
@@ -450,6 +455,7 @@ class Pytagora {
                     // TODO we should check if a field is a Mongo object by it's schema, not from a string
                     if (objectIdAsStringRegex.test(obj[key])) obj[key] = this.stringToMongoObjectId(obj[key]);
                     else if (mongoIdRegex.test(obj[key])) obj[key] = this.stringToMongoObjectId(`ObjectId("${obj[key]}")`);
+                    else if (regExpRegex.test(obj[key])) obj[key] = stringToRegExp(obj[key]);
                 } else if (obj[key]._bsontype === "ObjectID") {
                     continue;
                 } else if (isJSONObject(obj[key]) || Array.isArray(obj[key])) {
@@ -668,8 +674,9 @@ class Pytagora {
         let seen = [];
 
         const reviver = (key, value) => {
-            if (typeof value === 'string' && value.length === 24 && mongoIdRegex.test(value)) {
-                return new ObjectId(value);
+            if (typeof value === 'string') {
+                if (value.length === 24 && mongoIdRegex.test(value)) return new ObjectId(value);
+                else if (regExpRegex.test(value)) return stringToRegExp(value);
             }
             return value;
         }
@@ -678,6 +685,7 @@ class Pytagora {
             const seen = new WeakSet();
             return (key, value) => {
                 if (isLegacyObjectId(value)) value = (new ObjectId(Buffer.from(value.id.data))).toString();
+                else if (value instanceof RegExp) value = `RegExp("${value.toString()}")`;
                 else if (Array.isArray(value) && value.find(v => isLegacyObjectId(v))) {
                     value = value.map(v => isLegacyObjectId(v) ? (new ObjectId(Buffer.from(v.id.data))).toString() : v);
                 } if (typeof value === "object" && value !== null) {

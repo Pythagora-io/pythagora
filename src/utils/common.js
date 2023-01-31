@@ -17,7 +17,7 @@ const isObjectId = (value) => {
 }
 
 const isLegacyObjectId = (value) => {
-    return !value ? false : value.constructor.name === 'ObjectID' && isJSONObject(value.id);
+    return !value || !value.constructor ? false : value.constructor.name === 'ObjectID' && isJSONObject(value.id);
 }
 
 const cutWithDots = (string, cutAtChar = 100) => {

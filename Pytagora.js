@@ -514,6 +514,7 @@ class Pytagora {
 
         //todo check what else needs to be added eg. res.json, res.end, res.write,...
         const _send = res.send;
+        const _end = res.end;
         const _redirect = res.redirect;
         const _status = res.status;
         const _json = res.json;
@@ -538,6 +539,16 @@ class Pytagora {
             requests[req.id].finished = true;
             return _json.call(this, json);
         }
+
+        res.end = function(body) {
+            logWithStoreId('end');
+            requests[req.id].responseData = !body ? '' : typeof body === 'string' ? body : JSON.stringify(body);
+            requests[req.id].traceLegacy = requests[req.id].trace;
+            requests[req.id].trace = [];
+            if (!requests[req.id].finished) finishCapture(requests[req.id], body);
+            requests[req.id].finished = true;
+            _end.call(this, body);
+        };
 
         res.send = function(body) {
             logWithStoreId('send');
@@ -601,8 +612,19 @@ class Pytagora {
 
         const self = this;
         //todo check what else needs to be added eg. res.json, res.end, res.write,...
+        const _end = res.end;
         const _send = res.send;
         const _redirect = res.redirect;
+
+        res.end = function(body) {
+            logWithStoreId('testing end');
+            self.checkForFinalErrors(reqId);
+            global.Pytagora.request = {
+                id: testingRequests[reqId].id,
+                errors: _.clone(testingRequests[reqId].errors)
+            };
+            _end.call(this, body);
+        };
 
         res.send = function(body) {
             logWithStoreId('testing send');

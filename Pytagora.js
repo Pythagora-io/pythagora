@@ -178,6 +178,11 @@ class Pytagora {
 
     setUpExpressMiddleware(app) {
         app.use(async (req,res,next) => {
+            console.log(`${req.method} ${req.path}`);
+            return next();
+        });
+
+        app.use(async (req,res,next) => {
             MockDate.set('2023-01-13');
             return next();
         });

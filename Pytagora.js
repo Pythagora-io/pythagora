@@ -663,7 +663,7 @@ class Pytagora {
         let path = `./pytagora_data/${req.path.replace(/\//g, '|')}.json`;
         if (!FS.existsSync(path)) return;
         let capturedRequests = JSON.parse(await FS.promises.readFile(path, 'utf8'));
-        return capturedRequests.find(request => request.id === req.query.reqId);
+        return capturedRequests.find(request => request.id === req.headers['pytagora-req-id']);
     }
 
     getRequestMockData(capturedRequests, endpoint, method, body, query, params) {

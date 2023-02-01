@@ -3,14 +3,14 @@ const fs = require('fs');
 const qs = require('querystring');
 const _ = require('lodash');
 const { logTestPassed, logTestFailed, logTestsFinished, logTestsStarting } = require('./src/utils/cmdPrint');
-const { addIdToUrl, compareResponse } = require('./src/utils/common');
+const { compareResponse } = require('./src/utils/common');
 
 async function makeRequest(test) {
     try {
         let options = {
             method: test.method,
-            url: addIdToUrl(test.url, test.id),
-            headers: _.extend({'cache-control': 'no-cache'}, _.omit(test.headers, ['content-length', 'cache-control'])),
+            url: test.url,
+            headers: _.extend({'cache-control': 'no-cache', 'pytagora-req-id': test.id}, _.omit(test.headers, ['content-length', 'cache-control'])),
             maxRedirects: 0,
             cache: false,
             validateStatus: function (status) {

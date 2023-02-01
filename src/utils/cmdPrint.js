@@ -1,4 +1,5 @@
-let { cutWithDots } = require('./common');
+let { cutWithDots, getOccurrenceInArray } = require('./common');
+let pytagoraErrors = require('./errors.json');
 
 let red = '\x1b[31m',
     green = '\x1b[32m',
@@ -12,7 +13,7 @@ let logEndpointCaptured = (endpoint, method, body, query, responseBody = {}) => 
    ${blue+bold}Body:   ${reset}${cutWithDots(JSON.stringify(body))}
    ${blue+bold}Query:   ${reset}${cutWithDots(JSON.stringify(query))}
    ${blue+bold}Response:   ${reset}${cutWithDots(JSON.stringify(responseBody))}
-${blue+bold}-----------------------------------------------${reset}`);
+   ${blue+bold}-----------------------------------------------${reset}`);
 }
 
 let logEndpointNotCaptured = (endpoint, method, error) => {
@@ -21,14 +22,21 @@ let logEndpointNotCaptured = (endpoint, method, error) => {
 `);
 }
 
-let logTestFailed = (endpoint, method, body = {}, query = {}, response, expectedResponse, errors) => {
+let logTestFailed = (reqId, endpoint, method, body = {}, query = {}, response, expectedResponse, errors) => {
+    let errLog = '';
+    for (const err in pytagoraErrors) {
+        errLog += `\t${pytagoraErrors[err] + ' : ' + getOccurrenceInArray(errors, pytagoraErrors[err]) + '\n'}`
+    }
     console.log(`❌ Test ${red+bold}FAILED!${reset}
     ${red+bold}${method} ${endpoint} ${reset}
+    ${red+bold}ReqId:   ${reset}${cutWithDots(JSON.stringify(reqId))}
     ${red+bold}Body:   ${reset}${cutWithDots(JSON.stringify(body))}
     ${red+bold}Query:   ${reset}${cutWithDots(JSON.stringify(query))}
     ${red+bold}Response:   ${reset}${cutWithDots(JSON.stringify(response))}
     ${red+bold}Expected Response:   ${reset}${cutWithDots(JSON.stringify(expectedResponse))}
-    ${red+bold}Errors:   ${reset}${cutWithDots(JSON.stringify(errors))}
+    ${red+bold}Errors:   [
+${errLog}
+    ]
     ${red+bold}-----------------------------------------------${reset}`);
 }
 

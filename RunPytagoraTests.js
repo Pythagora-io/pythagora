@@ -36,7 +36,7 @@ async function makeRequest(test) {
 
         testResult = global.Pytagora.request.id === test.id && global.Pytagora.request.errors.length ? false : testResult;
         // TODO add query
-        (testResult ? logTestPassed : logTestFailed)(test.endpoint, test.method, test.pytagoraBody, undefined, response.data, test.responseData, global.Pytagora.request.errors);
+        (testResult ? logTestPassed : logTestFailed)(test.id, test.endpoint, test.method, test.pytagoraBody, undefined, response.data, test.responseData, global.Pytagora.request.errors);
         return testResult;
     } catch (error) {
         console.error(error);

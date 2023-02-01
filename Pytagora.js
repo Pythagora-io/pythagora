@@ -19,7 +19,10 @@ let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
 const RedisInterceptor = require("./RedisInterceptor.js");
 // const instrumenter = require('./instrumenter');
 const { logEndpointCaptured, logEndpointNotCaptured } = require('./src/utils/cmdPrint.js');
+const pytagoraErrors = require('./src/utils/errors.json');
 const duplexify = require('duplexify');
+const MockDate = require('mockdate');
+
 const {
     compareJson,
     isObjectId,
@@ -53,10 +56,9 @@ let MODES = {
     'test': 'test'
 };
 
-process.on('exit', (code) => {
+process.on('exit', async (code) => {
     console.log(`Exiting with code: ${code}`);
-    // TODO erase all data from pytagoraDb
-
+    await this.cleanupDb();
 });
 
 class Pytagora {
@@ -167,15 +169,24 @@ class Pytagora {
         });
     }
 
+    async cleanupDb() {
+        const collections = await mongoose.connection.db.collections();
+        for (const collection of collections) {
+            await collection.drop();
+        }
+    }
+
     setUpExpressMiddleware(app) {
+        app.use(async (req,res,next) => {
+            MockDate.set('2023-01-13');
+            return next();
+        });
+
         app.use(async (req,res,next) => {
             if (this.mode !== MODES.test) return next();
 
             let prepareDB = async() => {
-                const collections = await mongoose.connection.db.collections();
-                for (const collection of collections) {
-                    await collection.drop();
-                }
+                await this.cleanupDb();
 
                 const testReq = await this.getRequestMockDataById(req);
                 if (!testReq) return next();
@@ -302,7 +313,7 @@ class Pytagora {
                 let doc = args[0];
                 let next = args[1];
                 if (this.asyncStore === undefined ||
-                    this instanceof mongoose.Types.Embedded) return;
+                    this instanceof mongoose.Types.Embedded) return next ? next() : null;
                 try {
                     asyncLocalStorage.enterWith(this.asyncStore);
                     logWithStoreId('mongo post');
@@ -324,11 +335,9 @@ class Pytagora {
                         if (capturedData &&
                             (!compareJson(capturedData.mongoRes, self.mongoObjToJson(doc)) || !compareJson(capturedData.postQueryRes, self.mongoObjToJson(mongoRes.mongoDocs)))
                         ) {
-                            let error = 'Mongo query gave different result!';
-                            testingRequests[this.asyncStore].errors.push(error);
+                            testingRequests[this.asyncStore].errors.push(pytagoraErrors.mongoResultDifferent);
                         } else if (!capturedData) {
-                            let error = 'Mongo query was not found!';
-                            testingRequests[this.asyncStore].errors.push(error);
+                            testingRequests[this.asyncStore].errors.push(pytagoraErrors.mongoQueryNotFound);
                         }
                     } else if (self.mode === MODES.capture) {
                         let request = requests[Pytagora.getRequestKeyByAsyncStore()];
@@ -398,7 +407,7 @@ class Pytagora {
                     self.asyncStore = originalAsyncStore;
                     if (isQuery) {
                         let explaination = await self.model.find(findQuery).explain();
-                        findQuery = explaination.command.filter;
+                        findQuery = explaination[0] ? explaination[0].command.filter : explaination.command.filter;
                     }
 
                     resolve(await mongoose.connection.db.collection(collection).find(findQuery).toArray());
@@ -617,8 +626,12 @@ class Pytagora {
     }
 
     checkForFinalErrors(reqId) {
-        if (testingRequests[reqId].mongoQueriesCapture > testingRequests[reqId].mongoQueriesTest) testingRequests[reqId].errors.push('Some mongo queries have not been executed!');
-        if (testingRequests[reqId].mongoQueriesCapture < testingRequests[reqId].mongoQueriesTest) testingRequests[reqId].errors.push('More mongo queries were made than when capturing!');
+        if (testingRequests[reqId].mongoQueriesCapture > testingRequests[reqId].mongoQueriesTest) {
+            testingRequests[reqId].errors.push(pytagoraErrors.mongoNotExecuted);
+        }
+        if (testingRequests[reqId].mongoQueriesCapture < testingRequests[reqId].mongoQueriesTest) {
+            testingRequests[reqId].errors.push(pytagoraErrors.mongoExecutedTooManyTimes);
+        }
     }
 
     compareResponse(a, b) {

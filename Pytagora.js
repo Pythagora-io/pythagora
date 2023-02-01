@@ -355,7 +355,6 @@ class Pytagora {
             req,
             op,
             query,
-            model,
             isModel = self instanceof mongoose.Model,
             isQuery = self instanceof mongoose.Query,
             conditions = self._conditions || self._doc;
@@ -365,7 +364,6 @@ class Pytagora {
         if (isQuery) {
             collection = _.get(self, '_collection.collectionName');
             query = this.jsonObjToMongo(conditions);
-            model = self.model;
             req = _.extend({collection}, _.pick(self, ['op', 'options', '_conditions', '_fields', '_update', '_path', '_distinct', '_doc']));
         } else if (isModel) {
             op = self.$op || self.$__.op;
@@ -378,7 +376,6 @@ class Pytagora {
                 options: self.$__.saveOptions,
                 _doc: self._doc
             }
-            model = mongoose.connection.db.collection(collection);
         } else if (self instanceof mongoose.Aggregate) {
             collection = _.get(self, '_model.collection.collectionName');
             req = {
@@ -399,8 +396,12 @@ class Pytagora {
                 self.asyncStore = undefined;
                 asyncLocalStorage.run(undefined, async () => {
                     self.asyncStore = originalAsyncStore;
-                    if (isQuery) resolve(await model.find(findQuery).lean().exec());
-                    else if (isModel) resolve(await model.find(findQuery).toArray());
+                    if (isQuery) {
+                        let explaination = await self.model.find(findQuery).explain();
+                        findQuery = explaination.command.filter;
+                    }
+
+                    resolve(await mongoose.connection.db.collection(collection).find(findQuery).toArray());
                 });
             });
             mongoDocs = this.mongoObjToJson(Array.isArray(mongoRes) ? mongoRes : [mongoRes]);

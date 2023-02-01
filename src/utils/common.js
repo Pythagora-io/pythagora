@@ -104,7 +104,7 @@ function noUndefined(value, replaceValue = {}) {
 function stringToRegExp(str) {
     let idValue = str.match(regExpRegex);
     if (idValue && idValue[1]) {
-        const [, pattern, flags] = idValue[1].match(/^\/(.*)\/([gimuy]+)$/);
+        const [, pattern, flags] = idValue[1].match(/^\/(.*)\/([gimuy]+)?$/);
         return new RegExp(pattern, flags);
     }
     return str;

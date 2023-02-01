@@ -24,10 +24,6 @@ const cutWithDots = (string, cutAtChar = 100) => {
     return (string && string.length > cutAtChar) ? string.slice(0, cutAtChar) + '...' : string;
 }
 
-function addIdToUrl(url, id) {
-    return `${url}${url.includes('?') ? '&' : '?'}reqId=${id}`;
-}
-
 function parseString(s) {
     if (typeof s === 'string') {
         try {
@@ -133,7 +129,6 @@ function getOccurrenceInArray(array, value) {
 
 module.exports = {
     cutWithDots,
-    addIdToUrl,
     compareResponse,
     isDate,
     compareJson,

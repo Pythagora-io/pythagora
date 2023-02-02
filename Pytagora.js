@@ -57,7 +57,6 @@ let MODES = {
 };
 
 process.on('exit', async (code) => {
-    console.log(`Exiting with code: ${code}`);
     await this.cleanupDb();
 });
 

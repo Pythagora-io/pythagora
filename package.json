@@ -5,11 +5,11 @@
     "duplexify": "^4.1.2",
     "express": "^4.18.2",
     "fs": "^0.0.1-security",
-    "istanbul": "^0.4.5",
     "lodash": "^4.17.21",
     "minimist": "^1.2.7",
     "mockdate": "^3.0.5",
     "node-site-downloader": "^1.3.0",
+    "nyc": "^15.1.0",
     "uuid": "^9.0.0"
   },
   "name": "pytagora",
@@ -22,7 +22,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "pytagora": "RunPytagora.js"
+    "pytagora": "./bin/run.sh"
   },
   "author": "",
   "license": "ISC",

@@ -50,8 +50,6 @@ ${blue+bold}************************************************************${reset}
 ${green+bold}Pytagora finished testing!${reset}
 ${green+bold}${passed} ${reset}tests ${green+bold}PASSED!${reset}
 ${red+bold}${failed} ${reset}tests ${red+bold}FAILED!${reset}
-Total lines executed: ${blue+bold}${linesExecuted}${reset}
-Code coverage: ${blue+bold}${codeCoverage}%${reset}
 ${blue+bold}************************************************************${reset}
     `);
 }

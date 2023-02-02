@@ -29,6 +29,13 @@ After you captured all request you want, you can use Pytagora to run tests.
       pytagora --mode test --script <path to the file you use to start the server>
       ```
 <br><br><br>
+<h1>Code Coverage Report</h1>
+Code coverage is a great metric while building automated tests as it shows us which lines of code are covered by the tests. Pytagora uses `nyc` to generate report about code that was covered with Pytagora tests.
+
+By default, Pytagora will show you basic code coverage report in the console. If you want to generate a more detailed report, you can do so by running Pytagora with `--full-code-coverage-report` flag or if you don't want any code coverage displayed, run Pytagora with `--no-code-coverage`.
+When you run Pytagora with `--full-code-coverage-report` flag, it will generate a `code_coverage_report` directory in the `pytagora_data` directory in the root of your project. Inside that directory you will find `lcov-report/index.html` file that you can open in your browser to see the code coverage report.
+
+<br><br><br>
 <h1>Deep dive</h1>
 If you are interested in what has been recorded with pytagora
 you can see files in your root directory inside <strong><i>pytagora_data</i></strong> directory.

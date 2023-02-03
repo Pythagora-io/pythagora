@@ -572,42 +572,47 @@ class Pytagora {
         }
 
         res.json = function(json) {
+            logWithStoreId('json');
+            if (requests[req.id].finished) return _json.call(this, json);
             requests[req.id].responseData = !json ? '' : typeof json === 'string' ? json : JSON.stringify(json);
             requests[req.id].traceLegacy = requests[req.id].trace;
             requests[req.id].trace = [];
-            if (!requests[req.id].finished) finishCapture(requests[req.id], json);
+            finishCapture(requests[req.id], json);
             requests[req.id].finished = true;
             return _json.call(this, json);
         }
 
         res.end = function(body) {
             logWithStoreId('end');
+            if (requests[req.id].finished) return _end.call(this, body);
             requests[req.id].responseData = !body ? '' : typeof body === 'string' ? body : JSON.stringify(body);
             requests[req.id].traceLegacy = requests[req.id].trace;
             requests[req.id].trace = [];
-            if (!requests[req.id].finished) finishCapture(requests[req.id], body);
+            finishCapture(requests[req.id], body);
             requests[req.id].finished = true;
             _end.call(this, body);
         };
 
         res.send = function(body) {
             logWithStoreId('send');
+            if (requests[req.id].finished) return _send.call(this, requests[req.id].responseData);
             requests[req.id].responseData = !body || requests[req.id].responseStatus === 204 ? '' :
                 typeof body === 'string' ? body : JSON.stringify(body);
             requests[req.id].traceLegacy = requests[req.id].trace;
             requests[req.id].trace = [];
-            if (!requests[req.id].finished) finishCapture(requests[req.id], body);
+            finishCapture(requests[req.id], body);
             requests[req.id].finished = true;
             _send.call(this, requests[req.id].responseData);
         };
 
         res.redirect = function(redirectUrl) {
             logWithStoreId('redirect');
+            if (requests[req.id].finished) return _redirect.call(this, redirectUrl);
             requests[req.id].responseData = {
                 'type': 'redirect',
                 'url': redirectUrl
             };
-            if (!requests[req.id].finished) finishCapture(requests[req.id]);
+            finishCapture(requests[req.id]);
             requests[req.id].finished = true;
             _redirect.call(this, redirectUrl);
         };

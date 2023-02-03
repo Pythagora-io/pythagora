@@ -1,5 +1,3 @@
-const express = require('express');
-const app = express();
 const istanbul = require('istanbul');
 const fs = require('fs');
 const path = require('path');

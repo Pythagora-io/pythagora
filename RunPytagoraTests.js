@@ -19,12 +19,7 @@ async function makeRequest(test) {
             transformResponse: (r) => r
         };
         if (test.method !== 'GET') {
-            // TODO create more comprehensive check for body when parsing pytagoraBody
-            try {
-                options.data = JSON.parse(test.pytagoraBody);
-            } catch (e) {
-                options.data = qs.parse(test.pytagoraBody) || {};
-            }
+            options.data = test.body;
         }
         const response = await axios(options);
 
@@ -36,7 +31,7 @@ async function makeRequest(test) {
 
         testResult = global.Pytagora.request.id === test.id && global.Pytagora.request.errors.length ? false : testResult;
         // TODO add query
-        (testResult ? logTestPassed : logTestFailed)(test.id, test.endpoint, test.method, test.pytagoraBody, undefined, response.data, test.responseData, global.Pytagora.request.errors);
+        (testResult ? logTestPassed : logTestFailed)(test.id, test.endpoint, test.method, test.body, undefined, response.data, test.responseData, global.Pytagora.request.errors);
         return testResult;
     } catch (error) {
         console.error(error);

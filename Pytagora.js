@@ -20,8 +20,9 @@ const RedisInterceptor = require("./RedisInterceptor.js");
 // const instrumenter = require('./instrumenter');
 const { logEndpointCaptured, logEndpointNotCaptured } = require('./src/utils/cmdPrint.js');
 const pytagoraErrors = require('./src/utils/errors.json');
-const duplexify = require('duplexify');
+// const duplexify = require('duplexify');
 const MockDate = require('mockdate');
+const bodyParser = require('body-parser');
 
 const {
     compareJson,
@@ -225,6 +226,9 @@ class Pytagora {
             await prepareDB();
         });
 
+        app.use(bodyParser.json());
+        app.use(bodyParser.urlencoded());
+
         app.use((req, res, next) => {
             if (this.mode !== MODES.capture) return next();
             if (!req.id) req.id = v4();
@@ -245,18 +249,21 @@ class Pytagora {
                 asyncStore: idSeq,
                 mongoQueriesCapture: 0
             };
-            let data = '';
-            const inputStream = req;
-            const duplexStream = duplexify();
 
-            duplexStream.setReadable(inputStream);
-            req.duplexStream = duplexStream;
-            duplexStream.on('data', (chunk) => {
-                data+=chunk.toString();
-            });
-            duplexStream.on('end', () => {
-                requests[req.id].pytagoraBody = data;
-            });
+            // if (!req.is('multipart/form-data')) {
+            //     let data = '';
+            //     const inputStream = req;
+            //     const duplexStream = duplexify();
+            //
+            //     duplexStream.setReadable(inputStream);
+            //     req.duplexStream = duplexStream;
+            //     duplexStream.on('data', (chunk) => {
+            //         data+=chunk.toString();
+            //     });
+            //     duplexStream.on('end', () => {
+            //         requests[req.id].pytagoraBody = data;
+            //     });
+            // }
             next();
         });
 
@@ -513,6 +520,7 @@ class Pytagora {
 
         //todo check what else needs to be added eg. res.json, res.end, res.write,...
         const _send = res.send;
+        const _sendFile = res.sendFile;
         const _end = res.end;
         const _redirect = res.redirect;
         const _status = res.status;
@@ -524,16 +532,22 @@ class Pytagora {
             if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
             logEndpointCaptured(req.originalUrl, req.method, req.body, req.query, responseBody);
         }
+        const storeBodyAndTrace = (id, body) => {
+            requests[id].responseData = !body || requests[req.id].responseStatus === 204 ? '' :
+                typeof body === 'string' ? body : JSON.stringify(body);
+            requests[id].traceLegacy = requests[req.id].trace;
+            requests[id].trace = [];
+        }
 
         res.status = function(code) {
+            logWithStoreId('status');
             requests[req.id].responseStatus = code;
             return _status.call(this, code);
         }
 
         res.json = function(json) {
-            requests[req.id].responseData = !json ? '' : typeof json === 'string' ? json : JSON.stringify(json);
-            requests[req.id].traceLegacy = requests[req.id].trace;
-            requests[req.id].trace = [];
+            logWithStoreId('json');
+            storeBodyAndTrace(req.id, json);
             if (!requests[req.id].finished) finishCapture(requests[req.id], json);
             requests[req.id].finished = true;
             return _json.call(this, json);
@@ -541,9 +555,13 @@ class Pytagora {
 
         res.end = function(body) {
             logWithStoreId('end');
-            requests[req.id].responseData = !body ? '' : typeof body === 'string' ? body : JSON.stringify(body);
-            requests[req.id].traceLegacy = requests[req.id].trace;
-            requests[req.id].trace = [];
+            let path = '.' + this.req.originalUrl;
+            //todo find better solution for storing static files to body
+            if (body === undefined && FS.existsSync(path) && FS.lstatSync(path).isFile()) {
+                body = FS.readFileSync(path);
+                body = body.toString();
+            }
+            storeBodyAndTrace(req.id, body);
             if (!requests[req.id].finished) finishCapture(requests[req.id], body);
             requests[req.id].finished = true;
             _end.call(this, body);
@@ -551,13 +569,23 @@ class Pytagora {
 
         res.send = function(body) {
             logWithStoreId('send');
-            requests[req.id].responseData = !body || requests[req.id].responseStatus === 204 ? '' :
-                typeof body === 'string' ? body : JSON.stringify(body);
-            requests[req.id].traceLegacy = requests[req.id].trace;
-            requests[req.id].trace = [];
+            storeBodyAndTrace(req.id, body);
             if (!requests[req.id].finished) finishCapture(requests[req.id], body);
             requests[req.id].finished = true;
             _send.call(this, requests[req.id].responseData);
+        };
+
+        res.sendFile = function(path) {
+            let file;
+            logWithStoreId('sendFile');
+            if (path && FS.existsSync(path) && FS.lstatSync(path).isFile()) {
+                file = FS.readFileSync(path);
+                if (file) file = file.toString();
+            }
+            storeBodyAndTrace(req.id, file);
+            if (!requests[req.id].finished) finishCapture(requests[req.id], file);
+            requests[req.id].finished = true;
+            _sendFile.call(this, path);
         };
 
         res.redirect = function(redirectUrl) {
@@ -584,7 +612,7 @@ class Pytagora {
         else {
             let fileContent = JSON.parse(FS.readFileSync(endpointFileName));
             let identicalRequestIndex = fileContent.findIndex(req => {
-                return req && _.isEqual(req.pytagoraBody, reqData.pytagoraBody) &&
+                return req && _.isEqual(req.body, reqData.body) &&
                     req.method === reqData.method &&
                     _.isEqual(req.query, reqData.query) &&
                     _.isEqual(req.params, reqData.params);

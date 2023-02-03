@@ -12,7 +12,7 @@ module.exports = class RedisInterceptor {
 
     async init() {
         await new Promise((resolve, reject) => {
-            const listenSocket = net.createServer(connection => {
+            this.listenSocket = net.createServer(connection => {
                 connection.on('data', data => {
 
                     if (this.mode === 'capture') {
@@ -35,7 +35,7 @@ module.exports = class RedisInterceptor {
                 });
             });
 
-            listenSocket.listen(this.listenPort, () => {
+            this.listenSocket.listen(this.listenPort, () => {
                 resolve();
             });
         });
@@ -50,17 +50,17 @@ module.exports = class RedisInterceptor {
     }
 
     forwardData(connection, data, saveData) {
-        const targetSocket = new net.Socket();
+        this.targetSocket = new net.Socket();
 
-        targetSocket.connect(this.targetPort, 'localhost', () => {
-            targetSocket.write(data);
+        this.targetSocket.connect(this.targetPort, 'localhost', () => {
+            this.targetSocket.write(data);
         });
 
-        targetSocket.on('data', response => {
+        this.targetSocket.on('data', response => {
             if (saveData) Pytagora.saveRedisData(data.toString(), response.toString().replace(/^.*\r\n/, '').replace(/\r\n$/, ''));
 
             connection.write(response);
-            // targetSocket.destroy();
+            // this.targetSocket.destroy();
             // connection.destroy();
         });
     }
@@ -73,6 +73,20 @@ module.exports = class RedisInterceptor {
         }
 
         return chunks;
+    }
+
+    async cleanup() {
+        this.intermediateData = [];
+        let self = this;
+        await new Promise((resolve, reject) => {
+            self.listenSocket.close(() => {
+                self.targetSocket ?
+                    self.targetSocket.close(() => {
+                        resolve();
+                    }) :
+                    resolve();
+            });
+        });
     }
 }
 

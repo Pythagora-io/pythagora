@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const Pytagora = require('./Pytagora.js');
 
-global.Pytagora = new Pytagora(mode);
+global.Pytagora = new Pytagora(mode, initScript);
 
 function checkDependencies() {
     const searchPath = process.cwd();

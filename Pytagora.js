@@ -18,7 +18,7 @@ let mongoose = require("../mongoose");
 let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
 const RedisInterceptor = require("./RedisInterceptor.js");
 // const instrumenter = require('./instrumenter');
-const { logEndpointCaptured, logEndpointNotCaptured } = require('./src/utils/cmdPrint.js');
+const { logEndpointCaptured, logEndpointNotCaptured, logCaptureFinished } = require('./src/utils/cmdPrint.js');
 const pytagoraErrors = require('./src/utils/errors.json');
 // const duplexify = require('duplexify');
 const MockDate = require('mockdate');
@@ -35,7 +35,8 @@ const {
     mongoIdRegex,
     stringToRegExp,
     getCircularReplacer
-} = require('./src/utils/common.js')
+} = require('./src/utils/common.js');
+const { makeTestRequest } = require('./src/utils/testingHelper.js');
 
 const asyncLocalStorage = new AsyncLocalStorage();
 
@@ -46,6 +47,7 @@ function logWithStoreId(msg) {
 
 let app, pytagoraDbConnection;
 let idSeq = 0;
+let testsRemoved = 0;
 let loggingEnabled;
 let requests = {};
 let testingRequests = {};
@@ -57,13 +59,9 @@ let MODES = {
     'test': 'test'
 };
 
-process.on('exit', async (code) => {
-    await this.cleanupDb();
-});
-
 class Pytagora {
 
-    constructor(mode) {
+    constructor(mode, initScript) {
         if (!MODES[mode]) throw new Error('Invalid mode');
         else this.mode = mode;
         loggingEnabled = mode === 'capture';
@@ -77,6 +75,53 @@ class Pytagora {
         this.codeCoverage = {};
 
         // this.instrumenter = instrumenter;
+
+        this.cleanupDone = false;
+
+        process.on('SIGINT', this.exit.bind(this));
+        process.on('exit', this.exit.bind(this));
+
+
+    }
+
+    async exit() {
+        if (this.cleanupDone) return;
+        this.cleanupDone = true;
+        console.log(`\nPytagora capturing done. Finishing up...`);
+        if (this.mode === MODES.test) await this.cleanupDb();
+        if (this.mode === MODES.capture) {
+            this.mode = MODES.test;
+            for (const request of _.values(requests).filter(req => !req.error)) {
+                let result = await makeTestRequest(request);
+                if (!result) {
+                    testsRemoved++;
+                    console.log(`Capture is not valid for endpoint ${request.endpoint} (${request.method}). Erasing...`)
+                    let reqFileName = `./pytagora_data/${request.endpoint.replace(/\//g, '|')}.json`;
+                    let fileContent = JSON.parse(FS.readFileSync(reqFileName));
+                    if (fileContent.length === 1) {
+                        FS.unlinkSync(reqFileName);
+                    } else {
+                        let identicalRequestIndex = fileContent.findIndex(req => {
+                            return req && _.isEqual(req.pytagoraBody, reqData.pytagoraBody) &&
+                                req.method === reqData.method &&
+                                _.isEqual(req.query, reqData.query) &&
+                                _.isEqual(req.params, reqData.params);
+                        });
+
+                        if (identicalRequestIndex === -1) {
+                            console.error('Could not find request to delete. This should not happen. Please report this issue to Pytagora team.');
+                        } else {
+                            fileContent = fileContent.splice(identicalRequestIndex, 1);
+                            let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer());
+                            FS.writeFileSync(reqFileName, storeData);
+                        }
+                    }
+                }
+            }
+
+            logCaptureFinished(_.keys(requests).length - testsRemoved, testsRemoved);
+        }
+        process.exit();
     }
 
     setApp(newApp) {
@@ -179,11 +224,6 @@ class Pytagora {
     setUpExpressMiddleware(app) {
         app.use(async (req,res,next) => {
             console.log(`${req.method} ${req.path}`);
-            return next();
-        });
-
-        app.use(async (req,res,next) => {
-            MockDate.set('2023-01-13');
             return next();
         });
 
@@ -527,6 +567,7 @@ class Pytagora {
         const _json = res.json;
         const finishCapture = (request, responseBody) => {
             if (request.error) {
+                // testsRemoved++;
                 return logEndpointNotCaptured(req.originalUrl, req.method, request.error);
             }
             if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
@@ -547,6 +588,7 @@ class Pytagora {
 
         res.json = function(json) {
             logWithStoreId('json');
+            if (requests[req.id].finished) return _json.call(this, json);
             storeBodyAndTrace(req.id, json);
             if (!requests[req.id].finished) finishCapture(requests[req.id], json);
             requests[req.id].finished = true;
@@ -555,6 +597,7 @@ class Pytagora {
 
         res.end = function(body) {
             logWithStoreId('end');
+            if (requests[req.id].finished) return _end.call(this, body);
             let path = '.' + this.req.originalUrl;
             //todo find better solution for storing static files to body
             if (body === undefined && FS.existsSync(path) && FS.lstatSync(path).isFile()) {
@@ -569,6 +612,7 @@ class Pytagora {
 
         res.send = function(body) {
             logWithStoreId('send');
+            if (requests[req.id].finished) return _send.call(this, requests[req.id].responseData);
             storeBodyAndTrace(req.id, body);
             if (!requests[req.id].finished) finishCapture(requests[req.id], body);
             requests[req.id].finished = true;
@@ -590,11 +634,12 @@ class Pytagora {
 
         res.redirect = function(redirectUrl) {
             logWithStoreId('redirect');
+            if (requests[req.id].finished) return _redirect.call(this, redirectUrl);
             requests[req.id].responseData = {
                 'type': 'redirect',
                 'url': redirectUrl
             };
-            if (!requests[req.id].finished) finishCapture(requests[req.id]);
+            finishCapture(requests[req.id]);
             requests[req.id].finished = true;
             _redirect.call(this, redirectUrl);
         };

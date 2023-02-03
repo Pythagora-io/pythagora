@@ -2,8 +2,8 @@
   "dependencies": {
     "@mswjs/interceptors": "^0.19.2",
     "axios": "^1.2.2",
+    "body-parser": "^1.20.1",
     "duplexify": "^4.1.2",
-    "express": "^4.18.2",
     "fs": "^0.0.1-security",
     "istanbul": "^0.4.5",
     "lodash": "^4.17.21",

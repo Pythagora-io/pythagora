@@ -97,6 +97,7 @@ class Pytagora {
                     testsRemoved++;
                     console.log(`Capture is not valid for endpoint ${request.endpoint} (${request.method}). Erasing...`)
                     let reqFileName = `./pytagora_data/${request.endpoint.replace(/\//g, '|')}.json`;
+                    if (!FS.existsSync(reqFileName)) continue;
                     let fileContent = JSON.parse(FS.readFileSync(reqFileName));
                     if (fileContent.length === 1) {
                         FS.unlinkSync(reqFileName);
@@ -663,6 +664,7 @@ class Pytagora {
             if (identicalRequestIndex === -1) {
                 FS.writeFileSync(endpointFileName, JSON.stringify(fileContent.concat([reqData]), getCircularReplacer()));
             } else {
+                if (requests[fileContent[identicalRequestIndex].id]) delete requests[fileContent[identicalRequestIndex].id];
                 fileContent[identicalRequestIndex] = reqData;
                 let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer());
                 FS.writeFileSync(endpointFileName, storeData);
@@ -672,7 +674,11 @@ class Pytagora {
 
     async apiTestInterceptor(req, res, next) {
         let request = await this.getRequestMockDataById(req);
-        if (!request) return console.error('No request found for', req.path, req.method, req.body, req.query, req.params);
+        if (!request) {
+            // TODO we're overwriting requests during the capture phase so this might happen durign the final filtering of the capture
+            console.error('No request found for', req.path, req.method, req.body, req.query, req.params);
+            return next();
+        }
         this.RedisInterceptor.setIntermediateData(request.intermediateData);
         let reqId = idSeq++;
         testingRequests[reqId] = _.extend({

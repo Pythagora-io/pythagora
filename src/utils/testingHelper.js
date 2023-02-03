@@ -21,6 +21,8 @@ async function makeTestRequest(test) {
             options.data = test.body;
         }
         const response = await axios(options);
+        // TODO fix this along with managing the case where a request is overwritter during the capture so doesn't exist during capture filtering
+        if (!global.Pytagora.request) return false;
 
         if(response.status >= 300 && response.status < 400) {
             response.data = {type: 'redirect', url: `${response.headers.location}`};

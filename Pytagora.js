@@ -227,11 +227,6 @@ class Pytagora {
         });
 
         app.use(async (req,res,next) => {
-            MockDate.set('2023-01-13');
-            return next();
-        });
-
-        app.use(async (req,res,next) => {
             if (this.mode !== MODES.test) return next();
 
             let prepareDB = async() => {

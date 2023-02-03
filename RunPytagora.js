@@ -3,7 +3,7 @@ let { mode, initScript } = require('./argumentsCheck');
 const path = require('path');
 const Pytagora = require('./Pytagora.js');
 
-global.Pytagora = new Pytagora(mode);
+global.Pytagora = new Pytagora(mode, initScript);
 
 (async () => {
     let app;

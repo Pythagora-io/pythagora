@@ -54,6 +54,16 @@ ${blue+bold}************************************************************${reset}
     `);
 }
 
+let logCaptureFinished = (passed, failed, linesExecuted = undefined, codeCoverage = undefined) => {
+    console.log(`
+${blue+bold}************************************************************${reset}
+${green+bold}Pytagora finished capturing!${reset}
+${green+bold}${passed} ${reset}requests are ${green+bold}captured!${reset}
+Unable to capture ${red+bold}${failed} ${reset}request${failed === 1 ? '' : 's'}.${failed > 0 ? ' This is likely due to features Pytagora doesn\'t support yet like handling random variables (passwords, hashes, etc.) or some authentification methods.' : ''}
+${blue+bold}************************************************************${reset}
+    `);
+}
+
 let logTestsStarting = (files) => {
     console.log(`Starting tests on endpoints:${blue+bold}
 ${files.map(file => file.replace(/\|/g, '/').replace('.json', '')).join('\n')}
@@ -67,5 +77,6 @@ module.exports = {
     logTestPassed,
     logTestsFinished,
     logTestsStarting,
-    logEndpointNotCaptured
+    logEndpointNotCaptured,
+    logCaptureFinished
 }

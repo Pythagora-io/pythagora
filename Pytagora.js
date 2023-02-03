@@ -18,7 +18,7 @@ let mongoose = require("../mongoose");
 let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
 const RedisInterceptor = require("./RedisInterceptor.js");
 // const instrumenter = require('./instrumenter');
-const { logEndpointCaptured, logEndpointNotCaptured } = require('./src/utils/cmdPrint.js');
+const { logEndpointCaptured, logEndpointNotCaptured, logCaptureFinished } = require('./src/utils/cmdPrint.js');
 const pytagoraErrors = require('./src/utils/errors.json');
 const duplexify = require('duplexify');
 const MockDate = require('mockdate');
@@ -34,7 +34,8 @@ const {
     mongoIdRegex,
     stringToRegExp,
     getCircularReplacer
-} = require('./src/utils/common.js')
+} = require('./src/utils/common.js');
+const { makeTestRequest } = require('./src/utils/testingHelper.js');
 
 const asyncLocalStorage = new AsyncLocalStorage();
 
@@ -45,6 +46,7 @@ function logWithStoreId(msg) {
 
 let app, pytagoraDbConnection;
 let idSeq = 0;
+let testsRemoved = 0;
 let loggingEnabled;
 let requests = {};
 let testingRequests = {};
@@ -56,13 +58,9 @@ let MODES = {
     'test': 'test'
 };
 
-process.on('exit', async (code) => {
-    await this.cleanupDb();
-});
-
 class Pytagora {
 
-    constructor(mode) {
+    constructor(mode, initScript) {
         if (!MODES[mode]) throw new Error('Invalid mode');
         else this.mode = mode;
         loggingEnabled = mode === 'capture';
@@ -76,6 +74,53 @@ class Pytagora {
         this.codeCoverage = {};
 
         // this.instrumenter = instrumenter;
+
+        this.cleanupDone = false;
+
+        process.on('SIGINT', this.exit.bind(this));
+        process.on('exit', this.exit.bind(this));
+
+
+    }
+
+    async exit() {
+        if (this.cleanupDone) return;
+        this.cleanupDone = true;
+        console.log(`\nPytagora capturing done. Finishing up...`);
+        if (this.mode === MODES.test) await this.cleanupDb();
+        if (this.mode === MODES.capture) {
+            this.mode = MODES.test;
+            for (const request of _.values(requests).filter(req => !req.error)) {
+                let result = await makeTestRequest(request);
+                if (!result) {
+                    testsRemoved++;
+                    console.log(`Capture is not valid for endpoint ${request.endpoint} (${request.method}). Erasing...`)
+                    let reqFileName = `./pytagora_data/${request.endpoint.replace(/\//g, '|')}.json`;
+                    let fileContent = JSON.parse(FS.readFileSync(reqFileName));
+                    if (fileContent.length === 1) {
+                        FS.unlinkSync(reqFileName);
+                    } else {
+                        let identicalRequestIndex = fileContent.findIndex(req => {
+                            return req && _.isEqual(req.pytagoraBody, reqData.pytagoraBody) &&
+                                req.method === reqData.method &&
+                                _.isEqual(req.query, reqData.query) &&
+                                _.isEqual(req.params, reqData.params);
+                        });
+
+                        if (identicalRequestIndex === -1) {
+                            console.error('Could not find request to delete. This should not happen. Please report this issue to Pytagora team.');
+                        } else {
+                            fileContent = fileContent.splice(identicalRequestIndex, 1);
+                            let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer());
+                            FS.writeFileSync(reqFileName, storeData);
+                        }
+                    }
+                }
+            }
+
+            logCaptureFinished(_.keys(requests).length - testsRemoved, testsRemoved);
+        }
+        process.exit();
     }
 
     setApp(newApp) {
@@ -519,6 +564,7 @@ class Pytagora {
         const _json = res.json;
         const finishCapture = (request, responseBody) => {
             if (request.error) {
+                // testsRemoved++;
                 return logEndpointNotCaptured(req.originalUrl, req.method, request.error);
             }
             if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);

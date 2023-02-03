@@ -47,6 +47,7 @@ async function makeRequest(test) {
         files = files.filter(f => f[0] !== '.');
         logTestsStarting(files);
         for (let file of files) {
+            if (file[0] !== '|') continue;
             let tests = JSON.parse(fs.readFileSync(`./pytagora_data/${file}`));
             for (let test of tests) {
                 results.push(await makeRequest(test) || false);

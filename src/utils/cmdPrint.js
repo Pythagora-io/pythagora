@@ -59,7 +59,7 @@ let logCaptureFinished = (passed, failed, linesExecuted = undefined, codeCoverag
 ${blue+bold}************************************************************${reset}
 ${green+bold}Pytagora finished capturing!${reset}
 ${green+bold}${passed} ${reset}requests are ${green+bold}captured!${reset}
-Unable to capture ${red+bold}${failed} ${reset}request${failed === 1 ? '' : 's'}.${failed > 0 ? ' This is likely due to features Pytagora doesn\'t support yet like handling random variables (passwords, hashes, etc.) or some authentification methods.' : ''}
+Unable to capture ${red+bold}${failed} ${reset}request${failed === 1 ? '' : 's'}.${failed > 0 ? ' This is likely due to features Pytagora doesn\'t support yet like handling random variables (passwords, hashes, etc.), uploading files or some authentification methods.' : ''}
 ${blue+bold}************************************************************${reset}
     `);
 }

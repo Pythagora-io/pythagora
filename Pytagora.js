@@ -102,10 +102,7 @@ class Pytagora {
                         FS.unlinkSync(reqFileName);
                     } else {
                         let identicalRequestIndex = fileContent.findIndex(req => {
-                            return req && _.isEqual(req.pytagoraBody, reqData.pytagoraBody) &&
-                                req.method === reqData.method &&
-                                _.isEqual(req.query, reqData.query) &&
-                                _.isEqual(req.params, reqData.params);
+                            return req && req.id === request.id;
                         });
 
                         if (identicalRequestIndex === -1) {
@@ -301,7 +298,7 @@ class Pytagora {
             //         data+=chunk.toString();
             //     });
             //     duplexStream.on('end', () => {
-            //         requests[req.id].pytagoraBody = data;
+            //         requests[req.id].body = data;
             //     });
             // }
             next();
@@ -567,7 +564,7 @@ class Pytagora {
         const _json = res.json;
         const finishCapture = (request, responseBody) => {
             if (request.error) {
-                // testsRemoved++;
+                testsRemoved++;
                 return logEndpointNotCaptured(req.originalUrl, req.method, request.error);
             }
             if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);

@@ -61,7 +61,7 @@ let MODES = {
 
 class Pytagora {
 
-    constructor(mode, initScript) {
+    constructor(mode) {
         if (!MODES[mode]) throw new Error('Invalid mode');
         else this.mode = mode;
         loggingEnabled = mode === 'capture';
@@ -573,23 +573,24 @@ class Pytagora {
             if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
             logEndpointCaptured(req.originalUrl, req.method, req.body, req.query, responseBody);
         }
-        const storeBodyAndTrace = (id, body) => {
-            requests[id].responseData = !body || requests[req.id].responseStatus === 204 ? '' :
+        const storeRequestData = (statusCode, id, body) => {
+            requests[id].responseData = !body || statusCode === 204 ? '' :
                 typeof body === 'string' ? body : JSON.stringify(body);
             requests[id].traceLegacy = requests[req.id].trace;
+            requests[id].statusCode = statusCode;
             requests[id].trace = [];
         }
 
         res.status = function(code) {
             logWithStoreId('status');
-            requests[req.id].responseStatus = code;
+            requests[req.id].statusCode = code;
             return _status.call(this, code);
         }
 
         res.json = function(json) {
             logWithStoreId('json');
             if (requests[req.id].finished) return _json.call(this, json);
-            storeBodyAndTrace(req.id, json);
+            storeRequestData(res.statusCode, req.id, json);
             if (!requests[req.id].finished) finishCapture(requests[req.id], json);
             requests[req.id].finished = true;
             return _json.call(this, json);
@@ -604,7 +605,7 @@ class Pytagora {
                 body = FS.readFileSync(path);
                 body = body.toString();
             }
-            storeBodyAndTrace(req.id, body);
+            storeRequestData(res.statusCode, req.id, body);
             if (!requests[req.id].finished) finishCapture(requests[req.id], body);
             requests[req.id].finished = true;
             _end.call(this, body);
@@ -613,7 +614,7 @@ class Pytagora {
         res.send = function(body) {
             logWithStoreId('send');
             if (requests[req.id].finished) return _send.call(this, requests[req.id].responseData);
-            storeBodyAndTrace(req.id, body);
+            storeRequestData(res.statusCode, req.id, body);
             if (!requests[req.id].finished) finishCapture(requests[req.id], body);
             requests[req.id].finished = true;
             _send.call(this, requests[req.id].responseData);
@@ -626,7 +627,7 @@ class Pytagora {
                 file = FS.readFileSync(path);
                 if (file) file = file.toString();
             }
-            storeBodyAndTrace(req.id, file);
+            storeRequestData(res.statusCode, req.id, file);
             if (!requests[req.id].finished) finishCapture(requests[req.id], file);
             requests[req.id].finished = true;
             _sendFile.call(this, path);
@@ -634,6 +635,7 @@ class Pytagora {
 
         res.redirect = function(redirectUrl) {
             logWithStoreId('redirect');
+            requests[req.id].statusCode = res.statusCode;
             if (requests[req.id].finished) return _redirect.call(this, redirectUrl);
             requests[req.id].responseData = {
                 'type': 'redirect',

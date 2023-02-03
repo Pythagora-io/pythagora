@@ -1,4 +1,3 @@
-const qs = require('querystring');
 const axios = require('axios');
 const _ = require('lodash');
 const { compareResponse } = require('./common');
@@ -18,12 +17,7 @@ async function makeTestRequest(test) {
             transformResponse: (r) => r
         };
         if (test.method !== 'GET') {
-            // TODO create more comprehensive check for body when parsing pytagoraBody
-            try {
-                options.data = JSON.parse(test.pytagoraBody);
-            } catch (e) {
-                options.data = qs.parse(test.pytagoraBody) || {};
-            }
+            options.data = test.body;
         }
         const response = await axios(options).catch(e => {
             return e.response;
@@ -35,9 +29,10 @@ async function makeTestRequest(test) {
         // TODO we should compare JSON files and ignore _id during creation because it changes every time
         let testResult = compareResponse(response.data, test.responseData);
 
+        testResult = testResult ? test.statusCode === response.status : testResult;
         testResult = global.Pytagora.request.id === test.id && global.Pytagora.request.errors.length ? false : testResult;
         // TODO add query
-        (testResult ? logTestPassed : logTestFailed)(test.id, test.endpoint, test.method, test.pytagoraBody, undefined, response.data, test.responseData, global.Pytagora.request.errors);
+        (testResult ? logTestPassed : logTestFailed)(test, response, global.Pytagora);
         return testResult;
     } catch (error) {
         console.error(error);

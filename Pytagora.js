@@ -47,7 +47,7 @@ function logWithStoreId(msg) {
 
 let app, pytagoraDbConnection;
 let idSeq = 0;
-let testsRemoved = 0;
+let testEndpointsRemoved = [];
 let loggingEnabled;
 let requests = {};
 let testingRequests = {};
@@ -94,18 +94,16 @@ class Pytagora {
             for (const request of _.values(requests).filter(req => !req.error)) {
                 let result = await makeTestRequest(request);
                 if (!result) {
-                    testsRemoved++;
+                    testEndpointsRemoved.push(request.endpoint);
                     console.log(`Capture is not valid for endpoint ${request.endpoint} (${request.method}). Erasing...`)
                     let reqFileName = `./pytagora_data/${request.endpoint.replace(/\//g, '|')}.json`;
+                    if (!FS.existsSync(reqFileName)) continue;
                     let fileContent = JSON.parse(FS.readFileSync(reqFileName));
                     if (fileContent.length === 1) {
                         FS.unlinkSync(reqFileName);
                     } else {
                         let identicalRequestIndex = fileContent.findIndex(req => {
-                            return req && _.isEqual(req.pytagoraBody, reqData.pytagoraBody) &&
-                                req.method === reqData.method &&
-                                _.isEqual(req.query, reqData.query) &&
-                                _.isEqual(req.params, reqData.params);
+                            return req && req.id === request.id;
                         });
 
                         if (identicalRequestIndex === -1) {
@@ -119,7 +117,8 @@ class Pytagora {
                 }
             }
 
-            logCaptureFinished(_.keys(requests).length - testsRemoved, testsRemoved);
+            testEndpointsRemoved = _.uniq(testEndpointsRemoved);
+            logCaptureFinished(_.keys(requests).length - testEndpointsRemoved.length, testEndpointsRemoved.length);
         }
         process.exit();
     }
@@ -301,7 +300,7 @@ class Pytagora {
             //         data+=chunk.toString();
             //     });
             //     duplexStream.on('end', () => {
-            //         requests[req.id].pytagoraBody = data;
+            //         requests[req.id].body = data;
             //     });
             // }
             next();
@@ -567,7 +566,7 @@ class Pytagora {
         const _json = res.json;
         const finishCapture = (request, responseBody) => {
             if (request.error) {
-                // testsRemoved++;
+                testEndpointsRemoved.push(request.endpoint);
                 return logEndpointNotCaptured(req.originalUrl, req.method, request.error);
             }
             if (loggingEnabled) Pytagora.saveCaptureToFile(requests[req.id]);
@@ -668,6 +667,7 @@ class Pytagora {
             if (identicalRequestIndex === -1) {
                 FS.writeFileSync(endpointFileName, JSON.stringify(fileContent.concat([reqData]), getCircularReplacer()));
             } else {
+                if (requests[fileContent[identicalRequestIndex].id]) delete requests[fileContent[identicalRequestIndex].id];
                 fileContent[identicalRequestIndex] = reqData;
                 let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer());
                 FS.writeFileSync(endpointFileName, storeData);
@@ -677,7 +677,11 @@ class Pytagora {
 
     async apiTestInterceptor(req, res, next) {
         let request = await this.getRequestMockDataById(req);
-        if (!request) return console.error('No request found for', req.path, req.method, req.body, req.query, req.params);
+        if (!request) {
+            // TODO we're overwriting requests during the capture phase so this might happen durign the final filtering of the capture
+            console.error('No request found for', req.path, req.method, req.body, req.query, req.params);
+            return next();
+        }
         this.RedisInterceptor.setIntermediateData(request.intermediateData);
         let reqId = idSeq++;
         testingRequests[reqId] = _.extend({

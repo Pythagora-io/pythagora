@@ -109,7 +109,7 @@ class Pytagora {
                         if (identicalRequestIndex === -1) {
                             console.error('Could not find request to delete. This should not happen. Please report this issue to Pytagora team.');
                         } else {
-                            fileContent = fileContent.splice(identicalRequestIndex, 1);
+                            fileContent.splice(identicalRequestIndex, 1);
                             let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer());
                             FS.writeFileSync(reqFileName, storeData);
                         }

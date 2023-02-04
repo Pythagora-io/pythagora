@@ -22,7 +22,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "pytagora": "./bin/run.sh"
+    "pytagora": "bin/run.bash"
   },
   "author": "",
   "license": "ISC",

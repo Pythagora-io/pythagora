@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 args=("$@")
 if [[ " ${args[@]} " =~ " --no-code-coverage " ]] || ([[ ! " ${args[@]} " =~ " --mode test " ]] && [[ ! " ${args[@]} " =~ " --mode=test " ]])
 then

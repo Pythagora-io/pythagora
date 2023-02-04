@@ -18,7 +18,7 @@ let mongoose = require("../mongoose");
 let  { AsyncLocalStorage, AsyncResource } = require('node:async_hooks');
 const RedisInterceptor = require("./RedisInterceptor.js");
 // const instrumenter = require('./instrumenter');
-const { logEndpointCaptured, logEndpointNotCaptured, logCaptureFinished } = require('./src/utils/cmdPrint.js');
+const { logEndpointCaptured, logEndpointNotCaptured, logCaptureFinished, pytagoraFinishingUp } = require('./src/utils/cmdPrint.js');
 const pytagoraErrors = require('./src/utils/errors.json');
 // const duplexify = require('duplexify');
 const MockDate = require('mockdate');
@@ -88,6 +88,7 @@ class Pytagora {
         if (this.cleanupDone) return;
         this.cleanupDone = true;
         console.log(`\nPytagora capturing done. Finishing up...`);
+        pytagoraFinishingUp();
         if (this.mode === MODES.test) await this.cleanupDb();
         if (this.mode === MODES.capture) {
             this.mode = MODES.test;

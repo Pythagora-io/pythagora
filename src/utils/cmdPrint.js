@@ -70,6 +70,10 @@ ${files.map(file => file.replace(/\|/g, '/').replace('.json', '')).join('\n')}
 ${reset}`);
 }
 
+let pytagoraFinishingUp = () => {
+    console.log(`\n\n${blue+bold}Pytagora capturing done. Finishing up...${reset}\n`);
+}
+
 
 module.exports = {
     logEndpointCaptured,
@@ -78,5 +82,6 @@ module.exports = {
     logTestsFinished,
     logTestsStarting,
     logEndpointNotCaptured,
-    logCaptureFinished
+    logCaptureFinished,
+    pytagoraFinishingUp
 }

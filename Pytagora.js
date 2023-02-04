@@ -87,7 +87,6 @@ class Pytagora {
     async exit() {
         if (this.cleanupDone) return;
         this.cleanupDone = true;
-        console.log(`\nPytagora capturing done. Finishing up...`);
         pytagoraFinishingUp();
         if (this.mode === MODES.test) await this.cleanupDb();
         if (this.mode === MODES.capture) {

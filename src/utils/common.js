@@ -66,7 +66,7 @@ function compareJson(a, b, strict) {
     else if (Array.isArray(a) && Array.isArray(b)) {
         if (a.length !== b.length) return false;
         // TODO optimize because this is O(n^2)
-        return a.reduce((acc, item, index) => acc && b.find(b2 => compareJson(item, b2, strict)), true);
+        return a.reduce((acc, item, index) => acc && !!b.find(b2 => compareJson(item, b2, strict)), true);
     } else if (typeof a === 'string' && typeof b === 'string') {
         return objectIdAsStringRegex.test(a) && objectIdAsStringRegex.test(b) && !strict ? true : a === b;
     }

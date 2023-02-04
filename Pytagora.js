@@ -458,7 +458,13 @@ class Pytagora {
                     self.asyncStore = originalAsyncStore;
                     if (isQuery) {
                         let explaination = await self.model.find(findQuery).explain();
-                        findQuery = explaination[0] ? explaination[0].command.filter : explaination.command.filter;
+                        try {
+                            findQuery = Array.isArray(explaination) ?
+                                (explaination[0].command ? explaination[0].command.filter : explaination[0].queryPlanner.parsedQuery) :
+                                explaination.command.filter;
+                        } catch (e) {
+                            console.error('explaination', explaination);
+                        }
                     }
 
                     resolve(await mongoose.connection.db.collection(collection).find(findQuery).toArray());

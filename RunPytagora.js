@@ -4,24 +4,35 @@ const path = require('path');
 const fs = require('fs');
 const Pytagora = require('./Pytagora.js');
 
-global.Pytagora = new Pytagora(mode, initScript);
+global.Pytagora = new Pytagora(mode);
 
 function checkDependencies() {
     const searchPath = process.cwd();
-    const files = fs.readdirSync(searchPath);
     let mongoose, express;
 
-    files.forEach(file => {
-        if (file === "package.json") {
-            const filePath = path.resolve(searchPath, file);
-            const dependencies = JSON.parse(
-                fs.readFileSync(filePath, "utf-8")
-            ).dependencies;
+    const findPackageJson = (dir) => {
+        if (mongoose && express) return;
+        const files = fs.readdirSync(dir);
 
-            if(dependencies.mongoose) mongoose = true;
-            if(dependencies.express) express = true;
-        }
-    });
+        files.forEach(file => {
+            if (mongoose && express) return;
+            const filePath = path.resolve(dir, file);
+            const fileStat = fs.statSync(filePath);
+
+            if (fileStat.isDirectory() && file[0] !== '.' && file !== 'node_modules') {
+                findPackageJson(filePath);
+            } else if (file === "package.json") {
+                const dependencies = JSON.parse(
+                    fs.readFileSync(filePath, "utf-8")
+                ).dependencies;
+
+                if(dependencies.mongoose) mongoose = true;
+                if(dependencies.express) express = true;
+            }
+        });
+    };
+
+    findPackageJson(searchPath);
 
     if (!mongoose || !express) {
         console.log('For Pytagora to run you need to use "mongoose" and "express" node modules. Exiting app...')

@@ -22,26 +22,28 @@ let logEndpointNotCaptured = (endpoint, method, error) => {
 `);
 }
 
-let logTestFailed = (reqId, endpoint, method, body = {}, query = {}, response, expectedResponse, errors) => {
+let logTestFailed = (test, response, pytagora) => {
     let errLog = '';
     for (const err in pytagoraErrors) {
-        errLog += `\t${pytagoraErrors[err] + ' : ' + getOccurrenceInArray(errors, pytagoraErrors[err]) + '\n'}`
+        errLog += `\t${pytagoraErrors[err] + ' : ' + getOccurrenceInArray(pytagora.request.errors, pytagoraErrors[err]) + '\n'}`
     }
     console.log(`❌ Test ${red+bold}FAILED!${reset}
-    ${red+bold}${method} ${endpoint} ${reset}
-    ${red+bold}ReqId:   ${reset}${cutWithDots(JSON.stringify(reqId))}
-    ${red+bold}Body:   ${reset}${cutWithDots(JSON.stringify(body))}
-    ${red+bold}Query:   ${reset}${cutWithDots(JSON.stringify(query))}
-    ${red+bold}Response:   ${reset}${cutWithDots(JSON.stringify(response))}
-    ${red+bold}Expected Response:   ${reset}${cutWithDots(JSON.stringify(expectedResponse))}
+    ${red+bold}${test.method} ${test.endpoint} ${reset}
+    ${red+bold}ReqId:   ${reset}${cutWithDots(JSON.stringify(test.id))}
+    ${red+bold}Body:   ${reset}${cutWithDots(JSON.stringify(test.body))}
+    ${red+bold}Query:   ${reset}${cutWithDots(JSON.stringify(test.query || {}))}
+    ${red+bold}StatusCode:   ${reset}${cutWithDots(JSON.stringify(response.status))}
+    ${red+bold}Expected StatusCode:   ${reset}${cutWithDots(JSON.stringify(test.statusCode))}
+    ${red+bold}Response:   ${reset}${cutWithDots(JSON.stringify(response.data))}
+    ${red+bold}Expected Response:   ${reset}${cutWithDots(JSON.stringify(test.responseData))}
     ${red+bold}Errors:   [
-${errLog}
-    ]
+${reset}${errLog}
+    ${red+bold}]
     ${red+bold}-----------------------------------------------${reset}`);
 }
 
-let logTestPassed = (endpoint, method) => {
-    console.log(`✅ Test ${method} ${endpoint} ${green+bold}PASSED!${reset}`);
+let logTestPassed = (test, response, pytagora) => {
+    console.log(`✅ Test ${test.method} ${test.endpoint} ${green+bold}PASSED!${reset}`);
 }
 
 let logTestsFinished = (passed, failed, linesExecuted = undefined, codeCoverage = undefined) => {

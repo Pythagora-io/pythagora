@@ -1,9 +1,5 @@
-const axios = require('axios');
 const fs = require('fs');
-const qs = require('querystring');
-const _ = require('lodash');
 const { logTestsFinished, logTestsStarting } = require('./src/utils/cmdPrint');
-const { compareResponse } = require('./src/utils/common');
 const { makeTestRequest } = require('./src/utils/testingHelper');
 
 (async () => {

@@ -1,4 +1,3 @@
-const qs = require('querystring');
 const axios = require('axios');
 const _ = require('lodash');
 const { compareResponse } = require('./common');
@@ -20,7 +19,9 @@ async function makeTestRequest(test) {
         if (test.method !== 'GET') {
             options.data = test.body;
         }
-        const response = await axios(options);
+        const response = await axios(options).catch(e => {
+            return e.response;
+        });
         // TODO fix this along with managing the case where a request is overwritter during the capture so doesn't exist during capture filtering
         if (!global.Pytagora.request) return false;
 
@@ -30,9 +31,10 @@ async function makeTestRequest(test) {
         // TODO we should compare JSON files and ignore _id during creation because it changes every time
         let testResult = compareResponse(response.data, test.responseData);
 
+        testResult = testResult ? test.statusCode === response.status : testResult;
         testResult = global.Pytagora.request.id === test.id && global.Pytagora.request.errors.length ? false : testResult;
         // TODO add query
-        (testResult ? logTestPassed : logTestFailed)(test.id, test.endpoint, test.method, test.body, undefined, response.data, test.responseData, global.Pytagora.request.errors);
+        (testResult ? logTestPassed : logTestFailed)(test, response, global.Pytagora);
         return testResult;
     } catch (error) {
         console.error(error);

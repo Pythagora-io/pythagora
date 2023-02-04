@@ -289,6 +289,8 @@ class Pytagora {
                 mongoQueriesCapture: 0
             };
 
+            if (req.is('multipart/form-data')) requests[req.id].error = "Uploading multipart/form-data is not supported yet!";
+
             // if (!req.is('multipart/form-data')) {
             //     let data = '';
             //     const inputStream = req;

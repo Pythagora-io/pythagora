@@ -1,9 +1,11 @@
-const qs = require("querystring");
-const axios = require("axios");
 const _ = require("lodash");
+const mongoose = require("../../../mongoose");
+
 const objectIdAsStringRegex = /^ObjectId\("([0-9a-fA-F]{24})"\)$/;
 const regExpRegex = /^RegExp\("(.*)"\)$/;
 const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
+
+let ObjectId = mongoose.Types.ObjectId;
 
 const isObjectId = (value) => {
     try {
@@ -130,6 +132,78 @@ function getOccurrenceInArray(array, value) {
     return array.filter((v) => (v === value)).length;
 }
 
+function convertToRegularObject(obj) {
+    if (obj === null) return obj;
+
+    const reviver = (key, value) => {
+        if (typeof value === 'string') {
+            if (value.length === 24 && mongoIdRegex.test(value)) return new ObjectId(value);
+            else if (regExpRegex.test(value)) return stringToRegExp(value);
+        }
+        return value;
+    }
+
+    let stringified = JSON.stringify(noUndefined(obj), getCircularReplacer());
+    return JSON.parse(stringified, reviver);
+}
+
+function jsonObjToMongo(originalObj) {
+    let obj = _.clone(originalObj);
+    if (!obj) return obj;
+    if (Array.isArray(obj)) return obj.map(d => jsonObjToMongo(d));
+    else if (typeof obj === 'string' && objectIdAsStringRegex.test(obj)) return stringToMongoObjectId(obj);
+    else if (typeof obj === 'string' && mongoIdRegex.test(obj)) return stringToMongoObjectId(`ObjectId("${obj}")`);
+    else if (typeof obj === 'string' && regExpRegex.test(obj)) return stringToRegExp(obj);
+    else if (isJSONObject(obj)) {
+        obj = convertToRegularObject(obj);
+        for (let key in obj) {
+            if (!obj[key]) continue;
+            else if (typeof obj[key] === 'string') {
+                // TODO label a key as ObjectId better (not through a string)
+                if (objectIdAsStringRegex.test(obj[key])) obj[key] = stringToMongoObjectId(obj[key]);
+                else if (mongoIdRegex.test(obj[key])) obj[key] = stringToMongoObjectId(`ObjectId("${obj[key]}")`);
+                else if (regExpRegex.test(obj[key])) obj[key] = stringToRegExp(obj[key]);
+            } else if (obj[key]._bsontype === "ObjectID") {
+                continue;
+            } else if (isJSONObject(obj[key]) || Array.isArray(obj[key])) {
+                obj[key] = jsonObjToMongo(obj[key]);
+            }
+        }
+    }
+    return obj;
+}
+
+function stringToMongoObjectId(str) {
+    let idValue = str.match(objectIdAsStringRegex);
+    if (idValue && idValue[1] && ObjectId.isValid(idValue[1])) {
+        return new ObjectId(idValue[1]);
+    }
+    return str;
+}
+
+function mongoObjToJson(originalObj) {
+    let obj = _.clone(originalObj);
+    if (!obj) return obj;
+    else if (obj._bsontype === 'ObjectID') return `ObjectId("${obj.toString()}")`;
+    if (Array.isArray(obj)) return obj.map(d => {
+        return mongoObjToJson(d)
+    });
+    obj = convertToRegularObject(obj);
+
+    for (let key in obj) {
+        if (!obj[key]) continue;
+        if (obj[key]._bsontype === "ObjectID") {
+            // TODO label a key as ObjectId better (not through a string)
+            obj[key] = `ObjectId("${obj[key].toString()}")`;
+        } else if (obj[key] instanceof RegExp) {
+            obj[key] = `RegExp("${obj[key].toString()}")`;
+        } else if (typeof obj[key] === 'object') {
+            obj[key] = mongoObjToJson(obj[key]);
+        }
+    }
+    return obj;
+}
+
 module.exports = {
     cutWithDots,
     compareResponse,
@@ -144,5 +218,8 @@ module.exports = {
     noUndefined,
     stringToRegExp,
     getCircularReplacer,
-    getOccurrenceInArray
+    getOccurrenceInArray,
+    convertToRegularObject,
+    jsonObjToMongo,
+    mongoObjToJson
 }

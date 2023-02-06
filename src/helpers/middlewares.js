@@ -13,6 +13,10 @@ const fs = require('fs')
 
 function setUpExpressMiddleware(app, pytagora, mongoose) {
     app.use(async (req,res,next) => {
+        if (req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) {
+            req.pytagoraIgnore = true;
+            next();
+        }
         if (pytagora.mode !== MODES.test) return next();
         let pytagoraDb = 'pytagoraDb';
 
@@ -58,7 +62,7 @@ function setUpExpressMiddleware(app, pytagora, mongoose) {
     }));
 
     app.use((req, res, next) => {
-        if (pytagora.mode !== MODES.capture) return next();
+        if (pytagora.mode !== MODES.capture || req.pytagoraIgnore) return next();
         if (!req.id) req.id = v4();
         let eid = executionAsyncId();
         if (!pytagora.requests[req.id]) pytagora.requests[req.id] = {
@@ -98,6 +102,7 @@ function setUpExpressMiddleware(app, pytagora, mongoose) {
     });
 
     app.use(async (req, res, next) => {
+        if (req.pytagoraIgnore) return next();
         pytagora.RedisInterceptor.setMode(pytagora.mode);
         if (pytagora.mode === MODES.capture) await apiCaptureInterceptor(req, res, next, pytagora);
         else if (pytagora.mode === MODES.test) await apiTestInterceptor(req, res, next, pytagora);

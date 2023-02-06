@@ -1,7 +1,7 @@
 const axios = require('axios');
 const _ = require('lodash');
-const { compareResponse } = require('./common');
-const { logTestPassed, logTestFailed } = require('./cmdPrint');
+const { compareResponse } = require('../utils/common');
+const { logTestPassed, logTestFailed } = require('../utils/cmdPrint');
 
 async function makeTestRequest(test) {
     try {

@@ -1,6 +1,7 @@
-const fs = require('fs');
 const { logTestsFinished, logTestsStarting } = require('./src/utils/cmdPrint');
-const { makeTestRequest } = require('./src/utils/testingHelper');
+const { makeTestRequest } = require('./src/helpers/testing.js');
+
+const fs = require('fs');
 
 (async () => {
     const directory = './pytagora_data';

@@ -1,11 +1,16 @@
 let { cutWithDots, getOccurrenceInArray } = require('./common');
-let pytagoraErrors = require('./errors.json');
+let pytagoraErrors = require('../const/errors.json');
 
 let red = '\x1b[31m',
     green = '\x1b[32m',
     blue = '\x1b[34m',
     reset = '\x1b[0m',
     bold = '\x1b[1m';
+
+let logWithStoreId = (msg) => {
+    const id = global.asyncLocalStorage.getStore();
+    // console.log(`${id !== undefined ? id : '-'}:`, msg);
+}
 
 let logEndpointCaptured = (endpoint, method, body, query, responseBody = {}) => {
     console.log(`
@@ -85,5 +90,6 @@ module.exports = {
     logTestsStarting,
     logEndpointNotCaptured,
     logCaptureFinished,
-    pytagoraFinishingUp
+    pytagoraFinishingUp,
+    logWithStoreId
 }

@@ -114,7 +114,6 @@ async function apiCaptureInterceptor(req, res, next, pytagora) {
     const _json = res.json;
     const finishCapture = (request, responseBody) => {
         if (request.error) {
-            pytagora.testEndpointsRemoved.push(request.endpoint);
             return logEndpointNotCaptured(req.originalUrl, req.method, request.error);
         }
         if (pytagora.loggingEnabled) saveCaptureToFile(pytagora.requests[req.id], pytagora);

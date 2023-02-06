@@ -3,7 +3,7 @@ const _ = require('lodash');
 const { compareResponse } = require('../utils/common');
 const { logTestPassed, logTestFailed } = require('../utils/cmdPrint');
 
-async function makeTestRequest(test) {
+async function makeTestRequest(test, showPassedLog = true, showFailedLog = true) {
     try {
         let options = {
             method: test.method,
@@ -34,7 +34,8 @@ async function makeTestRequest(test) {
         testResult = testResult ? test.statusCode === response.status : testResult;
         testResult = global.Pytagora.request.id === test.id && global.Pytagora.request.errors.length ? false : testResult;
         // TODO add query
-        (testResult ? logTestPassed : logTestFailed)(test, response, global.Pytagora);
+        if (showPassedLog && testResult) logTestPassed(test, response, global.Pytagora);
+        if (showFailedLog && !testResult) logTestFailed(test, response, global.Pytagora);
         return testResult;
     } catch (error) {
         console.error(error);

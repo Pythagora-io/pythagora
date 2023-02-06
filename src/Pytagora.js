@@ -26,7 +26,6 @@ class Pytagora {
         else this.mode = mode;
 
         this.idSeq = 0;
-        this.testEndpointsRemoved = [];
         this.requests = {};
         this.testingRequests = {};
         this.loggingEnabled = mode === 'capture';
@@ -50,10 +49,16 @@ class Pytagora {
         if (this.mode === MODES.capture) {
             pytagoraFinishingUp();
             this.mode = MODES.test;
-            for (const request of _.values(this.requests).filter(req => !req.error)) {
-                let result = await makeTestRequest(request);
+            let savedRequests = [], failedRequests = [];
+            for (const request of _.values(this.requests)) {
+                if (request.error) {
+                    // TODO make a general function for comparing requests and use it here as well instead of only endpoint
+                    failedRequests.push(request.endpoint);
+                    continue;
+                }
+                let result = await makeTestRequest(request, true, false);
                 if (!result) {
-                    this.testEndpointsRemoved.push(request.endpoint);
+                    failedRequests.push(request.endpoint);
                     console.log(`Capture is not valid for endpoint ${request.endpoint} (${request.method}). Erasing...`)
                     let reqFileName = `./pytagora_data/${request.endpoint.replace(/\//g, '|')}.json`;
                     if (!fs.existsSync(reqFileName)) continue;
@@ -73,11 +78,12 @@ class Pytagora {
                             fs.writeFileSync(reqFileName, storeData);
                         }
                     }
-                }
+                } else savedRequests.push(request.endpoint);
             }
 
-            this.testEndpointsRemoved = _.uniq(this.testEndpointsRemoved);
-            logCaptureFinished(_.keys(this.requests).length - this.testEndpointsRemoved.length, this.testEndpointsRemoved.length);
+            savedRequests = _.uniq(savedRequests);
+            failedRequests = _.uniq(failedRequests);
+            logCaptureFinished(savedRequests.length, failedRequests.length);
         }
         process.exit();
     }

@@ -12,7 +12,10 @@ global.Pytagora = new Pytagora(mode);
     await global.Pytagora.runRedisInterceptor();
     try {
         checkDependencies();
-
+    } catch (e) {
+        console.log('Pytagora is unable to check dependencies. Continuing and hoping you have Express and Mongoose installed...')
+    }
+    try {
         console.log(path.join(process.cwd(), initScript));
         app = require(path.join(process.cwd(), initScript));
     } catch (e) {

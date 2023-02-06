@@ -46,9 +46,9 @@ class Pytagora {
     async exit() {
         if (this.cleanupDone) return;
         this.cleanupDone = true;
-        pytagoraFinishingUp();
         if (this.mode === MODES.test) await cleanupDb();
         if (this.mode === MODES.capture) {
+            pytagoraFinishingUp();
             this.mode = MODES.test;
             for (const request of _.values(this.requests).filter(req => !req.error)) {
                 let result = await makeTestRequest(request);

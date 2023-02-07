@@ -37,7 +37,7 @@ class Pythagora {
 
         configureMongoosePlugin(this);
 
-        this.cleanupDone = true;
+        this.cleanupDone = false;
 
         process.on('SIGINT', this.exit.bind(this));
         process.on('exit', this.exit.bind(this));

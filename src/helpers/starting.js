@@ -23,6 +23,7 @@ function checkDependencies() {
 
                 if(dependencies.mongoose) mongoose = true;
                 if(dependencies.express) express = true;
+                if(dependencies.pythagora) global.Pythagora.setVersion(dependencies.pythagora);
             }
         });
     };

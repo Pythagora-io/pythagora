@@ -269,6 +269,8 @@ function checkForFinalErrors(reqId, pythagora) {
 }
 
 function saveCaptureToFile(reqData, pythagora) {
+    reqData.pythagoraVersion = pythagora.version;
+    reqData.createdAt = new Date().toISOString();
     let endpointFileName = `./pythagora_data/${reqData.endpoint.replace(/\//g, '|')}.json`;
     if (!fs.existsSync(endpointFileName)) fs.writeFileSync(endpointFileName, JSON.stringify([reqData], getCircularReplacer()));
     else {

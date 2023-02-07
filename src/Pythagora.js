@@ -25,6 +25,7 @@ class Pythagora {
         if (!MODES[mode]) throw new Error('Invalid mode');
         else this.mode = mode;
 
+        this.version = undefined;
         this.idSeq = 0;
         this.requests = {};
         this.testingRequests = {};
@@ -86,6 +87,10 @@ class Pythagora {
             logCaptureFinished(savedRequests.length, failedRequests.length);
         }
         process.exit();
+    }
+
+    setVersion(version) {
+        this.version = version;
     }
 
     setApp(newApp) {

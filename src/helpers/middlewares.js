@@ -1,5 +1,5 @@
 const MODES = require("../const/modes.json");
-const { jsonObjToMongo, getCircularReplacer } = require("../utils/common.js");
+const { jsonObjToMongo, getCircularReplacer, compareResponse } = require("../utils/common.js");
 const pythagoraErrors = require("../const/errors.json");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
 const { cleanupDb } = require("./mongo.js");
@@ -279,7 +279,9 @@ function saveCaptureToFile(reqData, pythagora) {
             return req && _.isEqual(req.body, reqData.body) &&
                 req.method === reqData.method &&
                 _.isEqual(req.query, reqData.query) &&
-                _.isEqual(req.params, reqData.params);
+                _.isEqual(req.params, reqData.params) &&
+                _.isEqual(req.statusCode, reqData.statusCode) &&
+                compareResponse(req.responseData, reqData.responseData);
         });
 
         if (identicalRequestIndex === -1) {

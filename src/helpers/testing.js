@@ -20,6 +20,7 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
             options.data = test.body;
         }
         const response = await axios(options).catch(e => {
+            console.error(e);
             return e.response;
         });
         // TODO fix this along with managing the case where a request is overwritter during the capture so doesn't exist during capture filtering

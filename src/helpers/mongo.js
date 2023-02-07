@@ -1,4 +1,4 @@
-const pytagoraErrors = require("../const/errors.json");
+const pythagoraErrors = require("../const/errors.json");
 const MODES = require("../const/modes.json");
 const { mongoObjToJson, compareJson, jsonObjToMongo, noUndefined } = require("../utils/common.js");
 const { logWithStoreId } = require("../utils/cmdPrint.js");
@@ -77,7 +77,7 @@ async function getMongoDocs(self) {
     return {req, mongoDocs}
 }
 
-function configureMongoosePlugin(pytagora) {
+function configureMongoosePlugin(pythagora) {
     mongoose.plugin((schema) => {
         schema.pre(methods, async function() {
             if (global.asyncLocalStorage.getStore() === undefined ||
@@ -86,8 +86,8 @@ function configureMongoosePlugin(pytagora) {
             this.asyncStore = global.asyncLocalStorage.getStore();
             this.mongoReqId = v4();
             try {
-                let request = pytagora.requests[pytagora.getRequestKeyByAsyncStore()];
-                if (pytagora.mode === MODES.capture && request) {
+                let request = pythagora.requests[pythagora.getRequestKeyByAsyncStore()];
+                if (pythagora.mode === MODES.capture && request) {
                     let mongoRes = await getMongoDocs(this);
 
                     if (mongoRes.error) request.error = mongoRes.error.message;
@@ -117,9 +117,9 @@ function configureMongoosePlugin(pytagora) {
                 logWithStoreId('mongo post');
                 var mongoRes = await getMongoDocs(this);
 
-                if (pytagora.mode === MODES.test) {
-                    pytagora.testingRequests[this.asyncStore].mongoQueriesTest++;
-                    let request = pytagora.testingRequests[this.asyncStore];
+                if (pythagora.mode === MODES.test) {
+                    pythagora.testingRequests[this.asyncStore].mongoQueriesTest++;
+                    let request = pythagora.testingRequests[this.asyncStore];
                     let mongoReq = mongoObjToJson(_.omit(mongoRes.req, '_doc'));
                     let capturedData = request.intermediateData.find(d => {
                         return !d.processed &&
@@ -133,12 +133,12 @@ function configureMongoosePlugin(pytagora) {
                     if (capturedData &&
                         (!compareJson(capturedData.mongoRes, mongoObjToJson(doc)) || !compareJson(capturedData.postQueryRes, mongoObjToJson(mongoRes.mongoDocs)))
                     ) {
-                        pytagora.testingRequests[this.asyncStore].errors.push(pytagoraErrors.mongoResultDifferent);
+                        pythagora.testingRequests[this.asyncStore].errors.push(pythagoraErrors.mongoResultDifferent);
                     } else if (!capturedData) {
-                        pytagora.testingRequests[this.asyncStore].errors.push(pytagoraErrors.mongoQueryNotFound);
+                        pythagora.testingRequests[this.asyncStore].errors.push(pythagoraErrors.mongoQueryNotFound);
                     }
-                } else if (pytagora.mode === MODES.capture) {
-                    let request = pytagora.requests[pytagora.getRequestKeyByAsyncStore()];
+                } else if (pythagora.mode === MODES.capture) {
+                    let request = pythagora.requests[pythagora.getRequestKeyByAsyncStore()];
                     if (request) {
                         request.mongoQueriesCapture++;
                         request.intermediateData.forEach((intData, i) => {

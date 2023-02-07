@@ -30,7 +30,7 @@ function checkDependencies() {
     findPackageJson(searchPath);
 
     if (!mongoose || !express) {
-        console.log('For Pytagora to run you need to use "mongoose" and "express" node modules. Exiting app...')
+        console.log('For Pythagora to run you need to use "mongoose" and "express" node modules. Exiting app...')
         process.exit(1);
     }
 }

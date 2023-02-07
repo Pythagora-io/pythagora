@@ -15,7 +15,7 @@ Eg. --initScript ./app.js
     process.exit(1);
 }
 
-console.log(`Running ${initScript} using Pytagora in '${mode.toUpperCase()}' mode.`);
+console.log(`Running ${initScript} using Pythagora in '${mode.toUpperCase()}' mode.`);
 
 module.exports = {
     mode, initScript

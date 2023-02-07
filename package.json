@@ -9,9 +9,9 @@
     "nyc": "^15.1.0",
     "uuid": "^9.0.0"
   },
-  "name": "pytagora",
-  "version": "0.0.26",
-  "main": "Pytagora.js",
+  "name": "pythagora",
+  "version": "0.0.1",
+  "main": "Pythagora.js",
   "directories": {
     "test": "tests"
   },
@@ -19,7 +19,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "pytagora": "bin/run.bash"
+    "pythagora": "bin/run.bash"
   },
   "author": "",
   "license": "ISC",

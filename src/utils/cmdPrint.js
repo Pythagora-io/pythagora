@@ -1,5 +1,5 @@
 let { cutWithDots, getOccurrenceInArray } = require('./common');
-let pytagoraErrors = require('../const/errors.json');
+let pythagoraErrors = require('../const/errors.json');
 
 let red = '\x1b[31m',
     green = '\x1b[32m',
@@ -27,10 +27,10 @@ let logEndpointNotCaptured = (endpoint, method, error) => {
 `);
 }
 
-let logTestFailed = (test, response, pytagora) => {
+let logTestFailed = (test, response, pythagora) => {
     let errLog = '';
-    for (const err in pytagoraErrors) {
-        errLog += `\t${pytagoraErrors[err] + ' : ' + getOccurrenceInArray(pytagora.request.errors, pytagoraErrors[err]) + '\n'}`
+    for (const err in pythagoraErrors) {
+        errLog += `\t${pythagoraErrors[err] + ' : ' + getOccurrenceInArray(pythagora.request.errors, pythagoraErrors[err]) + '\n'}`
     }
     console.log(`❌ Test ${red+bold}FAILED!${reset}
     ${red+bold}${test.method} ${test.endpoint} ${reset}
@@ -47,14 +47,14 @@ ${reset}${errLog}
     ${red+bold}-----------------------------------------------${reset}`);
 }
 
-let logTestPassed = (test, response, pytagora) => {
+let logTestPassed = (test, response, pythagora) => {
     console.log(`✅ Test ${test.method} ${test.endpoint} ${green+bold}PASSED!${reset}`);
 }
 
 let logTestsFinished = (passed, failed, linesExecuted = undefined, codeCoverage = undefined) => {
     console.log(`
 ${blue+bold}************************************************************${reset}
-${green+bold}Pytagora finished testing!${reset}
+${green+bold}Pythagora finished testing!${reset}
 ${green+bold}${passed} ${reset}tests ${green+bold}PASSED!${reset}
 ${red+bold}${failed} ${reset}tests ${red+bold}FAILED!${reset}
 ${blue+bold}************************************************************${reset}
@@ -64,9 +64,9 @@ ${blue+bold}************************************************************${reset}
 let logCaptureFinished = (passed, failed, linesExecuted = undefined, codeCoverage = undefined) => {
     console.log(`
 ${blue+bold}************************************************************${reset}
-${green+bold}Pytagora finished capturing!${reset}
+${green+bold}Pythagora finished capturing!${reset}
 ${green+bold}${passed} ${reset}requests are ${green+bold}captured!${reset}
-Unable to capture ${red+bold}${failed} ${reset}request${failed === 1 ? '' : 's'}.${failed > 0 ? ' This is likely due to features Pytagora doesn\'t support yet like handling random variables (passwords, hashes, etc.), uploading files or some authentification methods.' : ''}
+Unable to capture ${red+bold}${failed} ${reset}request${failed === 1 ? '' : 's'}.${failed > 0 ? ' This is likely due to features Pythagora doesn\'t support yet like handling random variables (passwords, hashes, etc.), uploading files or some authentification methods.' : ''}
 ${blue+bold}************************************************************${reset}
     `);
 }
@@ -77,8 +77,8 @@ ${files.map(file => file.replace(/\|/g, '/').replace('.json', '')).join('\n')}
 ${reset}`);
 }
 
-let pytagoraFinishingUp = () => {
-    console.log(`\n\n${blue+bold}Pytagora capturing done. Finishing up...${reset}\n`);
+let pythagoraFinishingUp = () => {
+    console.log(`\n\n${blue+bold}Pythagora capturing done. Finishing up...${reset}\n`);
 }
 
 
@@ -90,6 +90,6 @@ module.exports = {
     logTestsStarting,
     logEndpointNotCaptured,
     logCaptureFinished,
-    pytagoraFinishingUp,
+    pythagoraFinishingUp,
     logWithStoreId
 }

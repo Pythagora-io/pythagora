@@ -3,7 +3,7 @@ const RedisInterceptor = require('./helpers/redis.js');
 const { configureMongoosePlugin, cleanupDb } = require('./helpers/mongo.js');
 const { makeTestRequest } = require('./helpers/testing.js');
 const { setUpExpressMiddleware } = require('./helpers/middlewares.js');
-const { logCaptureFinished, pytagoraFinishingUp } = require('./utils/cmdPrint.js');
+const { logCaptureFinished, pythagoraFinishingUp } = require('./utils/cmdPrint.js');
 const { getCircularReplacer } = require('./utils/common.js');
 
 let  { BatchInterceptor } = require('@mswjs/interceptors');
@@ -19,7 +19,7 @@ global.asyncLocalStorage = new AsyncLocalStorage();
 
 let app;
 
-class Pytagora {
+class Pythagora {
 
     constructor(mode) {
         if (!MODES[mode]) throw new Error('Invalid mode');
@@ -30,7 +30,7 @@ class Pytagora {
         this.testingRequests = {};
         this.loggingEnabled = mode === 'capture';
 
-        if (!fs.existsSync('./pytagora_data/')) fs.mkdirSync('./pytagora_data/');
+        if (!fs.existsSync('./pythagora_data/')) fs.mkdirSync('./pythagora_data/');
 
         // this.setUpHttpInterceptor();
 
@@ -47,7 +47,7 @@ class Pytagora {
         this.cleanupDone = true;
         if (this.mode === MODES.test) await cleanupDb();
         if (this.mode === MODES.capture) {
-            pytagoraFinishingUp();
+            pythagoraFinishingUp();
             this.mode = MODES.test;
             let savedRequests = [], failedRequests = [];
             for (const request of _.values(this.requests)) {
@@ -60,7 +60,7 @@ class Pytagora {
                 if (!result) {
                     failedRequests.push(request.endpoint);
                     console.log(`Capture is not valid for endpoint ${request.endpoint} (${request.method}). Erasing...`)
-                    let reqFileName = `./pytagora_data/${request.endpoint.replace(/\//g, '|')}.json`;
+                    let reqFileName = `./pythagora_data/${request.endpoint.replace(/\//g, '|')}.json`;
                     if (!fs.existsSync(reqFileName)) continue;
                     let fileContent = JSON.parse(fs.readFileSync(reqFileName));
                     if (fileContent.length === 1) {
@@ -71,7 +71,7 @@ class Pytagora {
                         });
 
                         if (identicalRequestIndex === -1) {
-                            console.error('Could not find request to delete. This should not happen. Please report this issue to Pytagora team.');
+                            console.error('Could not find request to delete. This should not happen. Please report this issue to Pythagora team.');
                         } else {
                             fileContent.splice(identicalRequestIndex, 1);
                             let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer());
@@ -109,9 +109,9 @@ class Pytagora {
         interceptor.on('response', (res, req) => this.httpResponseInterceptor(res, req, this));
     }
 
-    httpRequestInterceptor(request, requestId, pytagora) {
-        if (pytagora.mode === MODES.test) {
-            let mockResponse = pytagora.getHttpMockResponse(request);
+    httpRequestInterceptor(request, requestId, pythagora) {
+        if (pythagora.mode === MODES.test) {
+            let mockResponse = pythagora.getHttpMockResponse(request);
             if (!mockResponse) return console.error('No mock response found for request!');
 
             request.respondWith(
@@ -127,8 +127,8 @@ class Pytagora {
         }
     }
 
-    async httpResponseInterceptor(response, request, pytagora) {
-        if (pytagora.mode !== MODES.capture) return;
+    async httpResponseInterceptor(response, request, pythagora) {
+        if (pythagora.mode !== MODES.capture) return;
         async function readStream(reader) {
             let result;
             let values = [];
@@ -144,8 +144,8 @@ class Pytagora {
 
         let reader = response.body.getReader();
         let responseBody = await readStream(reader);
-        if (!pytagora.requests[pytagora.getRequestKeyByAsyncStore()]) return console.error('No TRACE found for response!');
-        pytagora.requests[pytagora.getRequestKeyByAsyncStore()].intermediateData.push({
+        if (!pythagora.requests[pythagora.getRequestKeyByAsyncStore()]) return console.error('No TRACE found for response!');
+        pythagora.requests[pythagora.getRequestKeyByAsyncStore()].intermediateData.push({
             type: 'outgoing_request',
             url: request.url,
             method: request.method,
@@ -184,10 +184,10 @@ class Pytagora {
     }
 
     async getRequestMockDataById(req) {
-        let path = `./pytagora_data/${req.path.replace(/\//g, '|')}.json`;
+        let path = `./pythagora_data/${req.path.replace(/\//g, '|')}.json`;
         if (!fs.existsSync(path)) return;
         let capturedRequests = JSON.parse(await fs.promises.readFile(path, 'utf8'));
-        return capturedRequests.find(request => request.id === req.headers['pytagora-req-id']);
+        return capturedRequests.find(request => request.id === req.headers['pythagora-req-id']);
     }
 
     async runRedisInterceptor(intermediateData) {
@@ -210,4 +210,4 @@ class Pytagora {
 
 }
 
-module.exports = Pytagora;
+module.exports = Pythagora;

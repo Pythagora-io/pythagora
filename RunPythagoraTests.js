@@ -4,7 +4,7 @@ const { makeTestRequest } = require('./src/helpers/testing.js');
 const fs = require('fs');
 
 (async () => {
-    const directory = './pytagora_data';
+    const directory = './pythagora_data';
     const results = [];
 
     try {
@@ -13,7 +13,7 @@ const fs = require('fs');
         logTestsStarting(files);
         for (let file of files) {
             if (file[0] !== '|') continue;
-            let tests = JSON.parse(fs.readFileSync(`./pytagora_data/${file}`));
+            let tests = JSON.parse(fs.readFileSync(`${directory}/${file}`));
             for (let test of tests) {
                 results.push(await makeTestRequest(test) || false);
             }
@@ -21,11 +21,11 @@ const fs = require('fs');
 
         let passedCount = results.filter(r => r).length,
             failedCount = results.filter(r => !r).length;
-            // linesExecuted = global.Pytagora.instrumenter.getCurrentlyExecutedLines(),
-            // codeCoverage = global.Pytagora.instrumenter.getCurrentlyExecutedLines(false, true);
+            // linesExecuted = global.Pythagora.instrumenter.getCurrentlyExecutedLines(),
+            // codeCoverage = global.Pythagora.instrumenter.getCurrentlyExecutedLines(false, true);
             logTestsFinished(passedCount, failedCount);//, linesExecuted, codeCoverage);
     } catch (err) {
-        console.error("Error occured while running Pytagora tests: ", err);
+        console.error("Error occured while running Pythagora tests: ", err);
     }
 
     process.exit(0);

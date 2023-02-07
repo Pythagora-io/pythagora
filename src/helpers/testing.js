@@ -8,7 +8,7 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
         let options = {
             method: test.method,
             url: test.url,
-            headers: _.extend({'cache-control': 'no-cache', 'pytagora-req-id': test.id}, _.omit(test.headers, ['content-length', 'cache-control'])),
+            headers: _.extend({'cache-control': 'no-cache', 'pythagora-req-id': test.id}, _.omit(test.headers, ['content-length', 'cache-control'])),
             maxRedirects: 0,
             cache: false,
             validateStatus: function (status) {
@@ -23,7 +23,7 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
             return e.response;
         });
         // TODO fix this along with managing the case where a request is overwritter during the capture so doesn't exist during capture filtering
-        if (!global.Pytagora.request) return false;
+        if (!global.Pythagora.request) return false;
 
         if(response.status >= 300 && response.status < 400) {
             response.data = {type: 'redirect', url: `${response.headers.location}`};
@@ -32,10 +32,10 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
         let testResult = compareResponse(response.data, test.responseData);
 
         testResult = testResult ? test.statusCode === response.status : testResult;
-        testResult = global.Pytagora.request.id === test.id && global.Pytagora.request.errors.length ? false : testResult;
+        testResult = global.Pythagora.request.id === test.id && global.Pythagora.request.errors.length ? false : testResult;
         // TODO add query
-        if (showPassedLog && testResult) logTestPassed(test, response, global.Pytagora);
-        if (showFailedLog && !testResult) logTestFailed(test, response, global.Pytagora);
+        if (showPassedLog && testResult) logTestPassed(test, response, global.Pythagora);
+        if (showFailedLog && !testResult) logTestFailed(test, response, global.Pythagora);
         return testResult;
     } catch (error) {
         console.error(error);

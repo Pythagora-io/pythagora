@@ -3,8 +3,8 @@ let net = require('net');
 const CHUNK_SIZE = 1024;
 
 module.exports = class RedisInterceptor {
-    constructor(Pytagora, listenPort, targetPort, intermediateData) {
-        this.Pytagora = Pytagora;
+    constructor(Pythagora, listenPort, targetPort, intermediateData) {
+        this.Pythagora = Pythagora;
         this.listenPort = listenPort;
         this.targetPort = targetPort || 6379;
         this.intermediateData = intermediateData || [];
@@ -57,7 +57,7 @@ module.exports = class RedisInterceptor {
         });
 
         this.targetSocket.on('data', response => {
-            if (saveData) Pytagora.saveRedisData(data.toString(), response.toString().replace(/^.*\r\n/, '').replace(/\r\n$/, ''));
+            if (saveData) Pythagora.saveRedisData(data.toString(), response.toString().replace(/^.*\r\n/, '').replace(/\r\n$/, ''));
 
             connection.write(response);
             // this.targetSocket.destroy();

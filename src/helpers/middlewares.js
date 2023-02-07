@@ -15,7 +15,7 @@ function setUpExpressMiddleware(app, pytagora, mongoose) {
     app.use(async (req,res,next) => {
         if (req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) {
             req.pytagoraIgnore = true;
-            next();
+            return next();
         }
         if (pytagora.mode !== MODES.test) return next();
         let pytagoraDb = 'pytagoraDb';

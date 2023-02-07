@@ -207,19 +207,12 @@ function mongoObjToJson(originalObj) {
 module.exports = {
     cutWithDots,
     compareResponse,
-    isDate,
     compareJson,
     isObjectId,
     isLegacyObjectId,
-    isJSONObject,
-    objectIdAsStringRegex,
-    mongoIdRegex,
-    regExpRegex,
     noUndefined,
-    stringToRegExp,
     getCircularReplacer,
     getOccurrenceInArray,
-    convertToRegularObject,
     jsonObjToMongo,
     mongoObjToJson
 }

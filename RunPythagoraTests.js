@@ -21,9 +21,7 @@ const fs = require('fs');
 
         let passedCount = results.filter(r => r).length,
             failedCount = results.filter(r => !r).length;
-            // linesExecuted = global.Pythagora.instrumenter.getCurrentlyExecutedLines(),
-            // codeCoverage = global.Pythagora.instrumenter.getCurrentlyExecutedLines(false, true);
-            logTestsFinished(passedCount, failedCount);//, linesExecuted, codeCoverage);
+            logTestsFinished(passedCount, failedCount);
     } catch (err) {
         console.error("Error occured while running Pythagora tests: ", err);
     }

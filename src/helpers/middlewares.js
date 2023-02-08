@@ -42,17 +42,18 @@ function setUpExpressMiddleware(app, pythagora, mongoose) {
         }
 
         let pythagoraConnection = mongoose.connections.filter((c) => c.name === pythagoraDb);
-        if (pythagoraConnection.length) return await prepareDB();
+        if (pythagoraConnection.length && mongoose.connections.length === 1) return await prepareDB();
 
         let connection = mongoose.connections[0];
+        let login = connection.user && connection.password ? `${connection.user}:${connection.password}@` : '';
         mongoose.disconnect();
-        let pythagoraDbConnection = await mongoose.connect(`mongodb://${connection.host}:${connection.port}/${pythagoraDb}`, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
         for (const connection of mongoose.connections) {
             if (connection.name !== pythagoraDb) connection.close();
         }
+        let pythagoraDbConnection = await mongoose.connect(`mongodb://${login}${connection.host}:${connection.port}/${pythagoraDb}`, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
         await prepareDB();
     });
 

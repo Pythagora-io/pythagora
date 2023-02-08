@@ -1,5 +1,8 @@
 <p align=center>
-  <img height="150px" src="https://user-images.githubusercontent.com/10895136/217490853-013a21d3-e4a2-4c1d-a38c-e3c835788592.png"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/10895136/217571898-14e94ea7-75a5-4a50-a7dc-486e10a8b462.png">
+    <img height="150px" alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="https://user-images.githubusercontent.com/10895136/217490853-013a21d3-e4a2-4c1d-a38c-e3c835788592.png">
+  </picture>
 </p>
 <p align=center>
   Generate 90% code coverage with integration tests in 1 hour
@@ -13,7 +16,7 @@ Pythagora is a tool that generates integration tests for your Node.js app by rec
 
 To integrate Pythagora into your Node.js app, you just need to paste one line of code and run the Pythagora capture command. Then, just play around with your app and from all API requests and database queries Pythagora will generate integration tests.
 
-Pythagora records all requests to endpoints of your app, along with Mongo/Redis queries. Then, when you run the tests, Pythagora mocks all responses from Redis and 3rd party APIs and simulates the database conditions from the time when the API requests were captured.
+Pythagora records all requests to endpoints of your app, along with Mongo/Redis queries. Then, when you run the tests, Pythagora mocks all responses from Redis and simulates the database conditions from the time when the API requests were captured.
 <br>
 <br>
 Tests do not depend on the state of the database. When an API request is being recorded, Pythagora saves all documents used during the request. Later, when you run the actual test, it restores those documents into `pythagoraDb` database. This way, the app gets the same data it got from the database on the machine on which it was captured and the data on your local database will NOT be affected while running tests.
@@ -93,6 +96,11 @@ Those are tests that Pythagora captured.
 
 
 <br><br>
-<h1>🖊️ Sign up for Updates</h1>
-You can <a href="http://eepurl.com/ikg_nT" target="_blank">add your email here</a> to get notified when we release the full version of Pythagora
+<h1>🔗 Connect with us</h1>
+📫 Stay updated by subscribing to <a href="http://eepurl.com/ikg_nT" target="_blank">our email list here</a>.
+<br><br>
+💬 Join the discussion at <a href="https://github.com/Pythagora-io/pythagora/discussions" target="_blank">Github discussions</a> or on <a href="https://discord.gg/9ykSuFGq" target="_blank">our Discord server</a>.
+<br><br>
+⭐ Star this repo to show your interest/support.
+<br><br>
 

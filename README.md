@@ -105,7 +105,7 @@ Those are tests that Pythagora captured.
 <h1>🔗 Connect with us</h1>
 📫 Stay updated by subscribing to <a href="http://eepurl.com/ikg_nT" target="_blank">our email list here</a>.
 <br><br>
-💬 Join the discussion at <a href="https://github.com/Pythagora-io/pythagora/discussions" target="_blank">Github discussions</a> or on <a href="https://discord.gg/9ykSuFGq" target="_blank">our Discord server</a>.
+💬 Join the discussion on <a href="https://discord.gg/9ykSuFGq" target="_blank">our Discord server</a>.
 <br><br>
 ⭐ Star this repo to show your interest/support.
 <br><br>

@@ -7,26 +7,23 @@ const path = require('path');
 
 global.Pythagora = new Pythagora(mode);
 
+process.on('uncaughtException', (error) => {
+    console.error('The app has crashed!');
+    console.error('This is likely not related to Pythagora, but the app itself.');
+    console.error(error);
+    process.exit(1);
+});
+
 (async () => {
-    let app;
     await global.Pythagora.runRedisInterceptor();
     try {
         checkDependencies();
     } catch (e) {
         console.log('Pythagora is unable to check dependencies. Continuing and hoping you have Express and Mongoose installed...')
     }
-    try {
-        console.log(path.join(process.cwd(), initScript));
-        app = require(path.join(process.cwd(), initScript));
-    } catch (e) {
-        console.error('The app has crashed!');
-        console.error('This is likely not related to Pythagora, but the app itself.');
-        console.error(e);
-        process.exit(1);
-    }
+    require(path.join(process.cwd(), initScript));
 
     if (mode === 'test') {
-        // TODO run tests once the app loads
         console.log('Running tests in 3 seconds...');
         setTimeout(() => {
             require('./RunPythagoraTests.js');

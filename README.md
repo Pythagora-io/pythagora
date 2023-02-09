@@ -8,7 +8,7 @@
   Generate 90% code coverage with integration tests in 1 hour
 </p>
 <br>
-Pythagora is a tool that generates integration tests for your Node.js app by recording server data without you having to write a single line of code.
+Pythagora is a tool that generates integration tests for your Node.js app by recording server activity without you having to write a single line of code.
 
 
 
@@ -21,9 +21,9 @@ if (global.Pythagora) global.Pythagora.setApp(app);
 and run the Pythagora capture command. Then, just play around with your app and from all API requests and database queries Pythagora will generate integration tests.
 
 <h3>1. Capturing requests</h3>
-Pythagora records all requests to endpoints of your app with the responses, and everything that's happening during the request. Currently, that means all Mongo and Redis queries with responses (in the future 3rd party API requests, disk IO operations, etc.). Then, when you run the tests, Pythagora can simulate the server conditions from the time when the request was captured.
+Pythagora records all requests to endpoints of your app with the response and everything that's happening during the request. Currently, that means all Mongo and Redis queries with responses (in the future 3rd party API requests, disk IO operations, etc.). Then, when you run the tests, Pythagora can simulate the server conditions from the time when the request was captured.
 <h3>2. Running tests</h3>
-When running tests, it doesn’t matter what database is your Node.js connected to or what is the state of that database. Actually, that database is never touched or used —> instead, Pythagora creates a special, ephemeral `pythagoraDb` database, which it uses to restore the data before each test is executed, that was present at the time when the test was recorded.  Because of this, tests can be run on any machine or environment.
+When running tests, it doesn’t matter what database is your Node.js connected to or what is the state of that database. Actually, that database is never touched or used —> instead, Pythagora creates a special, ephemeral `pythagoraDb` database, which it uses to restore the data before each test is executed, which was present at the time when the test was recorded. Because of this, tests can be run on any machine or environment.
 <br>
 <br>
 If a test does an update to the database, Pythagora also checks the database to see if it was updated correctly.

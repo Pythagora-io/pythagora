@@ -1,11 +1,12 @@
 const _ = require("lodash");
-const mongoose = require("../../../mongoose");
+let tryrequire = require("tryrequire");
+let mongoose = tryrequire("../../../mongoose");
 
 const objectIdAsStringRegex = /^ObjectId\("([0-9a-fA-F]{24})"\)$/;
 const regExpRegex = /^RegExp\("(.*)"\)$/;
 const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
 
-let ObjectId = mongoose.Types.ObjectId;
+let ObjectId = mongoose ? mongoose.Types.ObjectId : undefined;
 
 const isObjectId = (value) => {
     try {

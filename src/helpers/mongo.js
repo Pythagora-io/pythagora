@@ -3,7 +3,8 @@ const MODES = require("../const/modes.json");
 const { mongoObjToJson, compareJson, jsonObjToMongo, noUndefined } = require("../utils/common.js");
 const { logWithStoreId } = require("../utils/cmdPrint.js");
 
-let mongoose = require("../../../mongoose");
+let tryrequire = require("tryrequire");
+let mongoose = tryrequire("../../../mongoose");
 const {v4} = require("uuid");
 const _ = require("lodash");
 
@@ -78,6 +79,7 @@ async function getMongoDocs(self) {
 }
 
 function configureMongoosePlugin(pythagora) {
+    if (!mongoose) return;
     mongoose.plugin((schema) => {
         schema.pre(methods, async function() {
             if (global.asyncLocalStorage.getStore() === undefined ||

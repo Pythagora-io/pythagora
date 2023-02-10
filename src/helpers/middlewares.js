@@ -13,6 +13,7 @@ const fs = require('fs')
 
 function setUpExpressMiddleware(app, pythagora, mongoose) {
     app.use(async (req,res,next) => {
+        if (!mongoose) return next();
         if (req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) {
             req.pythagoraIgnore = true;
             return next();

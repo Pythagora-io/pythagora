@@ -31,7 +31,7 @@ let logEndpointNotCaptured = (endpoint, method, error) => {
 let logTestFailed = (test, response, pythagora) => {
     let errLog = '';
     for (const err in pythagoraErrors) {
-        if (getOccurrenceInArray(pytagora.request.errors, pytagoraErrors[err]) > 0) errLog += `\t${pytagoraErrors[err]}\n`;
+        if (getOccurrenceInArray(pythagora.request.errors, pythagoraErrors[err]) > 0) errLog += `\t${pythagoraErrors[err]}\n`;
     }
     console.log(`❌ Test ${red+bold}FAILED!${reset}
     ${red+bold}${test.method} ${test.endpoint} ${reset}

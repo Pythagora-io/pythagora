@@ -10,7 +10,7 @@
     "uuid": "^9.0.0"
   },
   "name": "pythagora",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "main": "Pythagora.js",
   "directories": {
     "test": "tests"

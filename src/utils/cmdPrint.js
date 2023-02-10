@@ -28,6 +28,11 @@ let logEndpointNotCaptured = (endpoint, method, error) => {
 `);
 }
 
+let logAppError = (message, error) => {
+    console.log(`${yellow+bold}${message}${reset}`);
+    console.error(error);
+}
+
 let logTestFailed = (test, response, pythagora) => {
     let errLog = '';
     for (const err in pythagoraErrors) {
@@ -92,5 +97,6 @@ module.exports = {
     logEndpointNotCaptured,
     logCaptureFinished,
     pythagoraFinishingUp,
-    logWithStoreId
+    logWithStoreId,
+    logAppError
 }

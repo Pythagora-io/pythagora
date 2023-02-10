@@ -10,13 +10,13 @@
     "uuid": "^9.0.0"
   },
   "name": "pythagora",
-  "version": "0.0.1",
+  "version": "0.0.23",
   "main": "Pythagora.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "publishPythagora": "bin/publish.bash"
   },
   "bin": {
     "pythagora": "bin/run.bash"

@@ -1,6 +1,6 @@
 const _ = require("lodash");
-let tryrequire = require("tryrequire");
-let mongoose = tryrequire("../../../mongoose");
+let tryRequire = require("tryrequire");
+let mongoose = tryRequire("mongoose");
 
 const objectIdAsStringRegex = /^ObjectId\("([0-9a-fA-F]{24})"\)$/;
 const regExpRegex = /^RegExp\("(.*)"\)$/;

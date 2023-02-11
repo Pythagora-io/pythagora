@@ -3,8 +3,8 @@ const MODES = require("../const/modes.json");
 const { mongoObjToJson, compareJson, jsonObjToMongo, noUndefined } = require("../utils/common.js");
 const { logWithStoreId } = require("../utils/cmdPrint.js");
 
-let tryrequire = require("tryrequire");
-let mongoose = tryrequire("../../../mongoose");
+let tryRequire = require("tryrequire");
+let mongoose = tryRequire("mongoose");
 const {v4} = require("uuid");
 const _ = require("lodash");
 

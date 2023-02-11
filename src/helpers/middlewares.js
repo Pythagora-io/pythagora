@@ -12,12 +12,13 @@ const fs = require('fs')
 
 
 function setUpExpressMiddleware(app, pythagora, mongoose) {
-    app.use(async (req,res,next) => {
-        if (req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) {
-            req.pythagoraIgnore = true;
-            return next();
-        }
-        if (pythagora.mode !== MODES.test) return next();
+    app.use((req, res, next) => {
+        if (req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
+        return next();
+    });
+
+    app.use(async (req, res, next) => {
+        if (!mongoose || pythagora.mode !== MODES.test) return next();
         let pythagoraDb = 'pythagoraDb';
 
         let prepareDB = async() => {

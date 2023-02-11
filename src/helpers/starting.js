@@ -23,7 +23,7 @@ function checkDependencies() {
 
                 if(dependencies.mongoose) mongoose = true;
                 if(dependencies.express) express = true;
-                if(dependencies.pythagora) global.Pythagora.setVersion(dependencies.pythagora);
+                if(dependencies.pythagora) global.PythagoraVersion = dependencies.pythagora;
             }
         });
     };
@@ -31,8 +31,7 @@ function checkDependencies() {
     findPackageJson(searchPath);
 
     if (!mongoose || !express) {
-        console.log('For Pythagora to run you need to use "mongoose" and "express" node modules. Exiting app...')
-        process.exit(1);
+        throw new Error('Pythagora is unable to check dependencies. Continuing and hoping you have Express and Mongoose installed...')
     }
 }
 

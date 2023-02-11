@@ -10,7 +10,8 @@ let  { BatchInterceptor } = require('@mswjs/interceptors');
 let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
 let  fs = require("fs");
 let  _ = require("lodash");
-let mongoose = require("../../mongoose");
+let tryrequire = require("tryrequire");
+let mongoose = tryrequire("../../../mongoose");
 let  { AsyncLocalStorage } = require('node:async_hooks');
 // const duplexify = require('duplexify');
 // const MockDate = require('mockdate'); todo find solution for expiration of tokens (we need to run capture and tests on same date/time)
@@ -25,7 +26,7 @@ class Pythagora {
         if (!MODES[mode]) throw new Error('Invalid mode');
         else this.mode = mode;
 
-        this.version = undefined;
+        this.version = global.PythagoraVersion;
         this.idSeq = 0;
         this.requests = {};
         this.testingRequests = {};
@@ -87,10 +88,6 @@ class Pythagora {
             logCaptureFinished(savedRequests.length, failedRequests.length);
         }
         process.exit();
-    }
-
-    setVersion(version) {
-        this.version = version;
     }
 
     setApp(newApp) {

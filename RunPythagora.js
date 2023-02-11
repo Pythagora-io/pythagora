@@ -1,6 +1,12 @@
 #!/usr/bin/env node
-let { mode, initScript } = require('./src/utils/argumentsCheck.js');
 let { checkDependencies } = require('./src/helpers/starting.js');
+try {
+    checkDependencies();
+} catch (e) {
+    console.error(e.message);
+}
+
+let { mode, initScript } = require('./src/utils/argumentsCheck.js');
 const Pythagora = require('./src/Pythagora.js');
 
 const path = require('path');
@@ -16,11 +22,6 @@ process.on('uncaughtException', (error) => {
 
 (async () => {
     await global.Pythagora.runRedisInterceptor();
-    try {
-        checkDependencies();
-    } catch (e) {
-        console.log('Pythagora is unable to check dependencies. Continuing and hoping you have Express and Mongoose installed...')
-    }
     require(path.join(process.cwd(), initScript));
 
     if (mode === 'test') {

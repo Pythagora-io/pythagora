@@ -7,16 +7,17 @@
     "lodash": "^4.17.21",
     "minimist": "^1.2.7",
     "nyc": "^15.1.0",
+    "tryrequire": "^3.0.0",
     "uuid": "^9.0.0"
   },
   "name": "pythagora",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "main": "Pythagora.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "publish-pythagora": "bin/publish.bash"
   },
   "bin": {
     "pythagora": "bin/run.bash"

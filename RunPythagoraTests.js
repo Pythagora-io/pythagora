@@ -4,6 +4,7 @@ const { makeTestRequest } = require('./src/helpers/testing.js');
 const fs = require('fs');
 
 (async () => {
+    const startTime = new Date();
     const directory = './pythagora_data';
     const results = [];
 
@@ -21,7 +22,8 @@ const fs = require('fs');
 
         let passedCount = results.filter(r => r).length,
             failedCount = results.filter(r => !r).length;
-            logTestsFinished(passedCount, failedCount);
+        logTestsFinished(passedCount, failedCount);
+        console.log(`\n\nTime it took to run all Pythagora tests: \x1b[32m${((new Date() - startTime)/1000).toFixed(2)}s\x1b[0m`);
     } catch (err) {
         console.error("Error occured while running Pythagora tests: ", err);
     }

@@ -144,7 +144,8 @@ function convertToRegularObject(obj) {
         return value;
     }
 
-    let stringified = JSON.stringify(noUndefined(obj), getCircularReplacer());
+    let noUndObj = noUndefined(obj);
+    let stringified = JSON.stringify(noUndObj.toObject ? noUndObj.toObject() : noUndObj, getCircularReplacer());
     return JSON.parse(stringified, reviver);
 }
 

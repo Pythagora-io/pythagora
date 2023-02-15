@@ -10,16 +10,15 @@ const _ = require("lodash");
 
 let methods = ['save','find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
 
-async function getMongoDocs(self) {
+async function getMongoDocs(self, stage) {
     let collection,
         req,
         op,
         query,
+        populateDocs = [],
         isModel = self instanceof mongoose.Model,
         isQuery = self instanceof mongoose.Query,
         conditions = self._conditions || self._doc;
-
-    if (self._mongooseOptions && self._mongooseOptions.populate) return { error: new Error('Mongoose "populate" not supported yet!') };
 
     if (isQuery) {
         collection = _.get(self, '_collection.collectionName');
@@ -47,15 +46,12 @@ async function getMongoDocs(self) {
         return { error: new Error('Aggregation not supported yet!') };
     }
 
-    let mongoDocs;
+    let mongoDocs = [];
     // TODO make a better way to ignore some queries
     if (query && req && req.op) {
         let findQuery = noUndefined(query);//jsonObjToMongo(noUndefined(query));
         let mongoRes = await new Promise(async (resolve, reject) => {
-            let originalAsyncStore = global.asyncLocalStorage.getStore();
-            self.asyncStore = undefined;
             global.asyncLocalStorage.run(undefined, async () => {
-                self.asyncStore = originalAsyncStore;
                 if (isQuery) {
                     let explaination = await self.model.find(findQuery).explain();
                     try {
@@ -66,16 +62,33 @@ async function getMongoDocs(self) {
                         console.error('explaination', explaination);
                     }
                 }
-
                 resolve(await mongoose.connection.db.collection(collection).find(findQuery).toArray());
             });
         });
+
+        var populatedFields = self._mongooseOptions.populate;
+        if (populatedFields && stage === 'pre') for (let field in populatedFields) {
+            field = populatedFields[field];
+            await new Promise(async (resolve, reject) => {
+                global.asyncLocalStorage.run(undefined, async () => {
+                    let popCollection = self.schema.obj[field.path].ref.toLowerCase() + 's';
+                    let pop = await mongoose.connection.db.collection(popCollection).find({"_id": {$in: mongoRes.map(m => m[field.path])}}).toArray();
+                    populateDocs = populateDocs.concat({
+                        type: 'mongo',
+                        subtype: 'populate',
+                        req: {collection: popCollection},
+                        preQueryRes: mongoObjToJson(Array.isArray(pop) ? pop : [pop])
+                    });
+
+                    resolve();
+                });
+            });
+        }
+
         mongoDocs = mongoObjToJson(Array.isArray(mongoRes) ? mongoRes : [mongoRes]);
-    } else {
-        mongoDocs = [];
     }
 
-    return {req, mongoDocs}
+    return {req, mongoDocs, populateDocs}
 }
 
 function configureMongoosePlugin(pythagora) {
@@ -90,17 +103,18 @@ function configureMongoosePlugin(pythagora) {
             try {
                 let request = pythagora.requests[pythagora.getRequestKeyByAsyncStore()];
                 if (pythagora.mode === MODES.capture && request) {
-                    let mongoRes = await getMongoDocs(this);
+                    let mongoRes = await getMongoDocs(this, 'pre');
 
                     if (mongoRes.error) request.error = mongoRes.error.message;
 
                     request.intermediateData.push({
                         type: 'mongo',
-                        // req: mongoRes.req,
                         req: mongoObjToJson(_.omit(mongoRes.req, '_doc')),
                         mongoReqId: this.mongoReqId,
                         preQueryRes: mongoObjToJson(mongoRes.mongoDocs)
                     });
+
+                    request.intermediateData = request.intermediateData.concat(mongoRes.populateDocs);
                 } else {
                     this.originalConditions = mongoObjToJson(this._conditions);
                 }
@@ -117,7 +131,7 @@ function configureMongoosePlugin(pythagora) {
             try {
                 global.asyncLocalStorage.enterWith(this.asyncStore);
                 logWithStoreId('mongo post');
-                var mongoRes = await getMongoDocs(this);
+                var mongoRes = await getMongoDocs(this, 'post');
 
                 if (pythagora.mode === MODES.test) {
                     pythagora.testingRequests[this.asyncStore].mongoQueriesTest++;

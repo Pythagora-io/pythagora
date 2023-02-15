@@ -2,6 +2,10 @@
 args=("$@")
 script_path=$(realpath $0)
 pythagora_dir=$(basename $(dirname $(dirname $script_path)))
+if [ "$pythagora_dir" == "pythagora-dev" ]
+then
+  pythagora_dir="/@pythagora.io/pythagora-dev"
+fi
 
 if [[ " ${args[@]} " =~ " --no-code-coverage " ]] || ([[ ! " ${args[@]} " =~ " --mode test " ]] && [[ ! " ${args[@]} " =~ " --mode=test " ]])
 then

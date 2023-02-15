@@ -23,7 +23,7 @@ const fs = require('fs');
         let passedCount = results.filter(r => r).length,
             failedCount = results.filter(r => !r).length;
         logTestsFinished(passedCount, failedCount);
-        console.log(`\n\nTime it took to run all Pythagora tests: \x1b[32m${((new Date() - startTime)/1000).toFixed(2)}s\x1b[0m`);
+        console.log(`Time it took to run all Pythagora tests: \x1b[32m${((new Date() - startTime)/1000).toFixed(2)}s\x1b[0m`);
     } catch (err) {
         console.error("Error occured while running Pythagora tests: ", err);
     }

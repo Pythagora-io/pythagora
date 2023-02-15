@@ -73,7 +73,7 @@ function compareJson(a, b, strict) {
     } else if (typeof a === 'string' && typeof b === 'string') {
         return objectIdAsStringRegex.test(a) && objectIdAsStringRegex.test(b) && !strict ? true : a === b;
     }
-    let ignoreKeys = ['_id'];
+    let ignoreKeys = ['stacktrace'];
     // let ignoreIfKeyContains = ['token'];
     let aProps = Object.getOwnPropertyNames(a);
     let bProps = Object.getOwnPropertyNames(b);
@@ -85,7 +85,7 @@ function compareJson(a, b, strict) {
         if (
             a[propName] !== b[propName] &&
             (!isDate(a[propName]) && !isDate(a[propName])) &&
-            // !ignoreKeys.includes(propName) &&
+            !ignoreKeys.includes(propName) &&
             !(isObjectId(a[propName]) && isObjectId(b[propName]))// &&
             // !ignoreIfKeyContains.some(function(v) { return propName.indexOf(v) >= 0; })
         ) {

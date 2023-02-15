@@ -6,6 +6,12 @@ flag=${args[@]}
 name=$(grep '"name"' package.json | awk -F: '{print $2}' | tr -d '", ')
 version=$(grep '"version"' package.json | awk -F: '{print $2}' | tr -d '", ')
 
+if [ "$name" != "@pythagora.io/pythagora-dev" ] && [ "$name" != "pythagora" ]
+then
+  echo "Package name $name not allowed, change it in package.json. Allowed names are: pythagora and @pythagora.io/pythagora-dev"
+  exit 1
+fi
+
 if [ "$flag" == "production" ] && [ "$name" == "pythagora" ]
 then
   echo "Publishing new pythagora PRODUCTION version! ($version)"

@@ -3,7 +3,6 @@
     "@mswjs/interceptors": "^0.19.2",
     "axios": "^1.2.2",
     "body-parser": "^1.20.1",
-    "fs": "^0.0.1-security",
     "lodash": "^4.17.21",
     "minimist": "^1.2.7",
     "nyc": "^15.1.0",

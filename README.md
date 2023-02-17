@@ -12,7 +12,7 @@ Pythagora is a tool that generates integration tests for your Node.js app by rec
 
 
 <h1>🏁 Alpha version</h1>
-This is an alpha version of Pythagora. To get an update when beta gets released you can 📪 <a href="http://eepurl.com/ikg_nT" target="_blank">add your email here</a> 📬 .
+This is an alpha version of Pythagora. To get an update about beta release or to give a <b>suggestion on tech (framework / database) you want Pythagora to support</b> you can 👉 <a href="http://eepurl.com/ikg_nT" target="_blank">add your email / comment here</a> 👈 .
 <br>
 <br>
 

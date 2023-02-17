@@ -78,7 +78,7 @@ NOTE: To stop the capture, you can exit the process like you usually do (Eg. `Ct
 After you captured all requests you want, you just need to add the mode parameter `--mode test` to the Pythagora command.
 <br>
    ```
-   npx pythagora --script ./path/to/your/server.js --mode test
+   npx pythagora --script ./path/to/your/server.js --mode test --initScript ./path/to/your/server.js
    ```   
 
 <br><br>
@@ -90,7 +90,7 @@ Code coverage is a great metric while building automated tests as it shows us wh
 
 If you want to generate a more detailed report, you can do so by running Pythagora with `--full-code-coverage-report` flag. Eg.
    ```
-   npx pythagora --script ./path/to/your/server.js --mode test --full-code-coverage-report
+   npx pythagora --script ./path/to/your/server.js --mode test --full-code-coverage-report --initScript ./path/to/your/server.js
    ```
 You can find the code coverage report inside `pythagora_data` folder in the root of your repository. You can open the HTML view of the report by opening `pythagora_data/code_coverage_report/lcov-report/index.html`.
 

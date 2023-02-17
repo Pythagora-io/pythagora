@@ -11,6 +11,11 @@
 Pythagora is a tool that generates integration tests for your Node.js app by recording server activity without you having to write a single line of code.
 
 
+<h1>🏁 Alpha version</h1>
+This is an alpha version of Pythagora. To get an update when beta gets released you can 📪 <a href="http://eepurl.com/ikg_nT" target="_blank">add your email here</a> 📬 .
+<br>
+<br>
+
 
 <h1>🏗️ How it works</h1>
 
@@ -103,10 +108,8 @@ Those are tests that Pythagora captured.
 
 <br><br>
 <h1>🔗 Connect with us</h1>
-📫 Stay updated by subscribing to <a href="http://eepurl.com/ikg_nT" target="_blank">our email list here</a>.
-<br><br>
 💬 Join the discussion on <a href="https://discord.gg/9ykSuFGq" target="_blank">our Discord server</a>.
 <br><br>
-⭐ Star this repo to show your interest/support.
+⭐ Star this repo to show support.
 <br><br>
 

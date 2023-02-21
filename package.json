@@ -23,5 +23,5 @@
   },
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "Generate integration tests by recording server activity without writing a single line of code."
 }

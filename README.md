@@ -35,10 +35,10 @@ If a test does an update to the database, Pythagora also checks the database to 
 <br>
 <br>
 <div align="center">
-  <a href="https://www.youtube.com/watch?v=Be9ed-JHuQg"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
+  <a href="https://youtu.be/KnWjL9f7N8w"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
 </div>
 <p align=center>
-  <a target="_blank" href="https://www.youtube.com/watch?v=Be9ed-JHuQg">Watch Pythagora Demo (2:28 min)</a>
+  <a target="_blank" href="https://youtu.be/KnWjL9f7N8w">Watch Pythagora Demo (2:28 min)</a>
 </p>
 <br>
 <br>

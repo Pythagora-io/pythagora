@@ -23,7 +23,7 @@ then
     fi
     read -p "Invalid input. Press Y to continue or N to exit: " choice
   done
-  npm publish
+  RELEASE_MODE=true npm publish
 
 elif [ "$flag" != "production" ] && [ "$name" == "pythagora" ]
 then
@@ -37,5 +37,5 @@ then
 
 else
   echo "Publishing new pythagora DEVELOPMENT version!"
-  npm publish
+  RELEASE_MODE=true npm publish
 fi

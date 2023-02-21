@@ -16,7 +16,8 @@
     "test": "tests"
   },
   "scripts": {
-    "publish-pythagora": "bin/publish.bash"
+    "publish-pythagora": "bin/publish.bash",
+    "prepublishOnly": "node bin/prepublish.js"
   },
   "bin": {
     "pythagora": "bin/run.bash"

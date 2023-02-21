@@ -43,7 +43,7 @@ async function getMongoDocs(self, stage) {
             _pipeline: self._pipeline,
             _doc: self._doc
         };
-        return { error: new Error('Aggregation not supported yet!') };
+        return { error: new Error(pythagoraErrors.aggregationNotSupported) };
     }
 
     let mongoDocs = [];

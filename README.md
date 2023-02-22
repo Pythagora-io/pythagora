@@ -108,7 +108,7 @@ Those are tests that Pythagora captured.
 
 <br><br>
 <h1>🔗 Connect with us</h1>
-💬 Join the discussion on <a href="https://discord.gg/9ykSuFGq" target="_blank">our Discord server</a>.
+💬 Join the discussion on <a href="https://discord.gg/npC5TAfj6e" target="_blank">our Discord server</a>.
 <br><br>
 ⭐ Star this repo to show support.
 <br><br>

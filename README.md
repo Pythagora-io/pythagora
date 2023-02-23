@@ -53,10 +53,10 @@ If a test does an update to the database, Pythagora also checks the database to 
 <br>
 <br>
 <div align="center">
-  <a href="https://www.youtube.com/watch?v=Be9ed-JHuQg"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
+  <a href="https://youtu.be/KnWjL9f7N8w"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
 </div>
 <p align=center>
-  <a target="_blank" href="https://www.youtube.com/watch?v=Be9ed-JHuQg">Watch Pythagora Demo (2:28 min)</a>
+  <a target="_blank" href="https://youtu.be/KnWjL9f7N8w">Watch Pythagora Demo (2:28 min)</a>
 </p>
 <br>
 <br>
@@ -120,7 +120,7 @@ Those are tests that Pythagora captured.
 
 <br><br>
 <h1 id="connectwithus">🔗 Connect with us</h1>
-💬 Join the discussion on <a href="https://discord.gg/9ykSuFGq" target="_blank">our Discord server</a>.
+💬 Join the discussion on <a href="https://discord.gg/npC5TAfj6e" target="_blank">our Discord server</a>.
 <br><br>
 ⭐ Star this repo to show support.
 <br><br>

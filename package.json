@@ -24,5 +24,18 @@
   },
   "author": "",
   "license": "ISC",
-  "description": "Generate integration tests by recording server activity without writing a single line of code."
+  "description": "Generate integration tests by recording server activity without writing a single line of code.",
+  "keywords": [
+    "test",
+    "testing",
+    "automation",
+    "automated testing",
+    "mock",
+    "api",
+    "http",
+    "MERN",
+    "MEAN",
+    "mongoose",
+    "express"
+  ]
 }

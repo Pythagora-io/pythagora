@@ -2,8 +2,13 @@
 let { checkDependencies } = require('./src/helpers/starting.js');
 try {
     checkDependencies();
+
+    require.cache[require.resolve('express')] = {
+        exports: require('./src/patches/express.js')
+    };
 } catch (e) {
-    console.error(e.message);
+    console.log(`\x1b[31m${e.message}\x1b[0m`);
+    process.exit(1);
 }
 
 let { mode, initScript } = require('./src/utils/argumentsCheck.js');

@@ -16,9 +16,14 @@ function getSchemaTree(str) {
     return  mongoose.models[key].schema.tree;
 }
 
+function checkForSchemaTree(schema) {
+    return schema && schema.tree ? schema.tree : schema;
+}
+
 function getSchemaOptions(schemaTree) {
     //todo check if this can be more than 1 element in array and if so fix accordigly
     let newSchemaTree = Array.isArray(schemaTree) ? schemaTree[0] : schemaTree;
+    newSchemaTree = checkForSchemaTree(newSchemaTree);
     if (newSchemaTree.ref) return { ref: newSchemaTree.ref};
     if (newSchemaTree instanceof mongoose.VirtualType) return newSchemaTree.options;
 
@@ -28,7 +33,7 @@ function getSchemaOptions(schemaTree) {
 }
 
 function getPopCollection(schemaTreeOriginal, pathArr) {
-    let schemaTree = schemaTreeOriginal[pathArr[0]];
+    let schemaTree = checkForSchemaTree(schemaTreeOriginal)[pathArr[0]];
     //todo check if this can be more than 1 element in array and if so fix accordigly
     schemaTree = Array.isArray(schemaTree) ? schemaTree[0] : schemaTree;
     let {ref} = getSchemaOptions(schemaTree);
@@ -40,7 +45,7 @@ function getPopCollection(schemaTreeOriginal, pathArr) {
     }
 }
 
-async function  getPopData(populateOptions, mongoDocs, schema, schemaOptions = undefined) {
+async function  getPopData(populateDocs, populateOptions, mongoDocs, schema, schemaOptions = undefined) {
     let localField = schemaOptions && schemaOptions.localField ? schemaOptions.localField : populateOptions.path;
     let foreignField = schemaOptions && schemaOptions.foreignField ? schemaOptions.foreignField : '_id';
     let ids = _.flatten(mongoDocs.map((m) => m[localField]));
@@ -63,9 +68,11 @@ async function  getPopData(populateOptions, mongoDocs, schema, schemaOptions = u
         for (let pop of populateOptions.populate) {
             let currentSchema = schema[populateOptions.path];
             let schemaOptions = getSchemaOptions(currentSchema);
-            await getPopData(pop, popDocs, getSchemaTree(schemaOptions.ref), schemaOptions);
+            populateDocs = await getPopData(populateDocs, pop, popDocs, getSchemaTree(schemaOptions.ref), schemaOptions);
         }
     }
+
+    return populateDocs;
 }
 //.populate() support end
 
@@ -131,9 +138,9 @@ async function getMongoDocs(self, stage) {
             await new Promise(async (resolve, reject) => {
                 global.asyncLocalStorage.run(undefined, async () => {
                     try {
-                        await getPopData(field, mongoRes, getSchemaTree(collection.slice(0, -1)));
-                    }catch (e) {
-                        //dummy catch
+                        populateDocs = await getPopData(populateDocs, field, mongoRes, getSchemaTree(collection.slice(0, -1)));
+                    } catch (e) {
+                        // dummy catch //todo console.log('population error ', e)
                     }
                     resolve();
                 });

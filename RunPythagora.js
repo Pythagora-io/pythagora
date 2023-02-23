@@ -6,6 +6,10 @@ try {
     require.cache[require.resolve('express')] = {
         exports: require('./src/patches/express.js')
     };
+
+    require.cache[require.resolve('../../mongodb/lib/collection.js')] = {
+        exports: require('./src/patches/mongoCollection.js')
+    };
 } catch (e) {
     console.log(`\x1b[31m${e.message}\x1b[0m`);
     process.exit(1);

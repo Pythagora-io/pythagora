@@ -29,7 +29,7 @@ This is an alpha version of Pythagora. To get an update about beta release or to
 <br>
 
 <b>NOTE:</b> For now we support projects that use:
-   - <a href="https://www.npmjs.com/package/express" target="_blank">Express</a> (it can be under the hood, like <a href="https://www.npmjs.com/package/@apollo/server" target="_blank">Apollo server</a>, <a href="https://www.npmjs.com/package/@apollo/server" target="_blank">NestJS</a>,...)
+   - <a href="https://www.npmjs.com/package/express" target="_blank">Express</a> (it can be under the hood, like <a href="https://www.npmjs.com/package/@apollo/server" target="_blank">Apollo server</a>, <a href="https://nestjs.com/" target="_blank">NestJS</a>,...)
    - <a href="https://www.npmjs.com/package/mongoose" target="_blank">Mongoose</a> (we are looking to change that in upcoming weeks to native <a href="https://www.npmjs.com/package/mongodb" target="_blank">MongoDB</a> and then add support for other DBs like <a href="https://www.postgresql.org/" target="_blank">PostgreSQL</a>)
    - <a href="https://redis.io/" target="_blank">Redis</a>
 <br>

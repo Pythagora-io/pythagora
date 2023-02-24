@@ -183,29 +183,6 @@ function stringToMongoObjectId(str) {
     return str;
 }
 
-function mongoObjToJson(originalObj) {
-    let obj = _.clone(originalObj);
-    if (!obj) return obj;
-    else if (obj._bsontype === 'ObjectID') return `ObjectId("${obj.toString()}")`;
-    if (Array.isArray(obj)) return obj.map(d => {
-        return mongoObjToJson(d)
-    });
-    obj = convertToRegularObject(obj);
-
-    for (let key in obj) {
-        if (!obj[key]) continue;
-        if (obj[key]._bsontype === "ObjectID") {
-            // TODO label a key as ObjectId better (not through a string)
-            obj[key] = `ObjectId("${obj[key].toString()}")`;
-        } else if (obj[key] instanceof RegExp) {
-            obj[key] = `RegExp("${obj[key].toString()}")`;
-        } else if (typeof obj[key] === 'object') {
-            obj[key] = mongoObjToJson(obj[key]);
-        }
-    }
-    return obj;
-}
-
 module.exports = {
     cutWithDots,
     compareResponse,
@@ -216,5 +193,5 @@ module.exports = {
     getCircularReplacer,
     getOccurrenceInArray,
     jsonObjToMongo,
-    mongoObjToJson
+    convertToRegularObject
 }

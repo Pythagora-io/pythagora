@@ -1,22 +1,75 @@
 // TODO make a function that dynamically searches for the collection file
-const originalCollection = require('../../mongodb/lib/collection');
-const { preHook, postHook } = require('../helpers/mongo.js');
-let methods = ['save','find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
+const originalCollection = require('../../../../mongodb/lib/collection');
+const pythagoraErrors = require('../const/errors');
+const MONGO_METHODS = require('../const/mongodb');
+const {v4} = require('uuid');
+const {
+    getCurrentMongoDocs,
+    extractArguments,
+    checkForErrors,
+    createCaptureIntermediateData,
+    postHook
+} = require('../helpers/mongodb');
+const MODES = require("@pythagora.io/pythagora/src/const/modes.json");
+let ignoredMethods = [
+    'rename',
+    'drop',
+    'isCapped',
+    'createIndex',
+    'createIndexes',
+    'dropIndex',
+    'dropIndexes',
+    'reIndex',
+    'listIndexes',
+    'indexExists',
+    'indexInformation',
+    'estimatedDocumentCount',
+    'distinct',
+    'indexes',
+    'stats',
+    'watch',
+    'geoHaystackSearch',
+    'mapReduce',
+    'initializeUnorderedBulkOp',
+    'initializeOrderedBulkOp',
+    'getLogger',
+    'ensureIndex',
+    'findAndModify',
+    'parallelCollectionScan',
+    'group'
+];
 
-methods.forEach(method => {
+Object.keys(MONGO_METHODS).forEach(method => {
     const originalMethod = originalCollection.prototype[method];
     originalCollection.prototype[method] = async function () {
-        const asyncContextId = global.asyncLocalStorage.getStore();
-        if (asyncContextId !== undefined) {
-            let callbackArgumentIndex = getCallbackArgumentIndex(originalMethod.toString());
-            const originalCallback = arguments[callbackArgumentIndex];
+        let asyncContextId = global.asyncLocalStorage.getStore(),
+            request = global.Pythagora.getRequestByAsyncStore(),
+            intermediatedata = {};
 
-            // TODO: call preHook
+        checkForErrors(method, request);
+
+        // TODO pitati Leona zasto u pre hooku ne postavljamo stvari u bazu?? Kada se to radi?
+        if (asyncContextId !== undefined && request && !request.error) {
+            let callbackArgumentIndex = MONGO_METHODS[method].indexOf('callback');
+            const { query, options, callback } = extractArguments(method, arguments);
+
+            // preHook
+            if (global.Pythagora.mode === MODES.capture) {
+                let preQueryRes = await getCurrentMongoDocs(this, query, options);
+                intermediatedata = createCaptureIntermediateData(
+                    this.s.namespace.db, this.s.namespace.collection, query, options, preQueryRes
+                );
+            } else {
+                // this.originalConditions = mongoObjToJson(this._conditions);
+            }
+            // end preHook
+
             arguments[callbackArgumentIndex] = async (err, cursor) => {
-                // TODO: call postHook
+                await postHook(this, cursor, query, options, request, intermediatedata);
+
                 console.log('\x1b[32m\x1b[1m', `${asyncContextId} Mongo [ ${method} ]`, `${!!cursor}\x1b[0m`);
-                if (typeof originalCallback === 'function') {
-                    originalCallback(err, cursor);
+                if (typeof callback === 'function') {
+                    global.asyncLocalStorage.run(asyncContextId, () => callback(err, cursor));
                     return;
                 }
 
@@ -30,15 +83,6 @@ methods.forEach(method => {
     }
 });
 
-function getCallbackArgumentIndex(methodFunction) {
-    const argsRegex = /\(([^)]*)\)/;
-    const argsMatch = argsRegex.exec(methodFunction);
 
-    const argsList = argsMatch[1];
-
-    const argsArray = argsList.split(',').map(arg => arg.trim());
-
-    return argsArray.indexOf('callback');
-}
 
 module.exports = originalCollection;

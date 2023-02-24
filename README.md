@@ -167,46 +167,11 @@ For now, we support projects that use:
   <br>
   <br>
 #### Other technologies that Pythagora works with:
-<div align="left" class="supported_technologies">
-  <a href="#">
-    <img src="https://user-images.githubusercontent.com/10895136/221124584-d82d1ab0-e8b4-4710-90c7-a2fa1450667d.png" width="50" alt="Logo 1" style="border-radius: 50%;" />
-    <br />Apollo server
-  </a>
-  <a href="#">
-    <img src="https://user-images.githubusercontent.com/10895136/221125424-699d5159-e68d-439b-91be-68c766e6b8c3.png" width="50" alt="Logo 2" style="border-radius: 50%" />
-    <br />GraphQL
-  </a>
-  <a href="#">
-    <img src="https://user-images.githubusercontent.com/10895136/221124832-2c0e7268-2e38-4779-9928-543efadf63a9.png" width="50" alt="Logo 3" style="border-radius: 50%" />
-    <br />NestJS
-  </a>
-  <div style="display:inline-block;height:80px;width:1px;background-color:#ccc;margin:0 10px 0 35px;"></div>
-  <a href="#" class="upcoming_support">
-    <img src="https://user-images.githubusercontent.com/10895136/221130405-1073a56b-9056-42b7-acb3-875fee2c40ce.png" width="50" alt="Logo 1" style="border-radius: 50%;" />
-    <br />Next.js [upcoming]
-  </a>
-  <a href="#" class="upcoming_support">
-    <img src="https://user-images.githubusercontent.com/10895136/221130597-4efae929-966f-4312-b47d-845e70f66984.jpg" width="50" alt="Logo 1" style="border-radius: 50%;" />
-    <br />Nuxt.js [upcoming]
-  </a>
-  <a href="#" class="upcoming_support">
-    <img src="https://user-images.githubusercontent.com/10895136/221130228-432f0a0c-0ac6-4154-b775-b6287760bedb.png" width="50" alt="Logo 1" style="border-radius: 50%;" />
-    <br />PostgreSQL [upcoming]
-  </a>
-  <style>
-    .supported_technologies > a {
-      display: inline-block;
-      text-align: center;
-      margin: 0 10px;
-      max-width: 100px;
-      vertical-align: top;
-    }
-    .upcoming_support {
-      opacity: 0.3;
-    }
-  </style>
-</div>
 
+| Apollo server | GraphQL | NestJS | Next.js | Nuxt.js | PostgreSQL | 
+|       :---:     |     :---:      |     :---: |       :---:     |     :---:      |     :---: |
+|<img src="https://user-images.githubusercontent.com/10895136/221188154-0d98b059-5cf1-48bd-b96b-400524d3cd55.png" width="50" alt="Logo 1" style="border-radius: 50%;" />|<img src="https://user-images.githubusercontent.com/10895136/221188225-ea8b0c45-fd37-4bf8-861b-8a97802702da.png" width="50" alt="Logo 2" style="border-radius: 50%" />|<img src="https://user-images.githubusercontent.com/10895136/221188433-e9634001-d9cb-40b2-b358-4932398955ef.png" width="50" alt="Logo 3" style="border-radius: 50%" />| <img src="https://user-images.githubusercontent.com/10895136/221188495-aaaa78bc-b31b-47cb-be37-47d55d4ccf0b.png" width="50" alt="Logo 1" style="border-radius: 50%;" />   | <img src="https://user-images.githubusercontent.com/10895136/221188561-24b75f90-01f7-4378-9664-88af12c9f666.png" width="50" alt="Logo 1" style="border-radius: 50%;" />     | <img src="https://user-images.githubusercontent.com/10895136/221188623-508a8238-8bd6-4858-a322-234582a70a87.png" width="50" alt="Logo 1" style="border-radius: 50%;" />   |
+|      |        |       | Upcoming     | Upcoming       |   Upcoming    |
 
 <br>
 <h1 id="connectwithus">🔗 Connect with us</h1>

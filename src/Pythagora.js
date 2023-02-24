@@ -170,10 +170,16 @@ class Pythagora {
         });
     }
 
-    getRequestKeyByAsyncStore() {
+    getRequestKeyByAsyncStore(asyncStoreId) {
+        if (asyncStoreId === undefined) asyncStoreId = global.asyncLocalStorage.getStore();
         return Object.keys(this.requests).find(key => {
-            return this.requests[key].asyncStore === global.asyncLocalStorage.getStore();
+            return this.requests[key].asyncStore === asyncStoreId;
         });
+    }
+
+    getRequestByAsyncStore(asyncStoreId) {
+        if (asyncStoreId === undefined) asyncStoreId = global.asyncLocalStorage.getStore();
+        return this.requests[this.getRequestKeyByAsyncStore(asyncStoreId)];
     }
 
     updateTrace(asyncId, triggerAsyncId) {

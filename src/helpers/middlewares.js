@@ -2,7 +2,7 @@ const MODES = require("../const/modes.json");
 const { jsonObjToMongo, getCircularReplacer, compareResponse } = require("../utils/common.js");
 const pythagoraErrors = require("../const/errors.json");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
-const { cleanupDb } = require("./mongo.js");
+const { cleanupDb, connectToPythagoraDB } = require("./mongo.js");
 
 const bodyParser = require("body-parser");
 const {v4} = require("uuid");
@@ -45,16 +45,7 @@ function setUpExpressMiddleware(app, pythagora, mongoose) {
         let pythagoraConnection = mongoose.connections.filter((c) => c.name === pythagoraDb);
         if (pythagoraConnection.length && mongoose.connections.length === 1) return await prepareDB();
 
-        let connection = mongoose.connections[0];
-        let login = connection.user && connection.password ? `${connection.user}:${connection.password}@` : '';
-        mongoose.disconnect();
-        for (const connection of mongoose.connections) {
-            if (connection.name !== pythagoraDb) connection.close();
-        }
-        let pythagoraDbConnection = await mongoose.connect(`mongodb://${login}${connection.host}:${connection.port}/${pythagoraDb}`, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
+        await connectToPythagoraDB();
         await prepareDB();
     });
 

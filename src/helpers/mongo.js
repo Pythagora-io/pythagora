@@ -244,13 +244,33 @@ function configureMongoosePlugin(pythagora) {
 }
 
 async function cleanupDb() {
-    const collections = await mongoose.connection.db.collections();
-    for (const collection of collections) {
-        await collection.drop();
+    try {
+        await connectToPythagoraDB();
+        const collections = await mongoose.connection.db.collections();
+        for (const collection of collections) {
+            await collection.drop();
+        }
+    } catch (e) {
+        console.log('Error while cleaning up PythagoraDB: ', e.message);
     }
+}
+
+async function connectToPythagoraDB() {
+    let pythagoraDb = 'pythagoraDb';
+    let connection = mongoose.connections[0];
+    let login = connection.user && connection.password ? `${connection.user}:${connection.password}@` : '';
+    await mongoose.disconnect();
+    for (const connection of mongoose.connections) {
+        if (connection.name !== pythagoraDb) await connection.close();
+    }
+    await mongoose.connect(`mongodb://${login}${connection.host}:${connection.port}/${pythagoraDb}`, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    });
 }
 
 module.exports = {
     configureMongoosePlugin,
-    cleanupDb
+    cleanupDb,
+    connectToPythagoraDB
 }

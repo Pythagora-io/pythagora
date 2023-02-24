@@ -18,8 +18,6 @@ let  { AsyncLocalStorage } = require('node:async_hooks');
 
 global.asyncLocalStorage = new AsyncLocalStorage();
 
-let app;
-
 class Pythagora {
 
     constructor(mode) {
@@ -90,13 +88,8 @@ class Pythagora {
         process.exit();
     }
 
-    setApp(newApp) {
-        app = newApp;
+    setApp(app) {
         setUpExpressMiddleware(app, this, mongoose);
-    }
-
-    getApp() {
-        return app;
     }
 
     setUpHttpInterceptor() {

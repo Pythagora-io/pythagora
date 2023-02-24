@@ -29,7 +29,7 @@ function setUpExpressMiddleware(app, pythagora, mongoose) {
 
             let uniqueIds = [];
             for (const data of testReq.intermediateData) {
-                if (data.type !== 'mongo') continue;
+                if (data.type !== 'mongodb') continue;
                 let insertData = [];
                 for (let doc of data.preQueryRes) {
                     if (!uniqueIds.includes(doc._id)) {
@@ -37,7 +37,7 @@ function setUpExpressMiddleware(app, pythagora, mongoose) {
                         insertData.push(jsonObjToMongo(doc));
                     }
                 }
-                if(insertData.length) await mongoose.connection.db.collection(data.req.collection).insertMany(insertData);
+                if(insertData.length) await mongoose.connection.db.collection(data.collection).insertMany(insertData);
             }
             return next();
         }

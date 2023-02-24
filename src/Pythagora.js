@@ -182,6 +182,11 @@ class Pythagora {
         return this.requests[this.getRequestKeyByAsyncStore(asyncStoreId)];
     }
 
+    getTestingRequestByAsyncStore(asyncStoreId) {
+        if (asyncStoreId === undefined) asyncStoreId = global.asyncLocalStorage.getStore();
+        return this.testingRequests[asyncStoreId];
+    }
+
     updateTrace(asyncId, triggerAsyncId) {
         for (let i = 0; i < Object.keys(this.requests).length; i++) {
             if (this.requests[Object.keys(this.requests)[i]].trace.includes(triggerAsyncId)) {

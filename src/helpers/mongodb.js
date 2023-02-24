@@ -221,14 +221,42 @@ function createCaptureIntermediateData(db, collection, query, options, preQueryR
     };
 }
 
-async function postHook(collection, cursor, query, options, request, intermediateData) {
+function findCapturedData(collectionName, query, options, intermediateData) {
+    return intermediateData.find(d => {
+        return !d.processed &&
+            d.type === 'mongodb' &&
+            d.collection === collectionName &&
+            compareJson(d.query, query, true) &&
+            compareJson(d.options, options, true);
+    });
+}
+
+function checkCapturedData(capturedData, mongoResult, postQueryRes, request) {
+    if (capturedData) capturedData.processed = true;
+    if (capturedData && (
+        !compareJson(capturedData.mongoRes, mongoObjToJson(mongoResult)) ||
+        !compareJson(capturedData.postQueryRes, mongoObjToJson(postQueryRes))
+    )) {
+        request.errors.push(pythagoraErrors.mongoResultDifferent);
+    } else if (!capturedData) {
+        request.errors.push(pythagoraErrors.mongoQueryNotFound);
+    }
+}
+
+async function postHook(collection, cursor, query, options, db, collectionName, request, intermediateData) {
     let mongoResult = cursor.toArray ? await cursor.toArray() : cursor;
+    let postQueryRes = await getCurrentMongoDocs(collection, query, options);
     if (global.Pythagora.mode === MODES.capture) {
         request.mongoQueriesCapture++;
-        let postQueryRes = await getCurrentMongoDocs(collection, query, options);
         intermediateData.mongoRes = mongoObjToJson(mongoResult);
         intermediateData.postQueryRes = mongoObjToJson(postQueryRes);
         request.intermediateData.push(_.clone(intermediateData));
+    } else if (global.Pythagora.mode === MODES.test) {
+        request.mongoQueriesTest++;
+        let capturedData = findCapturedData(
+            collectionName, mongoObjToJson(query), mongoObjToJson(options), request.intermediateData
+        );
+        checkCapturedData(capturedData, mongoResult, postQueryRes, request);
     }
 }
 
@@ -258,56 +286,6 @@ async function preHook(collection, query, options, request) {
     } catch (e) {
         console.error('Something went wrong while processing mongo pre hook', e);
     }
-}
-
-async function postHook2(collection, query, options, request) {
-    await new Promise(((resolve, reject) => {
-        global.asyncLocalStorage.run(this.asyncStore, async() => {
-            try {
-                logWithStoreId('mongo post');
-                var mongoRes = await getMongoDocs(this, 'post');
-
-                if (pythagora.mode === MODES.test) {
-                    pythagora.testingRequests[this.asyncStore].mongoQueriesTest++;
-                    let request = pythagora.testingRequests[this.asyncStore];
-                    let mongoReq = mongoObjToJson(_.omit(mongoRes.req, '_doc'));
-                    let capturedData = request.intermediateData.find(d => {
-                        return !d.processed &&
-                            d.type === 'mongo' &&
-                            d.req.op === mongoReq.op &&
-                            d.req.collection === mongoReq.collection &&
-                            compareJson(d.req.options, mongoObjToJson(mongoReq.options), true) &&
-                            compareJson(d.req._conditions, this.originalConditions, true);
-                    });
-                    if (capturedData) capturedData.processed = true;
-                    if (capturedData &&
-                        (!compareJson(capturedData.mongoRes, mongoObjToJson(doc)) || !compareJson(capturedData.postQueryRes, mongoObjToJson(mongoRes.mongoDocs)))
-                    ) {
-                        pythagora.testingRequests[this.asyncStore].errors.push(pythagoraErrors.mongoResultDifferent);
-                    } else if (!capturedData) {
-                        pythagora.testingRequests[this.asyncStore].errors.push(pythagoraErrors.mongoQueryNotFound);
-                    }
-                } else if (pythagora.mode === MODES.capture) {
-                    if (request) {
-                        request.mongoQueriesCapture++;
-                        request.intermediateData.forEach((intData, i) => {
-                            if (intData.mongoReqId === this.mongoReqId) {
-                                request.intermediateData[i].mongoRes = mongoObjToJson(doc);
-                                request.intermediateData[i].postQueryRes = mongoObjToJson(mongoRes.mongoDocs);
-                            }
-                        });
-                    }
-                }
-                if (next) {
-                    next();
-                } else {
-                    resolve();
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        });
-    }));
 }
 
 module.exports = {

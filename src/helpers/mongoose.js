@@ -250,17 +250,7 @@ async function cleanupDb() {
     }
 }
 
-async function preHook() {
-
-}
-
-async function postHook() {
-
-}
-
 module.exports = {
     configureMongoosePlugin,
     cleanupDb,
-    preHook,
-    postHook
 }

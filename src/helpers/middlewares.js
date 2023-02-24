@@ -1,8 +1,8 @@
 const MODES = require("../const/modes.json");
 const { jsonObjToMongo, getCircularReplacer, compareResponse } = require("../utils/common.js");
-const pythagoraErrors = require("../const/errors.json");
+const pythagoraErrors = require("../const/errors");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
-const { cleanupDb } = require("./mongo.js");
+const { cleanupDb } = require("./mongoose.js");
 
 const bodyParser = require("body-parser");
 const {v4} = require("uuid");

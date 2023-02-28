@@ -8,9 +8,11 @@ const {
     extractArguments,
     checkForErrors,
     createCaptureIntermediateData,
-    postHook
+    mongoObjToJson,
+    findCapturedData,
+    checkCapturedData
 } = require('../helpers/mongodb');
-const MODES = require("@pythagora.io/pythagora/src/const/modes.json");
+const MODES = require("../const/modes.json");
 let ignoredMethods = [
     'rename',
     'drop',
@@ -41,52 +43,108 @@ let ignoredMethods = [
 
 Object.keys(MONGO_METHODS).forEach(method => {
     const originalMethod = originalCollection.prototype[method];
-    originalCollection.prototype[method] = async function () {
+    originalCollection.prototype[method] = function () {
         let asyncContextId = global.asyncLocalStorage.getStore(),
             request = global.Pythagora.mode === MODES.capture ? global.Pythagora.getRequestByAsyncStore() :
                 global.Pythagora.mode === MODES.test ? global.Pythagora.getTestingRequestByAsyncStore() : undefined,
-            intermediatedata = {},
+            intermediateData = {},
             db = this.s.namespace.db,
             collectionName = this.s.namespace.collection;
 
         checkForErrors(method, request);
 
-        if (asyncContextId !== undefined && request && !request.error) {
-            let callbackArgumentIndex = MONGO_METHODS[method].indexOf('callback');
-            const { query, options, callback } = extractArguments(method, arguments);
+        // TODO weird situation where I can't get cursor from within if statement
+        if (asyncContextId === undefined || !request || request.error) return originalMethod.apply(this, arguments);
 
-            // preHook
+        let callbackArgumentIndex = MONGO_METHODS[method].args.indexOf('callback');
+        const { query, options, callback, otherArgs } = extractArguments(method, arguments);
+
+        const preHook = async () => {
             if (global.Pythagora.mode === MODES.capture) {
                 let preQueryRes = await getCurrentMongoDocs(this, query, options);
-                intermediatedata = createCaptureIntermediateData(db, collectionName, query, options, preQueryRes);
-            } else if (global.Pythagora.mode === MODES.test) {
-                // this.originalConditions = mongoObjToJson(this._conditions);
+                intermediateData = createCaptureIntermediateData(db, collectionName, method, query, options, otherArgs, preQueryRes);
             }
-            // end preHook
-
-            arguments[callbackArgumentIndex] = async (err, cursor) => {
-                if (err) {
-                    // TODO handle Mongo errors
-                }
-                // TODO probati ovo maknuti
-                await new Promise((resolve, reject) => {
-                    global.asyncLocalStorage.run(asyncContextId, async () => {
-                        await postHook(this, cursor, query, options, db, collectionName, request, intermediatedata);
-                        resolve();
-                    });
-                });
-
-                console.log('\x1b[32m\x1b[1m', `${asyncContextId} Mongo [ ${method} ]`, `${!!cursor}\x1b[0m`);
-                if (typeof callback === 'function') {
-                    global.asyncLocalStorage.run(asyncContextId, () => callback(err, cursor));
-                    return;
-                }
-
-                return cursor;
-            };
         }
 
-        return originalMethod.apply(this, arguments);
+        const postHook = async (err, cursor) => {
+
+            if (err) {
+                // TODO handle Mongo errors
+                throw new Error(err);
+            }
+
+            let mongoResult = cursor && cursor.toArray ? await cursor.toArray() : cursor;
+            let postQueryRes = await getCurrentMongoDocs(this, query, options);
+            if (global.Pythagora.mode === MODES.capture) {
+                request.mongoQueriesCapture++;
+                intermediateData.mongoRes = mongoObjToJson(mongoResult);
+                intermediateData.postQueryRes = mongoObjToJson(postQueryRes);
+                request.intermediateData.push(intermediateData);
+            } else if (global.Pythagora.mode === MODES.test) {
+                request.mongoQueriesTest++;
+                let capturedData = findCapturedData(
+                    collectionName, method, mongoObjToJson(query),
+                    mongoObjToJson(options), mongoObjToJson(otherArgs), request.intermediateData
+                );
+                checkCapturedData(capturedData, mongoResult, postQueryRes, request);
+            }
+
+            if (typeof callback === 'function') {
+                global.asyncLocalStorage.run(asyncContextId, () => callback(err, cursor));
+                return;
+            }
+
+            if (err) reject(err);
+
+            return cursor;
+        };
+
+        const cursorNextWrapper = (originalNext) => {
+            return async function () {
+                await preHook();
+                let originalCallback = arguments[0];
+                arguments[0] = async (err, item) => {
+                    // TODO handle Mongo errors
+                    if (err) {
+                        console.log(err);
+                    }
+                    await postHook(null, item);
+                    originalCallback(err, item);
+                };
+                originalNext.apply(this, arguments);
+            }
+        }
+
+        const cursorMapWrapper = async (originalMap) => {
+
+        }
+
+        const toArrayWrapper = async (originalToArray) => {
+
+        }
+
+        const cursorSizeWrapper = async (originalSize) => {
+
+        }
+
+        const cursorSortWrapper = async (originalSort) => {
+
+        }
+
+        const cursorTryNextWrapper = async (originalTryNext) => {
+
+        }
+
+        if (typeof callback === 'function') {
+            arguments[callbackArgumentIndex] = postHook;
+            preHook().then(() => originalMethod.apply(this, arguments));
+            return;
+        }
+
+        let cursor = originalMethod.apply(this, arguments);
+        if (cursor && cursor.next) cursor.next = cursorNextWrapper(cursor.next);
+        return cursor;
+
     }
 });
 

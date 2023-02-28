@@ -1,12 +1,14 @@
 const _ = require("lodash");
-let tryRequire = require("tryrequire");
-let mongoose = tryRequire("mongoose");
+const ObjectId = require("mongodb").ObjectId;
 
 const objectIdAsStringRegex = /^ObjectId\("([0-9a-fA-F]{24})"\)$/;
 const regExpRegex = /^RegExp\("(.*)"\)$/;
 const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
 
-let ObjectId = mongoose ? mongoose.Types.ObjectId : undefined;
+// TODO check this mongoose
+// TODO remove all MONGOOSE refs
+// TODO remove all Mongo from common
+// TODO make with mongodb driver but watch for requiring mongodb because of mongo-command patch
 
 const isObjectId = (value) => {
     try {

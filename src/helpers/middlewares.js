@@ -274,7 +274,7 @@ function saveCaptureToFile(reqData, pythagora) {
     reqData.pythagoraVersion = pythagora.version;
     reqData.createdAt = new Date().toISOString();
     let endpointFileName = `./pythagora_data/${reqData.endpoint.replace(/\//g, '|')}.json`;
-    if (!fs.existsSync(endpointFileName)) fs.writeFileSync(endpointFileName, JSON.stringify([reqData], getCircularReplacer()));
+    if (!fs.existsSync(endpointFileName)) fs.writeFileSync(endpointFileName, JSON.stringify([reqData], getCircularReplacer(), 2));
     else {
         let fileContent = JSON.parse(fs.readFileSync(endpointFileName));
         let identicalRequestIndex = fileContent.findIndex(req => {
@@ -287,11 +287,11 @@ function saveCaptureToFile(reqData, pythagora) {
         });
 
         if (identicalRequestIndex === -1) {
-            fs.writeFileSync(endpointFileName, JSON.stringify(fileContent.concat([reqData]), getCircularReplacer()));
+            fs.writeFileSync(endpointFileName, JSON.stringify(fileContent.concat([reqData]), getCircularReplacer(), 2));
         } else {
             if (pythagora.requests[fileContent[identicalRequestIndex].id]) delete pythagora.requests[fileContent[identicalRequestIndex].id];
             fileContent[identicalRequestIndex] = reqData;
-            let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer());
+            let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer(), 2);
             fs.writeFileSync(endpointFileName, storeData);
         }
     }

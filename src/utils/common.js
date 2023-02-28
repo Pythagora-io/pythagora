@@ -115,6 +115,7 @@ function stringToRegExp(str) {
 const getCircularReplacer = () => {
     const seen = new WeakSet();
     return (key, value) => {
+        value = _.clone(value);
         if (isLegacyObjectId(value)) value = (new ObjectId(Buffer.from(value.id.data))).toString();
         else if (value instanceof RegExp) value = `RegExp("${value.toString()}")`;
         else if (Array.isArray(value) && value.find(v => isLegacyObjectId(v))) {

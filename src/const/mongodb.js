@@ -1,47 +1,4 @@
-module.exports = {
-    'insertOne': [
-        'doc',
-        'options',
-        'callback'
-    ],
-    'insertMany': [
-        'docs',
-        'options',
-        'callback'
-    ],
-    'bulkWrite': [
-        'operations',
-        'options',
-        'callback'
-    ],
-    'updateOne': [
-        'filter',
-        'update',
-        'options',
-        'callback'
-    ],
-    'replaceOne': [
-        'filter',
-        'doc',
-        'options',
-        'callback'
-    ],
-    'updateMany': [
-        'filter',
-        'update',
-        'options',
-        'callback'
-    ],
-    'deleteOne': [
-        'filter',
-        'options',
-        'callback'
-    ],
-    'deleteMany': [
-        'filter',
-        'options',
-        'callback'
-    ],
+const unsupportedMethods = {
     // 'rename': [
     //     'newName',
     //     'options',
@@ -51,10 +8,6 @@ module.exports = {
     //     'options',
     //     'callback'
     // ],
-    'options': [
-        'opts',
-        'callback'
-    ],
     // 'isCapped': [
     //     'options',
     //     'callback'
@@ -98,11 +51,6 @@ module.exports = {
     //     'options',
     //     'callback'
     // ],
-    'countDocuments': [
-        'query',
-        'options',
-        'callback'
-    ],
     // 'distinct': [
     //     'key',
     //     'query',
@@ -117,28 +65,6 @@ module.exports = {
     //     'options',
     //     'callback'
     // ],
-    'findOneAndDelete': [
-        'filter',
-        'options',
-        'callback'
-    ],
-    'findOneAndReplace': [
-        'filter',
-        'replacement',
-        'options',
-        'callback'
-    ],
-    'findOneAndUpdate': [
-        'filter',
-        'update',
-        'options',
-        'callback'
-    ],
-    'aggregate': [
-        'pipeline',
-        'options',
-        'callback'
-    ],
     // 'watch': [
     //     'pipeline',
     //     'options'
@@ -162,58 +88,16 @@ module.exports = {
     //     'options'
     // ],
     // 'getLogger': []
-    'insert': [
-        'docs',
-        'options',
-        'callback'
-    ],
-    'update': [
-        'selector',
-        'update',
-        'options',
-        'callback'
-    ],
-    'remove': [
-        'selector',
-        'options',
-        'callback'
-    ],
-    'save': [
-        'doc',
-        'options',
-        'callback'
-    ],
     // 'ensureIndex': [
     //     'fieldOrSpec',
     //     'options',
     //     'callback'
     // ],
-    'count': [
-        'query',
-        'options',
-        'callback'
-    ],
-    'find': [
-        'query',
-        'options',
-        'callback'
-    ],
-    'findOne': [
-        'query',
-        'options',
-        'callback'
-    ],
     // 'findAndModify': [
     //     '_findAndModify',
     //     ''collection.findAndModify is deprecated. Use findOneAndUpdate',
     //     'findOneAndReplace or findOneAndDelete instead.''
     // ],
-    'findAndRemove': [
-        'query',
-        'sort',
-        'options',
-        'callback'
-    ],
     // 'parallelCollectionScan': [
     //     'options',
     //     'callback'
@@ -229,3 +113,232 @@ module.exports = {
     //     'callback'
     // ]
 }
+
+module.exports = {
+    'insertOne': {
+        args: [
+            'doc',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'doc', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'insertMany': {
+        args: [
+            'docs',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'docs', multi: true },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'bulkWrite': {
+        args: [
+            'operations',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'operations', multi: true },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'updateOne': {
+        args: [
+            'filter',
+            'update',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'filter', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'replaceOne': {
+        args: [
+            'filter',
+            'doc',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'filter', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'updateMany': {
+        args: [
+            'filter',
+            'update',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'filter', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'deleteOne': {
+        args: [
+            'filter',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'filter', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'deleteMany': {
+        args: [
+            'filter',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'filter', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'options': {
+        args: [
+            'opts',
+            'callback'
+        ],
+        query: { argName: 'opts', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'opts' }
+    },
+    'countDocuments': {
+        args: [
+            'query',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'query', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'findOneAndDelete': {
+        args: [
+            'filter',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'filter', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'findOneAndReplace': {
+        args: [
+            'filter',
+            'replacement',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'filter', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'findOneAndUpdate': {
+        args: [
+            'filter',
+            'update',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'filter', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'aggregate': {
+        args: [
+            'pipeline',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'pipeline', multi: false, conversionFunction: (pipeline) => {} },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'insert': {
+        args: [
+            'docs',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'docs', multi: true },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'update': {
+        args: [
+            'selector',
+            'update',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'selector', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'remove': {
+        args: [
+            'selector',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'selector', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'save': {
+        args: [
+            'doc',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'doc', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'count': {
+        args: [
+            'query',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'query', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'find': {
+        args: [
+            'query',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'query', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'findOne': {
+        args: [
+            'query',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'query', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    },
+    'findAndRemove': {
+        args: [
+            'query',
+            'sort',
+            'options',
+            'callback'
+        ],
+        query: { argName: 'query', multi: false },
+        callback: { argName: 'callback' },
+        options: { argName: 'options', ignore: ['session'] }
+    }
+};

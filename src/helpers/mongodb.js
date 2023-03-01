@@ -90,8 +90,8 @@ function createCaptureIntermediateData(db, collection, op, query, options, other
     };
 }
 
-function findCapturedData(collectionName, op, query, options, otherArgs, intermediateData) {
-    return intermediateData.find(d => {
+function findAndCheckCapturedData(collectionName, op, query, options, otherArgs, request, mongoResult, postQueryRes) {
+    let capturedData = request.intermediateData.find(d => {
         return !d.processed &&
             d.type === 'mongodb' &&
             d.collection === collectionName &&
@@ -100,6 +100,16 @@ function findCapturedData(collectionName, op, query, options, otherArgs, interme
             compareJson(d.options, options, true) &&
             compareJson(d.otherArgs, otherArgs, true);
     });
+
+    if (capturedData) capturedData.processed = true;
+    if (capturedData && (
+        !compareJson(capturedData.mongoRes, mongoObjToJson(mongoResult)) ||
+        !compareJson(capturedData.postQueryRes, mongoObjToJson(postQueryRes))
+    )) {
+        request.errors.push(pythagoraErrors.mongoResultDifferent);
+    } else if (!capturedData) {
+        request.errors.push(pythagoraErrors.mongoQueryNotFound);
+    }
 }
 
 function checkCapturedData(capturedData, mongoResult, postQueryRes, request) {
@@ -162,8 +172,7 @@ async function preHook(collection, query, options, request) {
 module.exports = {
     cleanupDb,
     preHook,
-    findCapturedData,
-    checkCapturedData,
+    findAndCheckCapturedData,
     mongoObjToJson,
     getCurrentMongoDocs,
     extractArguments,

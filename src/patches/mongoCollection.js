@@ -9,8 +9,7 @@ const {
     checkForErrors,
     createCaptureIntermediateData,
     mongoObjToJson,
-    findCapturedData,
-    checkCapturedData
+    findAndCheckCapturedData
 } = require('../helpers/mongodb');
 const MODES = require("../const/modes.json");
 let ignoredMethods = [
@@ -82,11 +81,10 @@ Object.keys(MONGO_METHODS).forEach(method => {
                 request.intermediateData.push(intermediateData);
             } else if (global.Pythagora.mode === MODES.test) {
                 request.mongoQueriesTest++;
-                let capturedData = findCapturedData(
-                    collectionName, method, mongoObjToJson(query),
-                    mongoObjToJson(options), mongoObjToJson(otherArgs), request.intermediateData
+                findAndCheckCapturedData(
+                    collectionName, method, mongoObjToJson(query), mongoObjToJson(options), mongoObjToJson(otherArgs),
+                    request, mongoResult, postQueryRes
                 );
-                checkCapturedData(capturedData, mongoResult, postQueryRes, request);
             }
 
             if (typeof callback === 'function') {

@@ -133,55 +133,9 @@ async function prepareDB(pythagora, req) {
     }
 }
 
-async function postHook(collection, cursor, query, options, db, collectionName, request, intermediateData) {
-    let mongoResult = cursor.toArray ? await cursor.toArray() : cursor;
-    let postQueryRes = await getCurrentMongoDocs(collection, query, options);
-    if (global.Pythagora.mode === MODES.capture) {
-        request.mongoQueriesCapture++;
-        intermediateData.mongoRes = mongoObjToJson(mongoResult);
-        intermediateData.postQueryRes = mongoObjToJson(postQueryRes);
-        request.intermediateData.push(_.clone(intermediateData));
-    } else if (global.Pythagora.mode === MODES.test) {
-        request.mongoQueriesTest++;
-        let capturedData = findCapturedData(
-            collectionName, mongoObjToJson(query), mongoObjToJson(options), request.intermediateData
-        );
-        checkCapturedData(capturedData, mongoResult, postQueryRes, request);
-    }
-}
-
-async function preHook(collection, query, options, request) {
-    this.mongoReqId = v4();
-    try {
-
-        if (global.Pythagora.mode === MODES.capture && request) {
-            let mongoRes = await new Promise((resolve, reject) => {
-                global.asyncLocalStorage.run(undefined, async () => {
-                    let result = await collection.find(query, options);
-                    resolve(await result.toArray());
-                });
-            });
-
-            request.intermediateData.push({
-                type: 'mongo',
-                options: options,
-                mongoReqId: this.mongoReqId,
-                req: mongoObjToJson(_.omit(query, '_doc')),
-                preQueryRes: mongoObjToJson(mongoRes)
-            });
-
-        } else {
-            this.originalConditions = mongoObjToJson(this._conditions);
-        }
-    } catch (e) {
-        console.error('Something went wrong while processing mongo pre hook', e);
-    }
-}
-
 module.exports = {
     cleanupDb,
     prepareDB,
-    preHook,
     findAndCheckCapturedData,
     mongoObjToJson,
     getCurrentMongoDocs,

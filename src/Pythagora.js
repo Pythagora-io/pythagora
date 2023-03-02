@@ -1,6 +1,6 @@
 const MODES = require('./const/modes.json');
 const RedisInterceptor = require('./helpers/redis.js');
-const { configureMongoosePlugin, cleanupDb } = require('./helpers/mongo.js');
+const { cleanupDb } = require('./helpers/mongodb.js');
 const { makeTestRequest } = require('./helpers/testing.js');
 const { setUpExpressMiddleware } = require('./helpers/middlewares.js');
 const { logCaptureFinished, pythagoraFinishingUp } = require('./utils/cmdPrint.js');
@@ -10,8 +10,6 @@ let  { BatchInterceptor } = require('@mswjs/interceptors');
 let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
 let  fs = require("fs");
 let  _ = require("lodash");
-let tryRequire = require("tryrequire");
-let mongoose = tryRequire("mongoose");
 let  { AsyncLocalStorage } = require('node:async_hooks');
 // const duplexify = require('duplexify');
 // const MockDate = require('mockdate'); todo find solution for expiration of tokens (we need to run capture and tests on same date/time)
@@ -34,8 +32,6 @@ class Pythagora {
 
         // this.setUpHttpInterceptor();
 
-        configureMongoosePlugin(this);
-
         this.cleanupDone = false;
 
         process.on('SIGINT', this.exit.bind(this));
@@ -45,7 +41,7 @@ class Pythagora {
     async exit() {
         if (this.cleanupDone) return;
         this.cleanupDone = true;
-        if (this.mode === MODES.test) await cleanupDb();
+        if (this.mode === MODES.test) await cleanupDb(this);
         if (this.mode === MODES.capture) {
             pythagoraFinishingUp();
             this.mode = MODES.test;
@@ -88,8 +84,12 @@ class Pythagora {
         process.exit();
     }
 
+    setMongoClient(client) {
+        this.mongoClient = client;
+    }
+
     setApp(app) {
-        setUpExpressMiddleware(app, this, mongoose);
+        setUpExpressMiddleware(app, this);
     }
 
     setUpHttpInterceptor() {

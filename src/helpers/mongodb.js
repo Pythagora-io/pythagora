@@ -5,7 +5,8 @@ const { logWithStoreId } = require("../utils/cmdPrint.js");
 
 const {v4} = require("uuid");
 const _ = require("lodash");
-const MONGO_METHODS = require("../const/mongodb");
+const {MONGO_METHODS} = require("../const/mongodb");
+const {PYTHAGORA_DB} = require('../const/mongodb');
 let unsupportedMethods = ['aggregate'];
 
 let methods = ['save','find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
@@ -48,7 +49,7 @@ function extractArguments(method, arguments) {
     let returnObj = {
         otherArgs: {}
     };
-    // TODO dodati processing za .multi
+    // TODO add processing for .multi
     let neededArgs = Object.keys(MONGO_METHODS[method]).slice(1);
     for (let i = 0; i < MONGO_METHODS[method].args.length; i++) {
         let mappedArg = neededArgs.find(d => MONGO_METHODS[method][d].argName === MONGO_METHODS[method].args[i]);
@@ -71,11 +72,9 @@ function checkForErrors(method, request) {
     }
 }
 
-async function cleanupDb() {
-    const collections = await mongoose.connection.db.collections();
-    for (const collection of collections) {
-        await collection.drop();
-    }
+async function cleanupDb(pythagora) {
+    const dbConnection = pythagora.mongoClient.db();
+    if (dbConnection.databaseName === PYTHAGORA_DB) dbConnection.dropDatabase();
 }
 
 function createCaptureIntermediateData(db, collection, op, query, options, otherArgs, preQueryRes) {
@@ -114,15 +113,23 @@ function findAndCheckCapturedData(collectionName, op, query, options, otherArgs,
     }
 }
 
-function checkCapturedData(capturedData, mongoResult, postQueryRes, request) {
-    if (capturedData) capturedData.processed = true;
-    if (capturedData && (
-        !compareJson(capturedData.mongoRes, mongoObjToJson(mongoResult)) ||
-        !compareJson(capturedData.postQueryRes, mongoObjToJson(postQueryRes))
-    )) {
-        request.errors.push(pythagoraErrors.mongoResultDifferent);
-    } else if (!capturedData) {
-        request.errors.push(pythagoraErrors.mongoQueryNotFound);
+async function prepareDB(pythagora, req) {
+    await cleanupDb(pythagora);
+
+    const testReq = await pythagora.getRequestMockDataById(req);
+    if (!testReq) return;
+
+    let uniqueIds = [];
+    for (const data of testReq.intermediateData) {
+        if (data.type !== 'mongodb') continue;
+        let insertData = [];
+        for (let doc of data.preQueryRes) {
+            if (!uniqueIds.includes(doc._id)) {
+                uniqueIds.push(doc._id);
+                insertData.push(jsonObjToMongo(doc));
+            }
+        }
+        if (insertData.length) await pythagora.mongoClient.db().collection(data.collection).insertMany(insertData);
     }
 }
 
@@ -173,6 +180,7 @@ async function preHook(collection, query, options, request) {
 
 module.exports = {
     cleanupDb,
+    prepareDB,
     preHook,
     findAndCheckCapturedData,
     mongoObjToJson,

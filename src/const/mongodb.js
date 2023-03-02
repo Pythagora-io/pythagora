@@ -114,7 +114,7 @@ const unsupportedMethods = {
     // ]
 }
 
-module.exports = {
+const MONGO_METHODS = {
     'insertOne': {
         args: [
             'doc',
@@ -342,3 +342,10 @@ module.exports = {
         options: { argName: 'options', ignore: ['session'] }
     }
 };
+
+const PYTHAGORA_DB = 'pythagoraDb';
+
+module.exports = {
+    MONGO_METHODS,
+    PYTHAGORA_DB
+}

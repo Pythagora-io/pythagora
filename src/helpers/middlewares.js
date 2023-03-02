@@ -2,7 +2,7 @@ const MODES = require("../const/modes.json");
 const { jsonObjToMongo, getCircularReplacer, compareResponse } = require("../utils/common.js");
 const pythagoraErrors = require("../const/errors");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
-const { cleanupDb, connectToPythagoraDB } = require("./mongo.js");
+const { prepareDB } = require("./mongodb.js");
 
 const bodyParser = require("body-parser");
 const {v4} = require("uuid");
@@ -11,42 +11,18 @@ let  { executionAsyncId } = require('node:async_hooks');
 const fs = require('fs');
 
 
-function setUpExpressMiddleware(app, pythagora, mongoose) {
+function setUpExpressMiddleware(app, pythagora) {
     app.use((req, res, next) => {
         if (req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
         return next();
     });
 
     app.use(async (req, res, next) => {
-        if (!mongoose || pythagora.mode !== MODES.test) return next();
-        let pythagoraDb = 'pythagoraDb';
-
-        let prepareDB = async() => {
-            await cleanupDb();
-
-            const testReq = await pythagora.getRequestMockDataById(req);
-            if (!testReq) return next();
-
-            let uniqueIds = [];
-            for (const data of testReq.intermediateData) {
-                if (data.type !== 'mongodb') continue;
-                let insertData = [];
-                for (let doc of data.preQueryRes) {
-                    if (!uniqueIds.includes(doc._id)) {
-                        uniqueIds.push(doc._id);
-                        insertData.push(jsonObjToMongo(doc));
-                    }
-                }
-                if(insertData.length) await mongoose.connection.db.collection(data.collection).insertMany(insertData);
-            }
-            return next();
+        if (pythagora.mode === MODES.test) {
+            await prepareDB(pythagora, req);
         }
 
-        let pythagoraConnection = mongoose.connections.filter((c) => c.name === pythagoraDb);
-        if (pythagoraConnection.length && mongoose.connections.length === 1) return await prepareDB();
-
-        await connectToPythagoraDB();
-        await prepareDB();
+        next();
     });
 
     app.use(bodyParser.json());

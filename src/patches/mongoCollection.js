@@ -1,7 +1,7 @@
 // TODO make a function that dynamically searches for the collection file
 const originalCollection = require('../../../../mongodb/lib/collection');
 const pythagoraErrors = require('../const/errors');
-const MONGO_METHODS = require('../const/mongodb');
+const {MONGO_METHODS} = require('../const/mongodb');
 const {v4} = require('uuid');
 const {
     getCurrentMongoDocs,
@@ -12,33 +12,6 @@ const {
     findAndCheckCapturedData
 } = require('../helpers/mongodb');
 const MODES = require("../const/modes.json");
-let ignoredMethods = [
-    'rename',
-    'drop',
-    'isCapped',
-    'createIndex',
-    'createIndexes',
-    'dropIndex',
-    'dropIndexes',
-    'reIndex',
-    'listIndexes',
-    'indexExists',
-    'indexInformation',
-    'estimatedDocumentCount',
-    'distinct',
-    'indexes',
-    'stats',
-    'watch',
-    'geoHaystackSearch',
-    'mapReduce',
-    'initializeUnorderedBulkOp',
-    'initializeOrderedBulkOp',
-    'getLogger',
-    'ensureIndex',
-    'findAndModify',
-    'parallelCollectionScan',
-    'group'
-];
 
 Object.keys(MONGO_METHODS).forEach(method => {
     const originalMethod = originalCollection.prototype[method];

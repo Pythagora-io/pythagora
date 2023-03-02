@@ -16,11 +16,6 @@ const objectIdAsStringRegex = /^ObjectId\("([0-9a-fA-F]{24})"\)$/;
 const regExpRegex = /^RegExp\("(.*)"\)$/;
 const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
 
-// TODO check this mongoose
-// TODO remove all MONGOOSE refs
-// TODO remove all Mongo from common
-// TODO make with mongodb driver but watch for requiring mongodb because of mongo-command patch
-
 const isObjectId = (value) => {
     try {
         return (!value || !value.toString || Array.isArray(value)) ? false :

@@ -10,6 +10,10 @@ try {
         exports: require('./src/patches/mongoCollection.js')
     };
 
+    require.cache[require.resolve('../../mongodb/lib/mongo_client.js')] = {
+        exports: require('./src/patches/mongo-client.js')
+    };
+
     checkDependencies();
 } catch (e) {
     console.log(`\x1b[31m${e.stack}\x1b[0m`);

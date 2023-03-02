@@ -1,6 +1,17 @@
 const _ = require("lodash");
-const ObjectId = require("mongodb").ObjectId;
+let mongodb;
+// this is needed so that "mongodb" is not required before mongo patches are applied
+const ObjectId = class {
+    constructor(id) {
+        if (!mongodb) mongodb = require("mongodb");
+        return new mongodb.ObjectId(id);
+    }
 
+    static isValid(value) {
+        if (!mongodb) mongodb = require("mongodb");
+        return mongodb.ObjectId.isValid(value);
+    }
+};
 const objectIdAsStringRegex = /^ObjectId\("([0-9a-fA-F]{24})"\)$/;
 const regExpRegex = /^RegExp\("(.*)"\)$/;
 const mongoIdRegex = /^[0-9a-fA-F]{24}$/;

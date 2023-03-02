@@ -60,7 +60,7 @@ Object.keys(MONGO_METHODS).forEach(method => {
 
         const preHook = async () => {
             if (global.Pythagora.mode === MODES.capture) {
-                let preQueryRes = await getCurrentMongoDocs(this, query, options);
+                let preQueryRes = await getCurrentMongoDocs(this, query);
                 intermediateData = createCaptureIntermediateData(db, collectionName, method, query, options, otherArgs, preQueryRes);
             }
         }
@@ -73,7 +73,7 @@ Object.keys(MONGO_METHODS).forEach(method => {
             }
 
             let mongoResult = cursor && cursor.toArray ? await cursor.toArray() : cursor;
-            let postQueryRes = await getCurrentMongoDocs(this, query, options);
+            let postQueryRes = await getCurrentMongoDocs(this, query);
             if (global.Pythagora.mode === MODES.capture) {
                 request.mongoQueriesCapture++;
                 intermediateData.mongoRes = mongoObjToJson(mongoResult);

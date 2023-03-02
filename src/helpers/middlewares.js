@@ -2,6 +2,7 @@ const MODES = require("../const/modes.json");
 const { jsonObjToMongo, getCircularReplacer, compareResponse } = require("../utils/common.js");
 const pythagoraErrors = require("../const/errors.json");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
+const { patchJwtVerify, unpatchJwtVerify } = require("../patches/jwt.js");
 const { cleanupDb, connectToPythagoraDB } = require("./mongo.js");
 
 const bodyParser = require("body-parser");
@@ -204,6 +205,10 @@ async function apiTestInterceptor(req, res, next, pythagora) {
         console.error('No request found for', req.path, req.method, req.body, req.query, req.params);
         return next();
     }
+
+    let timestamp = new Date(request.createdAt).getTime();
+    const originalFunction = patchJwtVerify(timestamp);
+
     pythagora.RedisInterceptor.setIntermediateData(request.intermediateData);
     let reqId = pythagora.idSeq++;
     pythagora.testingRequests[reqId] = _.extend({
@@ -217,6 +222,7 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     const _redirect = res.redirect;
 
     res.end = function(body) {
+        unpatchJwtVerify(originalFunction);
         logWithStoreId('testing end');
         checkForFinalErrors(reqId, pythagora);
         global.Pythagora.request = {
@@ -227,6 +233,7 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     };
 
     res.send = function(body) {
+        unpatchJwtVerify(originalFunction);
         logWithStoreId('testing send');
         checkForFinalErrors(reqId, pythagora);
         global.Pythagora.request = {
@@ -237,6 +244,7 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     };
 
     res.redirect = function(url) {
+        unpatchJwtVerify(originalFunction);
         logWithStoreId('testing redirect');
         checkForFinalErrors(reqId, pythagora);
         global.Pythagora.request = {

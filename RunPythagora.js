@@ -7,7 +7,7 @@ try {
     };
 
     require.cache[require.resolve('../../mongodb/lib/collection.js')] = {
-        exports: require('./src/patches/mongoCollection.js')
+        exports: require('./src/patches/mongo-collection.js')
     };
 
     require.cache[require.resolve('../../mongodb/lib/mongo_client.js')] = {

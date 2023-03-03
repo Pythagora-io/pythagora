@@ -39,11 +39,21 @@ function mongoObjToJson(originalObj) {
 async function getCurrentMongoDocs(collection, query, options = {}) {
     return await new Promise((resolve, reject) => {
         global.asyncLocalStorage.run(undefined, async () => {
-            let result = await collection.find(query, options);
-            resolve(await result.toArray());
+            if (Array.isArray(query)) {
+                let results = query.map(async q => {
+                    let qRes = await collection.find(q.query, options);
+                    return await qRes.toArray();
+                });
+                resolve(_.flatten(await Promise.all(results)));
+            } else {
+                let result = await collection.find(query, options);
+                let yo = await result.toArray();
+                resolve(await result.toArray());
+            }
         });
     });
 }
+
 
 function extractArguments(method, arguments) {
     let returnObj = {
@@ -54,10 +64,30 @@ function extractArguments(method, arguments) {
     for (let i = 0; i < MONGO_METHODS[method].args.length; i++) {
         let mappedArg = neededArgs.find(d => MONGO_METHODS[method][d].argName === MONGO_METHODS[method].args[i]);
         if (mappedArg) {
-            let ignoreKeys = MONGO_METHODS[method][mappedArg].ignore;
-            let mappsedArgData = arguments[i];
-            if (ignoreKeys) mappsedArgData = _.omit(mappsedArgData, ignoreKeys);
-            returnObj[mappedArg] = mappsedArgData;
+
+            if (MONGO_METHODS[method][mappedArg].multi) {
+                let operations = arguments[i];
+                returnObj[mappedArg] = operations.map(d => {
+                    let op = Object.keys(d)[0];
+                    let opNeededArgs = Object.keys(MONGO_METHODS[op]).slice(1);
+                    delete opNeededArgs.args;
+                    let opArgs = {
+                        subOp: op,
+                        otherArgs: {}
+                    };
+                    _.forEach(d[op], (v, k) =>  {
+                        let mappedValue = opNeededArgs.find(ona => MONGO_METHODS[op][ona].argName === k);
+                        if (mappedValue) opArgs[mappedValue] = v;
+                        else opArgs.otherArgs[k] = v;
+                    })
+                    return opArgs;
+                });
+            } else {
+                let ignoreKeys = MONGO_METHODS[method][mappedArg].ignore;
+                let mappsedArgData = arguments[i];
+                if (ignoreKeys) mappsedArgData = _.omit(mappsedArgData, ignoreKeys);
+                returnObj[mappedArg] = mappsedArgData;
+            }
         } else {
             returnObj.otherArgs[MONGO_METHODS[method].args[i]] = arguments[i];
         }

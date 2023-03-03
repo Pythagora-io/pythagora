@@ -83,11 +83,11 @@ function createCaptureIntermediateData(db, collection, op, query, options, other
         id: v4(), // former mongoReqId
         preQueryRes: mongoObjToJson(preQueryRes),
         query: mongoObjToJson(query), // former 'res'
+        otherArgs: mongoObjToJson(otherArgs),
+        options: mongoObjToJson(options),
         op,
-        options,
         db,
-        collection,
-        otherArgs
+        collection
     };
 }
 

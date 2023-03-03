@@ -16,6 +16,11 @@ const MODES = require("../const/modes.json");
 Object.keys(MONGO_METHODS).forEach(method => {
     const originalMethod = originalCollection.prototype[method];
     originalCollection.prototype[method] = function () {
+        if (global.Pythagora.mode === MODES.test) {
+            this.s.db = global.Pythagora.mongoClient.db('pythagoraDb');
+            this.s.namespace.db = 'pythagoraDb';
+        }
+
         let asyncContextId = global.asyncLocalStorage.getStore(),
             request = global.Pythagora.mode === MODES.capture ? global.Pythagora.getRequestByAsyncStore() :
                 global.Pythagora.mode === MODES.test ? global.Pythagora.getTestingRequestByAsyncStore() : undefined,

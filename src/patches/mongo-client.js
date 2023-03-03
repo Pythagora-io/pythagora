@@ -4,12 +4,6 @@ const {PYTHAGORA_DB} = require('../const/mongodb');
 const urlParser = require('url');
 
 const patchedMongoClient = function (url, options) {
-    if (global.Pythagora.mode === MODES.test) {
-        const parsedUrl = urlParser.parse(url);
-        if (parsedUrl.pathname && parsedUrl.pathname.length > 1) {
-            url = url.replace(parsedUrl.pathname, `/${PYTHAGORA_DB}`);
-        }
-    }
     let client = new originalMongoClient(url, options)
     global.Pythagora.setMongoClient(client);
     return client;

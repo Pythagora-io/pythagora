@@ -73,7 +73,7 @@ function checkForErrors(method, request) {
 }
 
 async function cleanupDb(pythagora) {
-    const dbConnection = pythagora.mongoClient.db();
+    const dbConnection = pythagora.mongoClient.db(PYTHAGORA_DB);
     if (dbConnection.databaseName === PYTHAGORA_DB) dbConnection.dropDatabase();
 }
 
@@ -129,7 +129,7 @@ async function prepareDB(pythagora, req) {
                 insertData.push(jsonObjToMongo(doc));
             }
         }
-        if (insertData.length) await pythagora.mongoClient.db().collection(data.collection).insertMany(insertData);
+        if (insertData.length) await pythagora.mongoClient.db(PYTHAGORA_DB).collection(data.collection).insertMany(insertData);
     }
 }
 

@@ -158,40 +158,6 @@ function convertToRegularObject(obj) {
     return JSON.parse(stringified, reviver);
 }
 
-function jsonObjToMongo(originalObj) {
-    let obj = _.clone(originalObj);
-    if (!obj) return obj;
-    if (Array.isArray(obj)) return obj.map(d => jsonObjToMongo(d));
-    else if (typeof obj === 'string' && objectIdAsStringRegex.test(obj)) return stringToMongoObjectId(obj);
-    else if (typeof obj === 'string' && mongoIdRegex.test(obj)) return stringToMongoObjectId(`ObjectId("${obj}")`);
-    else if (typeof obj === 'string' && regExpRegex.test(obj)) return stringToRegExp(obj);
-    else if (isJSONObject(obj)) {
-        obj = convertToRegularObject(obj);
-        for (let key in obj) {
-            if (!obj[key]) continue;
-            else if (typeof obj[key] === 'string') {
-                // TODO label a key as ObjectId better (not through a string)
-                if (objectIdAsStringRegex.test(obj[key])) obj[key] = stringToMongoObjectId(obj[key]);
-                else if (mongoIdRegex.test(obj[key])) obj[key] = stringToMongoObjectId(`ObjectId("${obj[key]}")`);
-                else if (regExpRegex.test(obj[key])) obj[key] = stringToRegExp(obj[key]);
-            } else if (obj[key]._bsontype === "ObjectID") {
-                continue;
-            } else if (isJSONObject(obj[key]) || Array.isArray(obj[key])) {
-                obj[key] = jsonObjToMongo(obj[key]);
-            }
-        }
-    }
-    return obj;
-}
-
-function stringToMongoObjectId(str) {
-    let idValue = str.match(objectIdAsStringRegex);
-    if (idValue && idValue[1] && ObjectId.isValid(idValue[1])) {
-        return new ObjectId(idValue[1]);
-    }
-    return str;
-}
-
 module.exports = {
     cutWithDots,
     compareResponse,
@@ -201,6 +167,11 @@ module.exports = {
     noUndefined,
     getCircularReplacer,
     getOccurrenceInArray,
-    jsonObjToMongo,
-    convertToRegularObject
+    convertToRegularObject,
+    ObjectId,
+    objectIdAsStringRegex,
+    regExpRegex,
+    mongoIdRegex,
+    stringToRegExp,
+    isJSONObject
 }

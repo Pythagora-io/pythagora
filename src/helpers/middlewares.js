@@ -1,5 +1,5 @@
 const MODES = require("../const/modes.json");
-const { jsonObjToMongo, getCircularReplacer, compareResponse } = require("../utils/common.js");
+const { getCircularReplacer, compareResponse } = require("../utils/common.js");
 const pythagoraErrors = require("../const/errors");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
 const { patchJwtVerify, unpatchJwtVerify } = require("../patches/jwt.js");

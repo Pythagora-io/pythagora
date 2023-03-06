@@ -75,7 +75,7 @@ module.exports = function (mongoPath) {
                 return cursor;
             };
 
-            const cursorNextWrapper = (originalNext) => {
+            const getCursorFunctionWrapper = (originalFunction) => {
                 return async function () {
                     await preHook();
                     let originalCallback = arguments[0];
@@ -85,17 +85,13 @@ module.exports = function (mongoPath) {
                             console.log(err);
                         }
                         await postHook(null, item);
-                        originalCallback(err, item);
+                        global.asyncLocalStorage.run(asyncContextId, () => originalCallback(err, item));
                     };
-                    originalNext.apply(this, arguments);
+                    originalFunction.apply(this, arguments);
                 }
             }
 
             const cursorMapWrapper = async (originalMap) => {
-
-            }
-
-            const toArrayWrapper = async (originalToArray) => {
 
             }
 
@@ -118,13 +114,14 @@ module.exports = function (mongoPath) {
             }
 
             let cursor = originalMethod.apply(this, arguments);
-            if (cursor && cursor.next) cursor.next = cursorNextWrapper(cursor.next);
+            let patchedCursorFunctions = ['next', 'toArray'];
+            patchedCursorFunctions.forEach(f => {
+                if (cursor && cursor[f]) cursor[f] = getCursorFunctionWrapper(cursor[f]);
+            });
             return cursor;
 
         }
     });
-
-
 
     return originalCollection;
 

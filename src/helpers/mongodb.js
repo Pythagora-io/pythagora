@@ -8,7 +8,8 @@ const {
     regExpRegex,
     mongoIdRegex,
     stringToRegExp,
-    isJSONObject
+    isJSONObject,
+    isObjectId
 } = require("../utils/common.js");
 const { logWithStoreId } = require("../utils/cmdPrint.js");
 
@@ -23,7 +24,7 @@ let methods = ['save','find', 'insert', 'update', 'delete', 'deleteOne', 'insert
 function mongoObjToJson(originalObj) {
     let obj = _.clone(originalObj);
     if (!obj) return obj;
-    else if (obj._bsontype === 'ObjectID') return `ObjectId("${obj.toString()}")`;
+    else if (isObjectId(obj)) return `ObjectId("${obj.toString()}")`;
     if (Array.isArray(obj)) return obj.map(d => {
         return mongoObjToJson(d)
     });
@@ -31,7 +32,7 @@ function mongoObjToJson(originalObj) {
 
     for (let key in obj) {
         if (!obj[key]) continue;
-        if (obj[key]._bsontype === "ObjectID") {
+        if (isObjectId(obj[key])) {
             // TODO label a key as ObjectId better (not through a string)
             obj[key] = `ObjectId("${obj[key].toString()}")`;
         } else if (obj[key] instanceof RegExp) {

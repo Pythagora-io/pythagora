@@ -1,18 +1,20 @@
 #!/usr/bin/env node
-let { checkDependencies } = require('./src/helpers/starting.js');
+let { checkDependencies, searchAllModuleFolders } = require('./src/helpers/starting.js');
 try {
 
     require.cache[require.resolve('express')] = {
         exports: require('./src/patches/express.js')
     };
 
-    require.cache[require.resolve('../../mongodb/lib/collection.js')] = {
-        exports: require('./src/patches/mongo-collection.js')
-    };
-
-    require.cache[require.resolve('../../mongodb/lib/mongo_client.js')] = {
-        exports: require('./src/patches/mongo-client.js')
-    };
+    // TODO do this for Express as well
+    for (let mongoPath of searchAllModuleFolders(process.cwd(), 'mongodb')) {
+        require.cache[require.resolve(mongoPath + '/lib/collection.js')] = {
+            exports: require('./src/patches/mongo-collection.js')(mongoPath)
+        };
+        require.cache[require.resolve(mongoPath + '/lib/mongo_client.js')] = {
+            exports: require('./src/patches/mongo-client.js')(mongoPath)
+        };
+    }
 
     checkDependencies();
 } catch (e) {

@@ -1,5 +1,5 @@
 let { cutWithDots, getOccurrenceInArray } = require('./common');
-let pythagoraErrors = require('../const/errors.json');
+let pythagoraErrors = require('../const/errors');
 
 let red = '\x1b[31m',
     yellow = '\x1b[33m',

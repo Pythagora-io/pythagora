@@ -1,13 +1,22 @@
 #!/usr/bin/env node
 let { checkDependencies } = require('./src/helpers/starting.js');
 try {
-    checkDependencies();
 
     require.cache[require.resolve('express')] = {
         exports: require('./src/patches/express.js')
     };
+
+    require.cache[require.resolve('../../mongodb/lib/collection.js')] = {
+        exports: require('./src/patches/mongo-collection.js')
+    };
+
+    require.cache[require.resolve('../../mongodb/lib/mongo_client.js')] = {
+        exports: require('./src/patches/mongo-client.js')
+    };
+
+    checkDependencies();
 } catch (e) {
-    console.log(`\x1b[31m${e.message}\x1b[0m`);
+    console.log(`\x1b[31m${e.stack}\x1b[0m`);
     process.exit(1);
 }
 

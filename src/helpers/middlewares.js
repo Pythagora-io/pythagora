@@ -1,9 +1,9 @@
 const MODES = require("../const/modes.json");
-const { jsonObjToMongo, getCircularReplacer, compareResponse } = require("../utils/common.js");
-const pythagoraErrors = require("../const/errors.json");
+const { getCircularReplacer, compareResponse } = require("../utils/common.js");
+const pythagoraErrors = require("../const/errors");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
 const { patchJwtVerify, unpatchJwtVerify } = require("../patches/jwt.js");
-const { cleanupDb, connectToPythagoraDB } = require("./mongo.js");
+const { prepareDB } = require("./mongodb.js");
 
 const bodyParser = require("body-parser");
 const {v4} = require("uuid");
@@ -12,42 +12,18 @@ let  { executionAsyncId } = require('node:async_hooks');
 const fs = require('fs');
 
 
-function setUpExpressMiddleware(app, pythagora, mongoose) {
+function setUpExpressMiddleware(app, pythagora) {
     app.use((req, res, next) => {
         if (req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
         return next();
     });
 
     app.use(async (req, res, next) => {
-        if (!mongoose || pythagora.mode !== MODES.test) return next();
-        let pythagoraDb = 'pythagoraDb';
-
-        let prepareDB = async() => {
-            await cleanupDb();
-
-            const testReq = await pythagora.getRequestMockDataById(req);
-            if (!testReq) return next();
-
-            let uniqueIds = [];
-            for (const data of testReq.intermediateData) {
-                if (data.type !== 'mongo') continue;
-                let insertData = [];
-                for (let doc of data.preQueryRes) {
-                    if (!uniqueIds.includes(doc._id)) {
-                        uniqueIds.push(doc._id);
-                        insertData.push(jsonObjToMongo(doc));
-                    }
-                }
-                if(insertData.length) await mongoose.connection.db.collection(data.req.collection).insertMany(insertData);
-            }
-            return next();
+        if (pythagora.mode === MODES.test) {
+            await prepareDB(pythagora, req);
         }
 
-        let pythagoraConnection = mongoose.connections.filter((c) => c.name === pythagoraDb);
-        if (pythagoraConnection.length && mongoose.connections.length === 1) return await prepareDB();
-
-        await connectToPythagoraDB();
-        await prepareDB();
+        next();
     });
 
     app.use(bodyParser.json());
@@ -273,7 +249,7 @@ function saveCaptureToFile(reqData, pythagora) {
     reqData.pythagoraVersion = pythagora.version;
     reqData.createdAt = new Date().toISOString();
     let endpointFileName = `./pythagora_data/${reqData.endpoint.replace(/\//g, '|')}.json`;
-    if (!fs.existsSync(endpointFileName)) fs.writeFileSync(endpointFileName, JSON.stringify([reqData], getCircularReplacer()));
+    if (!fs.existsSync(endpointFileName)) fs.writeFileSync(endpointFileName, JSON.stringify([reqData], getCircularReplacer(), 2));
     else {
         let fileContent = JSON.parse(fs.readFileSync(endpointFileName));
         let identicalRequestIndex = fileContent.findIndex(req => {
@@ -286,11 +262,11 @@ function saveCaptureToFile(reqData, pythagora) {
         });
 
         if (identicalRequestIndex === -1) {
-            fs.writeFileSync(endpointFileName, JSON.stringify(fileContent.concat([reqData]), getCircularReplacer()));
+            fs.writeFileSync(endpointFileName, JSON.stringify(fileContent.concat([reqData]), getCircularReplacer(), 2));
         } else {
             if (pythagora.requests[fileContent[identicalRequestIndex].id]) delete pythagora.requests[fileContent[identicalRequestIndex].id];
             fileContent[identicalRequestIndex] = reqData;
-            let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer());
+            let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer(), 2);
             fs.writeFileSync(endpointFileName, storeData);
         }
     }

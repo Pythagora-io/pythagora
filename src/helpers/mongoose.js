@@ -1,4 +1,4 @@
-const pythagoraErrors = require("../const/errors.json");
+const pythagoraErrors = require("../const/errors");
 const MODES = require("../const/modes.json");
 const { mongoObjToJson, compareJson, jsonObjToMongo, noUndefined } = require("../utils/common.js");
 const { logWithStoreId } = require("../utils/cmdPrint.js");
@@ -109,7 +109,7 @@ async function getMongoDocs(self, stage) {
             _pipeline: self._pipeline,
             _doc: self._doc
         };
-        return { error: new Error(pythagoraErrors.aggregationNotSupported) };
+        return { error: new Error(pythagoraErrors.mongoMethodNotSupported('aggregate')) };
     }
 
     let mongoDocs = [];

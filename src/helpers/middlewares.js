@@ -13,70 +13,84 @@ const fs = require('fs');
 
 
 function setUpExpressMiddleware(app, pythagora) {
-    app.use((req, res, next) => {
-        if (req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
-        return next();
-    });
 
-    app.use(async (req, res, next) => {
-        if (pythagora.mode === MODES.test) {
-            await prepareDB(pythagora, req);
+    const pythagoraMiddlwares = {
+        ignoreMiddleware: (req, res, next) => {
+            if (req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
+            return next();
+        },
+
+        prepareTestingMiddleware: async (req, res, next) => {
+            if (pythagora.mode === MODES.test) {
+                await prepareDB(pythagora, req);
+            }
+
+            next();
+        },
+
+        setUpPythagoraDataMiddleware: (req, res, next) => {
+            if (pythagora.mode !== MODES.capture || req.pythagoraIgnore) return next();
+            if (!req.id) req.id = v4();
+            let eid = executionAsyncId();
+            if (!pythagora.requests[req.id]) pythagora.requests[req.id] = {
+                id: req.id,
+                endpoint: req.path,
+                url: 'http://' + req.headers.host + req.url,
+                body: req.body,
+                method: req.method,
+                headers: req.headers,
+                responseData: null,
+                traceId: eid,
+                trace: [eid],
+                intermediateData: [],
+                query: req.query,
+                params: req.params,
+                asyncStore: pythagora.idSeq,
+                mongoQueriesCapture: 0
+            };
+
+            if (req.is('multipart/form-data')) pythagora.requests[req.id].error = "Uploading multipart/form-data is not supported yet!";
+
+            // if (!req.is('multipart/form-data')) {
+            //     let data = '';
+            //     const inputStream = req;
+            //     const duplexStream = duplexify();
+            //
+            //     duplexStream.setReadable(inputStream);
+            //     req.duplexStream = duplexStream;
+            //     duplexStream.on('data', (chunk) => {
+            //         data+=chunk.toString();
+            //     });
+            //     duplexStream.on('end', () => {
+            //         pythagora.requests[req.id].body = data;
+            //     });
+            // }
+            next();
+        },
+
+        setUpInterceptorMiddleware: async (req, res, next) => {
+            if (req.pythagoraIgnore) return next();
+            pythagora.RedisInterceptor.setMode(pythagora.mode);
+            if (pythagora.mode === MODES.capture) await apiCaptureInterceptor(req, res, next, pythagora);
+            else if (pythagora.mode === MODES.test) await apiTestInterceptor(req, res, next, pythagora);
         }
 
-        next();
+    };
+    Object.keys(pythagoraMiddlwares).forEach(middleware => {
+        pythagoraMiddlwares[middleware].isPythagoraMiddleware = true;
     });
+    app.use(pythagoraMiddlwares.ignoreMiddleware);
+
+    app.use(pythagoraMiddlwares.prepareTestingMiddleware);
 
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({
         extended: true
     }));
 
-    app.use((req, res, next) => {
-        if (pythagora.mode !== MODES.capture || req.pythagoraIgnore) return next();
-        if (!req.id) req.id = v4();
-        let eid = executionAsyncId();
-        if (!pythagora.requests[req.id]) pythagora.requests[req.id] = {
-            id: req.id,
-            endpoint: req.path,
-            url: 'http://' + req.headers.host + req.url,
-            body: req.body,
-            method: req.method,
-            headers: req.headers,
-            responseData: null,
-            traceId: eid,
-            trace: [eid],
-            intermediateData: [],
-            query: req.query,
-            params: req.params,
-            asyncStore: pythagora.idSeq,
-            mongoQueriesCapture: 0
-        };
+    app.use(pythagoraMiddlwares.setUpPythagoraDataMiddleware);
 
-        if (req.is('multipart/form-data')) pythagora.requests[req.id].error = "Uploading multipart/form-data is not supported yet!";
-
-        // if (!req.is('multipart/form-data')) {
-        //     let data = '';
-        //     const inputStream = req;
-        //     const duplexStream = duplexify();
-        //
-        //     duplexStream.setReadable(inputStream);
-        //     req.duplexStream = duplexStream;
-        //     duplexStream.on('data', (chunk) => {
-        //         data+=chunk.toString();
-        //     });
-        //     duplexStream.on('end', () => {
-        //         pythagora.requests[req.id].body = data;
-        //     });
-        // }
-        next();
-    });
-
-    app.use(async (req, res, next) => {
-        if (req.pythagoraIgnore) return next();
-        pythagora.RedisInterceptor.setMode(pythagora.mode);
-        if (pythagora.mode === MODES.capture) await apiCaptureInterceptor(req, res, next, pythagora);
-        else if (pythagora.mode === MODES.test) await apiTestInterceptor(req, res, next, pythagora);
-    });
+    app.use(pythagoraMiddlwares.setUpInterceptorMiddleware);
 }
 
 async function apiCaptureInterceptor(req, res, next, pythagora) {

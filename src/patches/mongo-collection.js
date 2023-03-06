@@ -14,8 +14,8 @@ module.exports = function (mongoPath) {
     const MODES = require("../const/modes.json");
 
     Object.keys(MONGO_METHODS).forEach(method => {
-        const originalMethod = originalCollection.Collection.prototype[method];
-        originalCollection.Collection.prototype[method] = function () {
+        const originalMethod = (originalCollection.Collection || originalCollection).prototype[method];
+        (originalCollection.Collection || originalCollection).prototype[method] = function () {
             if (global.Pythagora.mode === MODES.test) {
                 this.s.db = global.Pythagora.mongoClient.db('pythagoraDb');
                 this.s.namespace.db = 'pythagoraDb';

@@ -48,6 +48,6 @@ module.exports = function(mongoPath) {
         // patchedMongoClient.connect = function (url, options, callback) {
         //     return originalConnect.apply(this, arguments);
         // }
-        module.exports = patchedMongoClient;
+        return patchedMongoClient;
     }
 }

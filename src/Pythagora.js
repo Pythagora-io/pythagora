@@ -22,6 +22,7 @@ class Pythagora {
         if (!MODES[mode]) throw new Error('Invalid mode');
         else this.mode = mode;
 
+        this.expressInstances = [];
         this.version = global.PythagoraVersion;
         this.idSeq = 0;
         this.requests = {};
@@ -89,6 +90,7 @@ class Pythagora {
     }
 
     setApp(app) {
+        this.expressInstances.push(app);
         setUpExpressMiddleware(app, this);
     }
 

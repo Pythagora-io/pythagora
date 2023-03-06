@@ -91,7 +91,6 @@ async function getCurrentMongoDocs(collection, query, options = {}) {
                 resolve(_.flatten(await Promise.all(results)));
             } else {
                 let result = await collection.find(query, options);
-                let yo = await result.toArray();
                 resolve(await result.toArray());
             }
         });

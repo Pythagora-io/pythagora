@@ -36,7 +36,7 @@ const Pythagora = require('./src/Pythagora.js');
 
 const path = require('path');
 
-global.Pythagora = new Pythagora(mode);
+global.Pythagora = new Pythagora(process.env.PYTHAGORA_MODE);
 
 process.on('uncaughtException', (error) => {
     console.error('The app has crashed!');
@@ -47,9 +47,9 @@ process.on('uncaughtException', (error) => {
 
 (async () => {
     await global.Pythagora.runRedisInterceptor();
-    require(path.join(process.cwd(), initScript));
+    // require(path.join(process.cwd(), initScript));
 
-    if (mode === 'test') {
+    if (process.env.PYTHAGORA_MODE === 'test') {
         console.log('Running tests in 3 seconds...');
         setTimeout(() => {
             require('./RunPythagoraTests.js');

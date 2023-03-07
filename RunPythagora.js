@@ -2,11 +2,16 @@
 let { checkDependencies, searchAllModuleFolders } = require('./src/helpers/starting.js');
 try {
 
-    require.cache[require.resolve('express')] = {
-        exports: require('./src/patches/express.js')
-    };
+    for (let expressPath of searchAllModuleFolders(process.cwd(), 'express')) {
+        try {
+            require.cache[require.resolve('express')] = {
+                exports: require('./src/patches/express.js')
+            };
+        } catch (e) {
+            // console.log(`Can't patch Express at ${expressPath}`);
+        }
+    }
 
-    // TODO do this for Express as well
     for (let mongoPath of searchAllModuleFolders(process.cwd(), 'mongodb')) {
         try {
             require.cache[require.resolve(mongoPath + '/lib/collection.js')] = {

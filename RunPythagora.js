@@ -8,12 +8,16 @@ try {
 
     // TODO do this for Express as well
     for (let mongoPath of searchAllModuleFolders(process.cwd(), 'mongodb')) {
-        require.cache[require.resolve(mongoPath + '/lib/collection.js')] = {
-            exports: require('./src/patches/mongo-collection.js')(mongoPath)
-        };
-        require.cache[require.resolve(mongoPath + '/lib/mongo_client.js')] = {
-            exports: require('./src/patches/mongo-client.js')(mongoPath)
-        };
+        try {
+            require.cache[require.resolve(mongoPath + '/lib/collection.js')] = {
+                exports: require('./src/patches/mongo-collection.js')(mongoPath)
+            };
+            require.cache[require.resolve(mongoPath + '/lib/mongo_client.js')] = {
+                exports: require('./src/patches/mongo-client.js')(mongoPath)
+            };
+        } catch (e) {
+            // dummy catch
+        }
     }
 
     // checkDependencies();

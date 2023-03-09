@@ -81,6 +81,7 @@ module.exports = function (mongoPath) {
                 if (global.Pythagora.mode === MODES.capture) {
                     request.mongoQueriesCapture++;
                     if (intermediateData.mongoRes !== undefined) {
+                        // TODO this is for when people do multiple cursor.next() calls - double check different cases
                         intermediateData = _.cloneDeep(intermediateData);
                     }
                     intermediateData.mongoRes = mongoObjToJson(mongoResult);

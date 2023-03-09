@@ -48,21 +48,24 @@ fi
 if [[ " ${args[@]} " =~ " --no-code-coverage " ]] || ([[ ! " ${args[@]} " =~ " --mode test " ]] && [[ ! " ${args[@]} " =~ " --mode=test " ]])
 then
   args=( "${args[@]//--no-code-coverage/}" )
-  PYTHAGORA_MODE="$mode" NODE_OPTIONS="--require ./node_modules/${pythagora_dir}/RunPythagora.js" $init_command
+  PYTHAGORA_MODE="$mode" NODE_OPTIONS="--inspect --require ./node_modules/${pythagora_dir}/RunPythagora.js" $init_command
 else
   nyc_args=( "--reporter=text-summary" )
+
   if [[ " ${args[@]} " =~ " --full-code-coverage-report " ]]
   then
     args=( "${args[@]//--full-code-coverage-report/}" )
     nyc_args+=( "--reporter=lcov" )
     nyc_args+=( "--report-dir=./pythagora_tests/code_coverage_report" )
   fi
+
   if [ -f "./node_modules/$pythagora_dir/node_modules/nyc/bin/nyc.js" ]
   then
-    PYTHAGORA_MODE="$mode" NODE_OPTIONS="--require ./node_modules/${pythagora_dir}/RunPythagora.js" ./node_modules/"$pythagora_dir"/node_modules/nyc/bin/nyc.js "${nyc_args[@]}" $init_command
+    PYTHAGORA_MODE="$mode" NODE_OPTIONS="--inspect --require ./node_modules/${pythagora_dir}/RunPythagora.js" ./node_modules/"$pythagora_dir"/node_modules/nyc/bin/nyc.js "${nyc_args[@]}" $init_command
 #    ./node_modules/"$pythagora_dir"/node_modules/nyc/bin/nyc.js "${nyc_args[@]}" node ./node_modules/"$pythagora_dir"/RunPythagora.js "${args[@]}"
   else
-    PYTHAGORA_MODE="$mode" NODE_OPTIONS="--require ./node_modules/$pythagora_dir/RunPythagora.js" ./node_modules/nyc/bin/nyc.js "${nyc_args[@]}" $init_command
+    PYTHAGORA_MODE="$mode" NODE_OPTIONS="--inspect --require ./node_modules/$pythagora_dir/RunPythagora.js" ./node_modules/nyc/bin/nyc.js "${nyc_args[@]}" $init_command
 #     ./node_modules/nyc/bin/nyc.js "${nyc_args[@]}" node ./node_modules/"$pythagora_dir"/RunPythagora.js "${args[@]}"
   fi
+
 fi

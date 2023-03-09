@@ -17,12 +17,14 @@ function setUpExpressMiddlewares(app) {
 
     const pythagoraMiddlwares = {
         ignoreMiddleware: (req, res, next) => {
-            if (!global.Pythagora || req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
+            if (!global.Pythagora ||
+                !app.isPythagoraExpressInstance ||
+                req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
             return next();
         },
 
         prepareTestingMiddleware: async (req, res, next) => {
-            if (global.Pythagora && global.Pythagora.mode === MODES.test) {
+            if (!req.pythagoraIgnore && global.Pythagora.mode === MODES.test) {
                 await prepareDB(global.Pythagora, req);
             }
 
@@ -30,7 +32,7 @@ function setUpExpressMiddlewares(app) {
         },
 
         setUpPythagoraDataMiddleware: (req, res, next) => {
-            if (global.Pythagora.mode !== MODES.capture || req.pythagoraIgnore) return next();
+            if (req.pythagoraIgnore || global.Pythagora.mode !== MODES.capture) return next();
             // if (Object.keys(pythagora.requests).length === 0) pythagora.setExitListener();
             if (!req.id) req.id = v4();
             let eid = executionAsyncId();

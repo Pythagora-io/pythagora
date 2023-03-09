@@ -3,7 +3,7 @@ module.exports = function (httpModule) {
     const Pythagora = require("../Pythagora");
 
     const originalCreateServer = originalHttp.createServer;
-    originalHttp.createServer = function () {
+    originalHttp.createServer = function (app) {
         global.Pythagora = new Pythagora(process.env.PYTHAGORA_MODE);
         global.Pythagora.setMongoClient(global.pythagoraMongoClient);
         global.Pythagora.runRedisInterceptor().then(() => {
@@ -11,7 +11,8 @@ module.exports = function (httpModule) {
                 require('../../RunPythagoraTests.js');
             }
         });
-        // require(path.join(process.cwd(), initScript));
+
+        app.isPythagoraExpressInstance = true;
         return originalCreateServer.apply(this, arguments);
     }
 

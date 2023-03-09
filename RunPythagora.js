@@ -2,6 +2,13 @@
 let { checkDependencies, searchAllModuleFolders } = require('./src/helpers/starting.js');
 try {
 
+    for (let httpModule of ['http', 'https']) {
+        require.cache[require.resolve(httpModule)] = {
+            exports: require('./src/patches/http.js')(httpModule)
+        };
+    }
+
+    // TODO - optimize by runnning only once through folders for both express and mongo
     for (let expressPath of searchAllModuleFolders(process.cwd(), 'express')) {
         try {
             require.cache[require.resolve('express')] = {
@@ -25,18 +32,14 @@ try {
         }
     }
 
+    // TODO @Leon finish checkDependencies
     // checkDependencies();
 } catch (e) {
     console.log(`\x1b[31m${e.stack}\x1b[0m`);
     process.exit(1);
 }
 
-let { mode, initScript } = require('./src/utils/argumentsCheck.js');
-const Pythagora = require('./src/Pythagora.js');
-
 const path = require('path');
-
-global.Pythagora = new Pythagora(process.env.PYTHAGORA_MODE);
 
 process.on('uncaughtException', (error) => {
     console.error('The app has crashed!');
@@ -44,16 +47,4 @@ process.on('uncaughtException', (error) => {
     console.error(error);
     process.exit(1);
 });
-
-(async () => {
-    await global.Pythagora.runRedisInterceptor();
-    // require(path.join(process.cwd(), initScript));
-
-    if (process.env.PYTHAGORA_MODE === 'test') {
-        console.log('Running tests in 3 seconds...');
-        setTimeout(() => {
-            require('./RunPythagoraTests.js');
-        }, 3000);
-    }
-})();
 

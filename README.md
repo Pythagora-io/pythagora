@@ -87,7 +87,7 @@ If you want to generate a more detailed report, you can do so by running Pythago
    ```
    npx pythagora --initScript ./path/to/your/server.js --mode test --full-code-coverage-report
    ```
-You can find the code coverage report inside `pythagora_data` folder in the root of your repository. You can open the HTML view of the report by opening `pythagora_data/code_coverage_report/lcov-report/index.html`.
+You can find the code coverage report inside `pythagora_tests` folder in the root of your repository. You can open the HTML view of the report by opening `pythagora_tests/code_coverage_report/lcov-report/index.html`.
 
 <br>
 
@@ -95,7 +95,7 @@ In case you don't want the code coverage to be shown at all while running tests,
 
 <br><br>
 <h1 id="testdata">🗺️️ Where can I see the tests?</h1>
-Each captured test is saved in <strong><i>pythagora_data</i></strong> directory at the root of your repository.
+Each captured test is saved in <strong><i>pythagora_tests</i></strong> directory at the root of your repository.
 Each JSON file in this repository represents one endpoint that was captured and each endpoint can have many captured tests.
 If you open these files, you will see an array in which each object represents a single test. All data that's needed to run a test
 is stored in this object. Here is an example of a test object.

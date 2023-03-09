@@ -2,9 +2,9 @@ const MODES = require('./const/modes.json');
 const RedisInterceptor = require('./helpers/redis.js');
 const { cleanupDb } = require('./helpers/mongodb.js');
 const { makeTestRequest } = require('./helpers/testing.js');
-const { setUpExpressMiddleware } = require('./helpers/middlewares.js');
 const { logCaptureFinished, pythagoraFinishingUp } = require('./utils/cmdPrint.js');
 const { getCircularReplacer } = require('./utils/common.js');
+const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR } = require('./const/common.js');
 
 let  { BatchInterceptor } = require('@mswjs/interceptors');
 let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
@@ -22,15 +22,13 @@ class Pythagora {
         if (!MODES[mode]) throw new Error('Invalid mode');
         else this.mode = mode;
 
-        this.expressInstances = [];
         this.version = global.PythagoraVersion;
         this.idSeq = 0;
         this.requests = {};
         this.testingRequests = {};
         this.loggingEnabled = mode === 'capture';
 
-        if (!fs.existsSync('./pythagora_data/')) fs.mkdirSync('./pythagora_data/');
-
+        this.setUpPythagoraDirs();
         // this.setUpHttpInterceptor();
 
         this.cleanupDone = false;
@@ -42,8 +40,10 @@ class Pythagora {
     async exit() {
         if (this.cleanupDone) return;
         this.cleanupDone = true;
-        if (this.mode === MODES.test) await cleanupDb(this);
-        if (this.mode === MODES.capture) {
+        if (this.mode === MODES.test) {
+            this.saveTestRunMetadata();
+            await cleanupDb(this);
+        } else if (this.mode === MODES.capture) {
             pythagoraFinishingUp();
             this.mode = MODES.test;
             let savedRequests = [], failedRequests = [];
@@ -57,7 +57,7 @@ class Pythagora {
                 if (!result) {
                     failedRequests.push(request.endpoint);
                     console.log(`Capture is not valid for endpoint ${request.endpoint} (${request.method}). Erasing...`)
-                    let reqFileName = `./pythagora_data/${request.endpoint.replace(/\//g, '|')}.json`;
+                    let reqFileName = `./${PYTHAGORA_TESTS_DIR}/${request.endpoint.replace(/\//g, '|')}.json`;
                     if (!fs.existsSync(reqFileName)) continue;
                     let fileContent = JSON.parse(fs.readFileSync(reqFileName));
                     if (fileContent.length === 1) {
@@ -85,13 +85,28 @@ class Pythagora {
         process.exit();
     }
 
-    setMongoClient(client) {
-        this.mongoClient = client;
+    saveTestRunMetadata() {
+        let metadata = fs.readFileSync(`./${PYTHAGORA_METADATA_DIR}/metadata.json`);
+        metadata = JSON.parse(metadata);
+        metadata.runs = (metadata.runs || []).concat([{
+            date: new Date(),
+            version: this.version,
+            passed: _.values(this.testingRequests).filter(t => t.passed).map(t => t.id),
+            failed: _.values(this.testingRequests).filter(t => !t.passed).map(t => t.id)
+        }]);
+        metadata.runs = metadata.runs.slice(-10);
+        fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/metadata.json`, JSON.stringify(metadata, getCircularReplacer(), 2));
+        console.log('Test run metadata saved.');
     }
 
-    setApp(app) {
-        this.expressInstances.push(app);
-        setUpExpressMiddleware(app, this);
+    setUpPythagoraDirs() {
+        if (!fs.existsSync(`./${PYTHAGORA_TESTS_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
+        if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_METADATA_DIR}/`);
+        if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/metadata.json`)) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/metadata.json`, '{}');
+    }
+
+    setMongoClient(client) {
+        this.mongoClient = client;
     }
 
     setUpHttpInterceptor() {
@@ -192,7 +207,7 @@ class Pythagora {
     }
 
     async getRequestMockDataById(req) {
-        let path = `./pythagora_data/${req.path.replace(/\//g, '|')}.json`;
+        let path = `./${PYTHAGORA_TESTS_DIR}/${req.path.replace(/\//g, '|')}.json`;
         if (!fs.existsSync(path)) return;
         let capturedRequests = JSON.parse(await fs.promises.readFile(path, 'utf8'));
         return capturedRequests.find(request => request.id === req.headers['pythagora-req-id']);

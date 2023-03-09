@@ -1,20 +1,20 @@
 const { logTestsFinished, logTestsStarting } = require('./src/utils/cmdPrint');
 const { makeTestRequest } = require('./src/helpers/testing.js');
+const { PYTHAGORA_TESTS_DIR } = require('./src/const/common.js');
 
 const fs = require('fs');
 
 (async () => {
     const startTime = new Date();
-    const directory = './pythagora_data';
     const results = [];
 
     try {
-        let files = fs.readdirSync(directory);
+        let files = fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
         files = files.filter(f => f[0] !== '.');
         logTestsStarting(files);
         for (let file of files) {
             if (file[0] !== '|') continue;
-            let tests = JSON.parse(fs.readFileSync(`${directory}/${file}`));
+            let tests = JSON.parse(fs.readFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`));
             for (let test of tests) {
                 results.push(await makeTestRequest(test) || false);
             }
@@ -28,5 +28,5 @@ const fs = require('fs');
         console.error("Error occured while running Pythagora tests: ", err);
     }
 
-    process.exit(0);
+    global.Pythagora.exit();
 })();

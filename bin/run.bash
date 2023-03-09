@@ -48,7 +48,7 @@ else
   then
     args=( "${args[@]//--full-code-coverage-report/}" )
     nyc_args+=( "--reporter=lcov" )
-    nyc_args+=( "--report-dir=./pythagora_data/code_coverage_report" )
+    nyc_args+=( "--report-dir=./pythagora_tests/code_coverage_report" )
   fi
   if [ -f "./node_modules/$pythagora_dir/node_modules/nyc/bin/nyc.js" ]
   then

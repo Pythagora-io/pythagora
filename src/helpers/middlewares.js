@@ -4,6 +4,7 @@ const pythagoraErrors = require("../const/errors");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
 const { patchJwtVerify, unpatchJwtVerify } = require("../patches/jwt.js");
 const { prepareDB } = require("./mongodb.js");
+const { PYTHAGORA_TESTS_DIR } = require("../const/common.js");
 
 const bodyParser = require("body-parser");
 const {v4} = require("uuid");
@@ -12,27 +13,28 @@ let  { executionAsyncId } = require('node:async_hooks');
 const fs = require('fs');
 
 
-function setUpExpressMiddleware(app, pythagora) {
+function setUpExpressMiddlewares(app) {
 
     const pythagoraMiddlwares = {
         ignoreMiddleware: (req, res, next) => {
-            if (req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
+            if (!global.Pythagora || req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
             return next();
         },
 
         prepareTestingMiddleware: async (req, res, next) => {
-            if (pythagora.mode === MODES.test) {
-                await prepareDB(pythagora, req);
+            if (global.Pythagora && global.Pythagora.mode === MODES.test) {
+                await prepareDB(global.Pythagora, req);
             }
 
             next();
         },
 
         setUpPythagoraDataMiddleware: (req, res, next) => {
-            if (pythagora.mode !== MODES.capture || req.pythagoraIgnore) return next();
+            if (global.Pythagora.mode !== MODES.capture || req.pythagoraIgnore) return next();
+            // if (Object.keys(pythagora.requests).length === 0) pythagora.setExitListener();
             if (!req.id) req.id = v4();
             let eid = executionAsyncId();
-            if (!pythagora.requests[req.id]) pythagora.requests[req.id] = {
+            if (!global.Pythagora.requests[req.id]) global.Pythagora.requests[req.id] = {
                 id: req.id,
                 endpoint: req.path,
                 url: 'http://' + req.headers.host + req.url,
@@ -45,11 +47,11 @@ function setUpExpressMiddleware(app, pythagora) {
                 intermediateData: [],
                 query: req.query,
                 params: req.params,
-                asyncStore: pythagora.idSeq,
+                asyncStore: global.Pythagora.idSeq,
                 mongoQueriesCapture: 0
             };
 
-            if (req.is('multipart/form-data')) pythagora.requests[req.id].error = "Uploading multipart/form-data is not supported yet!";
+            if (req.is('multipart/form-data')) global.Pythagora.requests[req.id].error = "Uploading multipart/form-data is not supported yet!";
 
             // if (!req.is('multipart/form-data')) {
             //     let data = '';
@@ -70,15 +72,12 @@ function setUpExpressMiddleware(app, pythagora) {
 
         setUpInterceptorMiddleware: async (req, res, next) => {
             if (req.pythagoraIgnore) return next();
-            pythagora.RedisInterceptor.setMode(pythagora.mode);
-            if (pythagora.mode === MODES.capture) await apiCaptureInterceptor(req, res, next, pythagora);
-            else if (pythagora.mode === MODES.test) await apiTestInterceptor(req, res, next, pythagora);
+            global.Pythagora.RedisInterceptor.setMode(global.Pythagora.mode);
+            if (global.Pythagora.mode === MODES.capture) await apiCaptureInterceptor(req, res, next, global.Pythagora);
+            else if (global.Pythagora.mode === MODES.test) await apiTestInterceptor(req, res, next, global.Pythagora);
         }
 
     };
-    Object.keys(pythagoraMiddlwares).forEach(middleware => {
-        pythagoraMiddlwares[middleware].isPythagoraMiddleware = true;
-    });
     app.use(pythagoraMiddlwares.ignoreMiddleware);
 
     app.use(pythagoraMiddlwares.prepareTestingMiddleware);
@@ -262,7 +261,7 @@ function checkForFinalErrors(reqId, pythagora) {
 function saveCaptureToFile(reqData, pythagora) {
     reqData.pythagoraVersion = pythagora.version;
     reqData.createdAt = new Date().toISOString();
-    let endpointFileName = `./pythagora_data/${reqData.endpoint.replace(/\//g, '|')}.json`;
+    let endpointFileName = `./${PYTHAGORA_TESTS_DIR}/${reqData.endpoint.replace(/\//g, '|')}.json`;
     if (!fs.existsSync(endpointFileName)) fs.writeFileSync(endpointFileName, JSON.stringify([reqData], getCircularReplacer(), 2));
     else {
         let fileContent = JSON.parse(fs.readFileSync(endpointFileName));
@@ -287,5 +286,5 @@ function saveCaptureToFile(reqData, pythagora) {
 }
 
 module.exports = {
-    setUpExpressMiddleware
+    setUpExpressMiddlewares
 }

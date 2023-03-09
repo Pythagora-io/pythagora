@@ -39,8 +39,6 @@ try {
     process.exit(1);
 }
 
-const path = require('path');
-
 process.on('uncaughtException', (error) => {
     console.error('The app has crashed!');
     console.error('This is likely not related to Pythagora, but the app itself.');

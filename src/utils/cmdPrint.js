@@ -53,7 +53,7 @@ ${reset}${errLog}
     ${red+bold}-----------------------------------------------${reset}`);
 }
 
-let logTestPassed = (test, response, pythagora) => {
+let logTestPassed = (test) => {
     console.log(`✅ Test ${test.method} ${test.endpoint} ${green+bold}PASSED!${reset}`);
 }
 

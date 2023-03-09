@@ -82,6 +82,8 @@ class Pythagora {
             failedRequests = _.uniq(failedRequests);
             logCaptureFinished(savedRequests.length, failedRequests.length);
         }
+
+        fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/finishingup`, 'done');
         process.exit();
     }
 

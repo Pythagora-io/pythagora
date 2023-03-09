@@ -12,9 +12,18 @@ module.exports = function (httpModule) {
             }
         });
 
-        app.isPythagoraExpressInstance = true;
-        return originalCreateServer.apply(this, arguments);
+        if (app) app.isPythagoraExpressInstance = true;
+        let server = originalCreateServer.apply(this, arguments);
+
+        const originalServerOnRequest = server.on;
+        server.on = function (event, callback) {
+            if (event === 'request' && typeof callback === 'function') callback.isPythagoraExpressInstance = true;
+            return originalServerOnRequest.apply(this, arguments);
+        }
+
+        return server;
     }
+
 
     return originalHttp;
 }

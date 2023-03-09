@@ -44,7 +44,6 @@ function searchAllModuleFolders(rootDir, moduleName) {
         if (isDirectory) {
             if (file === moduleName && filePath.includes('node_modules')) {
                 listOfModulePaths.push(filePath);
-                console.log(`Found MongoDB module folder: ${filePath}`);
             } else {
                 listOfModulePaths = listOfModulePaths.concat(searchAllModuleFolders(filePath, moduleName));
             }

@@ -39,7 +39,7 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
         _.values(global.Pythagora.testingRequests).find(v => v.id === test.id).passed = testResult;
         // TODO add query
         if (showPassedLog && testResult) logTestPassed(test);
-        if (showFailedLog && !testResult) logTestFailed(test);
+        if (showFailedLog && !testResult) logTestFailed(test, response, global.Pythagora);
         return testResult;
     } catch (error) {
         console.error(error);

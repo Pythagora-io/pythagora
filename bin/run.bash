@@ -29,7 +29,6 @@ do
 done
 
 function exit_handler() {
-#  echo -e "\n${yellow}If you don't see message \"${green}${bold}Pythagora finished capturing!${reset}${yellow}\", please run the following command: ${reset}"
   while [ ! -f "./.pythagora/finishingup" ]
   do
     echo "Waiting for finishingup file to appear..."

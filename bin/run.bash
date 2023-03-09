@@ -47,7 +47,7 @@ done
 if [[ " ${args[@]} " =~ " --no-code-coverage " ]] || ([[ ! " ${args[@]} " =~ " --mode test " ]] && [[ ! " ${args[@]} " =~ " --mode=test " ]])
 then
   args=( "${args[@]//--no-code-coverage/}" )
-  PYTHAGORA_MODE="$mode" NODE_OPTIONS="--inspect --require ./node_modules/${pythagora_dir}/RunPythagora.js" $init_command
+  PYTHAGORA_MODE="$mode" NODE_OPTIONS="--require ./node_modules/${pythagora_dir}/RunPythagora.js" $init_command
 else
   nyc_args=( "--reporter=text-summary" )
 
@@ -76,3 +76,7 @@ then
 else
   exit_handler $APP_PID
 fi
+
+APP_PID=$!
+
+exit_handler $APP_PID

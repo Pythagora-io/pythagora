@@ -78,8 +78,6 @@ class Pythagora {
                 } else savedRequests.push(request.endpoint);
             }
 
-            savedRequests = _.uniq(savedRequests);
-            failedRequests = _.uniq(failedRequests);
             logCaptureFinished(savedRequests.length, failedRequests.length);
         }
 

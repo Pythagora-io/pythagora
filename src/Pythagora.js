@@ -5,7 +5,7 @@ const { makeTestRequest } = require('./helpers/testing.js');
 const { setUpExpressMiddleware } = require('./helpers/middlewares.js');
 const { logCaptureFinished, pythagoraFinishingUp } = require('./utils/cmdPrint.js');
 const { getCircularReplacer } = require('./utils/common.js');
-const { PYTHAGORA_TESTS_DIR } = require('./const/common.js');
+const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR } = require('./const/common.js');
 
 let  { BatchInterceptor } = require('@mswjs/interceptors');
 let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
@@ -30,8 +30,7 @@ class Pythagora {
         this.testingRequests = {};
         this.loggingEnabled = mode === 'capture';
 
-        if (!fs.existsSync(`./${PYTHAGORA_TESTS_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
-
+        this.setUpPythagoraDirs();
         // this.setUpHttpInterceptor();
 
         this.cleanupDone = false;
@@ -43,8 +42,10 @@ class Pythagora {
     async exit() {
         if (this.cleanupDone) return;
         this.cleanupDone = true;
-        if (this.mode === MODES.test) await cleanupDb(this);
-        if (this.mode === MODES.capture) {
+        if (this.mode === MODES.test) {
+            this.saveTestRunMetadata();
+            await cleanupDb(this);
+        } else if (this.mode === MODES.capture) {
             pythagoraFinishingUp();
             this.mode = MODES.test;
             let savedRequests = [], failedRequests = [];
@@ -84,6 +85,26 @@ class Pythagora {
             logCaptureFinished(savedRequests.length, failedRequests.length);
         }
         process.exit();
+    }
+
+    saveTestRunMetadata() {
+        let metadata = fs.readFileSync(`./${PYTHAGORA_METADATA_DIR}/metadata.json`);
+        metadata = JSON.parse(metadata);
+        metadata.runs = (metadata.runs || []).concat([{
+            date: new Date(),
+            version: this.version,
+            passed: _.values(this.testingRequests).filter(t => t.passed).map(t => t.id),
+            failed: _.values(this.testingRequests).filter(t => !t.passed).map(t => t.id)
+        }]);
+        metadata.runs = metadata.runs.slice(-10);
+        fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/metadata.json`, JSON.stringify(metadata, getCircularReplacer(), 2));
+        console.log('Test run metadata saved.');
+    }
+
+    setUpPythagoraDirs() {
+        if (!fs.existsSync(`./${PYTHAGORA_TESTS_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
+        if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_METADATA_DIR}/`);
+        if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/metadata.json`)) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/metadata.json`, '{}');
     }
 
     setMongoClient(client) {

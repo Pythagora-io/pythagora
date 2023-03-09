@@ -34,6 +34,9 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
 
         testResult = testResult ? test.statusCode === response.status : testResult;
         testResult = global.Pythagora.request.id === test.id && global.Pythagora.request.errors.length ? false : testResult;
+
+        // horrible - please refactor at one point
+        _.values(global.Pythagora.testingRequests).find(v => v.id === test.id).passed = testResult;
         // TODO add query
         if (showPassedLog && testResult) logTestPassed(test, response, global.Pythagora);
         if (showFailedLog && !testResult) logTestFailed(test, response, global.Pythagora);

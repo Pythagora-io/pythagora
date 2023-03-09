@@ -28,5 +28,5 @@ const fs = require('fs');
         console.error("Error occured while running Pythagora tests: ", err);
     }
 
-    process.exit(0);
+    global.Pythagora.exit();
 })();

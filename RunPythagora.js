@@ -20,7 +20,7 @@ try {
         }
     }
 
-    // checkDependencies();
+    checkDependencies();
 } catch (e) {
     console.log(`\x1b[31m${e.stack}\x1b[0m`);
     process.exit(1);

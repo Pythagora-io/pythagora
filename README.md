@@ -94,6 +94,44 @@ You can find the code coverage report inside `pythagora_tests` folder in the roo
 In case you don't want the code coverage to be shown at all while running tests, you can run the tests with `--no-code-coverage` parameter.
 
 <br><br>
+<h1 id="authentication"> Authentication</h1>
+For authentication we support <a href="https://www.npmjs.com/package/jsonwebtoken" target="_blank">JWT</a>, sessions stored in
+<a href="https://redis.io/" target="_blank">Redis</a> and sessions stored in <a href="https://www.npmjs.com/package/mongodb" target="_blank">MongoDB</a>.
+First 2 cases cases (JWT and sessions stored in Redis) should work just fine without
+any additional implementation but for session that are stored in MongoDB you need to add this one line of code:
+
+```
+if (global.Pythagora) global.Pythagora.authenticationMiddleware = true;
+```
+just before your authentication middleware. For example, if you are using <a href="https://www.npmjs.com/package/express-session" target="_blank">express-session</a>
+you would have to add our line of code just above your middleware that is managing sessions in your DB, like this:
+
+```
+...
+
+if (global.Pythagora) global.Pythagora.authenticationMiddleware = true;
+
+app.use(session({
+    secret: 'my-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 60 * 60 * 1000
+    },
+    store: MongoStore.create({
+        mongoUrl: mongourl,
+        mongoOptions: {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        }
+    })
+}));
+
+...
+```
+That's it! You are ready to go and all your API requests with authentication should PASS!
+
+<br><br>
 <h1 id="testdata">🗺️️ Where can I see the tests?</h1>
 Each captured test is saved in <strong><i>pythagora_tests</i></strong> directory at the root of your repository.
 Each JSON file in this repository represents one endpoint that was captured and each endpoint can have many captured tests.
@@ -162,7 +200,7 @@ is stored in this object. Here is an example of a test object.
 
 For now, we support projects that use:
 - <a href="https://www.npmjs.com/package/express" target="_blank">Express</a> (it can be used explicitly or under the hood, like in <a href="https://www.npmjs.com/package/@apollo/server" target="_blank">Apollo server</a> or <a href="https://nestjs.com/" target="_blank">NestJS</a>)
-- <a href="https://www.npmjs.com/package/mongoose" target="_blank">Mongoose</a> (in the upcoming weeks, we'll add support for the native <a href="https://www.npmjs.com/package/mongodb" target="_blank">MongoDB</a> driver as well)
+- <a href="https://www.npmjs.com/package/mongodb" target="_blank">MongoDB</a> (same as express, it can be used explicitly or under the hood, like with <a href="https://www.npmjs.com/package/mongoose" target="_blank">Mongoose</a>)
 - <a href="https://redis.io/" target="_blank">Redis</a>
   <br>
   <br>

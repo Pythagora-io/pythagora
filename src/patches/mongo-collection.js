@@ -36,7 +36,26 @@ module.exports = function (mongoPath) {
             if (asyncContextId === undefined || !request || request.error) return originalMethod.apply(this, arguments);
 
             let callbackArgumentIndex = MONGO_METHODS[method].args.indexOf('callback');
-            const { query, options, callback, otherArgs } = extractArguments(method, arguments);
+            let { query, options, callback, otherArgs } = extractArguments(method, arguments);
+
+            if (global.Pythagora.authenticationInProcess) {
+                let queryArgumentIndex = MONGO_METHODS[method].args.indexOf(MONGO_METHODS[method].query.argName);
+                function replaceDateGt(query) {
+                    for (const key in query) {
+                        const value = query[key];
+                        if (typeof value === 'object') {
+                            if ('$gt' in value && value['$gt'] instanceof Date) {
+                                query[key]['$gt'] = '1970-01-01T00:00:00Z'; //todo get exact date and time from request.createdAt inside .json
+                            } else {
+                                replaceDateGt(value);
+                            }
+                        }
+                    }
+                    return query;
+                }
+
+                arguments[queryArgumentIndex] = replaceDateGt(query);
+            }
 
             const preHook = async () => {
                 if (global.Pythagora.mode === MODES.capture) {
@@ -52,10 +71,20 @@ module.exports = function (mongoPath) {
                     throw new Error(err);
                 }
 
-                let mongoResult = cursor && cursor.toArray ? await cursor.toArray() : cursor;
+                let mongoResult = cursor;
+                if (cursor && cursor.toArray) {
+                    mongoResult = await cursor.toArray();
+                } else if (cursor instanceof Promise) {
+                    mongoResult = await cursor;
+                    cursor = new Promise((resolve, reject) => resolve(mongoResult));
+                }
                 let postQueryRes = await getCurrentMongoDocs(this, query);
                 if (global.Pythagora.mode === MODES.capture) {
                     request.mongoQueriesCapture++;
+                    if (intermediateData.mongoRes !== undefined) {
+                        // TODO this is for when people do multiple cursor.next() calls - double check different cases
+                        intermediateData = _.cloneDeep(intermediateData);
+                    }
                     intermediateData.mongoRes = mongoObjToJson(mongoResult);
                     intermediateData.postQueryRes = mongoObjToJson(postQueryRes);
                     request.intermediateData.push(intermediateData);
@@ -80,16 +109,22 @@ module.exports = function (mongoPath) {
             const getCursorFunctionWrapper = (originalFunction) => {
                 return async function () {
                     await preHook();
-                    let originalCallback = arguments[0];
-                    arguments[0] = async (err, item) => {
-                        // TODO handle Mongo errors
-                        if (err) {
-                            console.log(err);
-                        }
-                        await postHook(null, item);
-                        global.asyncLocalStorage.run(asyncContextId, () => originalCallback(err, item));
-                    };
-                    originalFunction.apply(this, arguments);
+                    if (typeof arguments[0] !== 'function') {
+                        let res = originalFunction.apply(this, arguments);
+                        await postHook(null, res);
+                        return res;
+                    } else {
+                        let originalCallback = arguments[0];
+                        arguments[0] = async (err, item) => {
+                            // TODO handle Mongo errors
+                            if (err) {
+                                console.log(err);
+                            }
+                            await postHook(null, item);
+                            global.asyncLocalStorage.run(asyncContextId, () => originalCallback(err, item));
+                        };
+                        originalFunction.apply(this, arguments);
+                    }
                 }
             }
 

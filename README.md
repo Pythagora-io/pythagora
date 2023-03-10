@@ -91,7 +91,8 @@ You can find the code coverage report inside `pythagora_tests` folder in the roo
 
 <br>
 
-In case you don't want the code coverage to be shown at all while running tests, you can run the tests with `--no-code-coverage` parameter.
+In case you don't want the code coverage to be shown at all while running tests, you can run the tests with `--no-code-coverage` parameter. This is helpful
+during debugging process since the code coverage report can clash with your IDE's debugger.
 
 <br><br>
 <h1 id="authentication"> Authentication</h1>

@@ -18,8 +18,10 @@ function exit_handler {
   done
 
   rm -f "./.pythagora/finishingup"
-#  kill -s SIGINT $1
-#  sleep .5
+  if kill -s SIGINT $1 > /dev/null 2>&1
+  then
+    sleep .5
+  fi
   exit 0
 }
 
@@ -47,7 +49,7 @@ done
 if [[ " ${args[@]} " =~ " --no-code-coverage " ]] || ([[ ! " ${args[@]} " =~ " --mode test " ]] && [[ ! " ${args[@]} " =~ " --mode=test " ]])
 then
   args=( "${args[@]//--no-code-coverage/}" )
-  PYTHAGORA_MODE="$mode" NODE_OPTIONS="--inspect --require ./node_modules/${pythagora_dir}/RunPythagora.js" $init_command
+  PYTHAGORA_MODE="$mode" NODE_OPTIONS="--inspect --require ./node_modules/${pythagora_dir}/RunPythagora.js" $init_command &
 else
   nyc_args=( "--reporter=text-summary" )
 
@@ -72,7 +74,9 @@ APP_PID=$!
 
 if [[ "${mode}" == "capture" ]]
 then
-  trap exit_handler EXIT
+  trap exit_handler SIGINT
 else
   exit_handler $APP_PID
 fi
+
+wait

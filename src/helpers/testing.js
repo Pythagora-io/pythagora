@@ -26,6 +26,7 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
         // TODO fix this along with managing the case where a request is overwritter during the capture so doesn't exist during capture filtering
         if (!global.Pythagora.request) return false;
 
+        // TODO show if we got 500 for a response
         if(response.status >= 300 && response.status < 400) {
             response.data = {type: 'redirect', url: `${response.headers.location}`};
         }

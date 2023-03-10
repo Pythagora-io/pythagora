@@ -17,6 +17,7 @@ module.exports = function (httpModule) {
 
         const originalServerOnRequest = server.on;
         server.on = function (event, callback) {
+            // TODO be aware that this can be called along with express.listen and http.createServer
             if (event === 'request' && typeof callback === 'function') callback.isPythagoraExpressInstance = true;
             return originalServerOnRequest.apply(this, arguments);
         }

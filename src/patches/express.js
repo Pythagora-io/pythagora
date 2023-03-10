@@ -10,7 +10,7 @@ pythagoraExpress = function () {
         return originalListen.apply(this, arguments);
     }
     app.use = function() {
-        if (!global.Pythagora.authenticationMiddleware) return originalUse.apply(this, arguments);
+        if (!global.Pythagora || !global.Pythagora.authenticationMiddleware) return originalUse.apply(this, arguments);
 
         let originalMiddleware = arguments[0];
         arguments[0] = async function() {

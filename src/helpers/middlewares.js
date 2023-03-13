@@ -24,6 +24,11 @@ function setUpExpressMiddlewares(app) {
             if (global.Pythagora.mode === MODES.capture &&
                 global.Pythagora.pick &&
                 !global.Pythagora.pick.includes(req.url)) req.pythagoraIgnore = true;
+
+            if (global.Pythagora.mode === MODES.capture &&
+                global.Pythagora.ignore &&
+                global.Pythagora.ignore.includes(req.url)) req.pythagoraIgnore = true;
+
             return next();
         },
 

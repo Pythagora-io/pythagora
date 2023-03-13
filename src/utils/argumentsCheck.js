@@ -33,6 +33,7 @@ if (args.test && args.mode !== 'test') logAndExit(`Flag --test allowed only in "
 if (args.rerun_all_failed && args.test) logAndExit(`Not allowed to set flags --rerun_all_failed and --test at same time.`);
 
 if (args.pick && args.mode !== 'capture') logAndExit(`Flag --pick allowed only in "--mode capture"`);
+if (args.ignore && args.mode !== 'capture') logAndExit(`Flag --ignore allowed only in "--mode capture"`);
 
 console.log(`Running "${process.env.PYTHAGORA_CONFIG}" using Pythagora in "${args.mode.toUpperCase()}" mode.`);
 

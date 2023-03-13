@@ -25,6 +25,7 @@ class Pythagora {
         this.rerun_all_failed = args.rerun_all_failed;
         this.testId = args.test;
         this.pick = args.pick;
+        this.ignore = args.ignore;
 
         this.version = global.PythagoraVersion;
         this.idSeq = 0;

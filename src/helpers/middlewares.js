@@ -13,27 +13,30 @@ let  { executionAsyncId } = require('node:async_hooks');
 const fs = require('fs');
 
 
-function setUpExpressMiddleware(app, pythagora) {
+function setUpExpressMiddlewares(app) {
 
     const pythagoraMiddlwares = {
         ignoreMiddleware: (req, res, next) => {
-            if (req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
+            if (!global.Pythagora ||
+                !app.isPythagoraExpressInstance ||
+                req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
             return next();
         },
 
         prepareTestingMiddleware: async (req, res, next) => {
-            if (pythagora.mode === MODES.test) {
-                await prepareDB(pythagora, req);
+            if (!req.pythagoraIgnore && global.Pythagora.mode === MODES.test) {
+                await prepareDB(global.Pythagora, req);
             }
 
             next();
         },
 
         setUpPythagoraDataMiddleware: (req, res, next) => {
-            if (pythagora.mode !== MODES.capture || req.pythagoraIgnore) return next();
+            if (req.pythagoraIgnore || global.Pythagora.mode !== MODES.capture) return next();
+            // if (Object.keys(pythagora.requests).length === 0) pythagora.setExitListener();
             if (!req.id) req.id = v4();
             let eid = executionAsyncId();
-            if (!pythagora.requests[req.id]) pythagora.requests[req.id] = {
+            if (!global.Pythagora.requests[req.id]) global.Pythagora.requests[req.id] = {
                 id: req.id,
                 endpoint: req.path,
                 url: 'http://' + req.headers.host + req.url,
@@ -46,11 +49,11 @@ function setUpExpressMiddleware(app, pythagora) {
                 intermediateData: [],
                 query: req.query,
                 params: req.params,
-                asyncStore: pythagora.idSeq,
+                asyncStore: global.Pythagora.idSeq,
                 mongoQueriesCapture: 0
             };
 
-            if (req.is('multipart/form-data')) pythagora.requests[req.id].error = "Uploading multipart/form-data is not supported yet!";
+            if (req.is('multipart/form-data')) global.Pythagora.requests[req.id].error = "Uploading multipart/form-data is not supported yet!";
 
             // if (!req.is('multipart/form-data')) {
             //     let data = '';
@@ -71,15 +74,12 @@ function setUpExpressMiddleware(app, pythagora) {
 
         setUpInterceptorMiddleware: async (req, res, next) => {
             if (req.pythagoraIgnore) return next();
-            pythagora.RedisInterceptor.setMode(pythagora.mode);
-            if (pythagora.mode === MODES.capture) await apiCaptureInterceptor(req, res, next, pythagora);
-            else if (pythagora.mode === MODES.test) await apiTestInterceptor(req, res, next, pythagora);
+            global.Pythagora.RedisInterceptor.setMode(global.Pythagora.mode);
+            if (global.Pythagora.mode === MODES.capture) await apiCaptureInterceptor(req, res, next, global.Pythagora);
+            else if (global.Pythagora.mode === MODES.test) await apiTestInterceptor(req, res, next, global.Pythagora);
         }
 
     };
-    Object.keys(pythagoraMiddlwares).forEach(middleware => {
-        pythagoraMiddlwares[middleware].isPythagoraMiddleware = true;
-    });
     app.use(pythagoraMiddlwares.ignoreMiddleware);
 
     app.use(pythagoraMiddlwares.prepareTestingMiddleware);
@@ -288,5 +288,5 @@ function saveCaptureToFile(reqData, pythagora) {
 }
 
 module.exports = {
-    setUpExpressMiddleware
+    setUpExpressMiddlewares
 }

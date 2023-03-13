@@ -1,24 +1,16 @@
 const originalExpress = require('express');
-
-removePythagoraMiddlewares = function (express) {
-    let indexesToRemove = express._router.stack.map(middleware => middleware.handle.isPythagoraMiddleware);
-    for (let i = express._router.stack.length - 1; i >= 0; i--) {
-        if (indexesToRemove[i]) {
-            express._router.stack.splice(i, 1);
-        }
-    }
-}
+const { setUpExpressMiddlewares } = require('../helpers/middlewares');
 
 pythagoraExpress = function () {
     const app = originalExpress.apply(this, arguments);
     const originalListen = app.listen;
     const originalUse = app.use;
     app.listen = function () {
-        global.Pythagora.expressInstances.filter(e => e !== this).forEach(removePythagoraMiddlewares);
+        app.isPythagoraExpressInstance = true;
         return originalListen.apply(this, arguments);
     }
     app.use = function() {
-        if (!global.Pythagora.authenticationMiddleware) return originalUse.apply(this, arguments);
+        if (!global.Pythagora || !global.Pythagora.authenticationMiddleware) return originalUse.apply(this, arguments);
 
         let originalMiddleware = arguments[0];
         arguments[0] = async function() {
@@ -31,7 +23,7 @@ pythagoraExpress = function () {
         global.Pythagora.authenticationMiddleware = false;
         return originalUse.apply(this, arguments);
     }
-    if (global.Pythagora) global.Pythagora.setApp(app);
+    setUpExpressMiddlewares(app);
     return app;
 }
 

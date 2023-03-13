@@ -8,7 +8,8 @@ module.exports = function(mongoPath) {
         const patchedMongoClient = class MongoClient extends originalMongoClient.MongoClient {
             constructor(url, options) {
                 super(url, options);
-                global.Pythagora.setMongoClient(this);
+                if (global.Pythagora) global.Pythagora.setMongoClient(this);
+                else global.pythagoraMongoClient = this;
             }
         }
 
@@ -27,8 +28,9 @@ module.exports = function(mongoPath) {
     } else {
         // older version of Mongodb
         const patchedMongoClient = function (url, options) {
-            let client = new originalMongoClient(url, options)
-            global.Pythagora.setMongoClient(client);
+            let client = new originalMongoClient(url, options);
+            if (global.Pythagora) global.Pythagora.setMongoClient(client);
+            else global.pythagoraMongoClient = client;
             return client;
         }
         patchedMongoClient.prototype = originalMongoClient.prototype;

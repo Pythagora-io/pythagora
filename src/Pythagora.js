@@ -2,7 +2,6 @@ const MODES = require('./const/modes.json');
 const RedisInterceptor = require('./helpers/redis.js');
 const { cleanupDb } = require('./helpers/mongodb.js');
 const { makeTestRequest } = require('./helpers/testing.js');
-const { setUpExpressMiddleware } = require('./helpers/middlewares.js');
 const { logCaptureFinished, pythagoraFinishingUp } = require('./utils/cmdPrint.js');
 const { getCircularReplacer } = require('./utils/common.js');
 const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR } = require('./const/common.js');
@@ -23,7 +22,6 @@ class Pythagora {
         if (!MODES[mode]) throw new Error('Invalid mode');
         else this.mode = mode;
 
-        this.expressInstances = [];
         this.version = global.PythagoraVersion;
         this.idSeq = 0;
         this.requests = {};
@@ -80,10 +78,10 @@ class Pythagora {
                 } else savedRequests.push(request.endpoint);
             }
 
-            savedRequests = _.uniq(savedRequests);
-            failedRequests = _.uniq(failedRequests);
             logCaptureFinished(savedRequests.length, failedRequests.length);
         }
+
+        fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/finishingup`, 'done');
         process.exit();
     }
 
@@ -109,11 +107,6 @@ class Pythagora {
 
     setMongoClient(client) {
         this.mongoClient = client;
-    }
-
-    setApp(app) {
-        this.expressInstances.push(app);
-        setUpExpressMiddleware(app, this);
     }
 
     setUpHttpInterceptor() {

@@ -57,12 +57,12 @@ When running tests, it doesn’t matter what database is your Node.js connected 
 1. <b>From the root directory</b> run Pythagora in a capture mode first to capture test data and mocks.
    <br><br>
       ```
-      npx pythagora --initScript ./path/to/your/server.js --mode capture
+      npx pythagora --init-command "my start command" --mode capture
       ```
-   Eg. if you start your Node.js app with `node ./server.js` then the command would be:
+   Eg. if you start your Node.js app with `nest start` then the command would be:
    <br><br>
       ```
-      npx pythagora --initScript ./server.js --mode capture
+      npx pythagora --init-command "nest start" --mode capture
       ```
 2. Click around your application or make requests to your API. Pythagora will capture all requests and responses.
    <br><br>
@@ -73,7 +73,7 @@ NOTE: To stop the capture, you can exit the process like you usually do (Eg. `Ct
 After you captured all requests you want, you just need to change the mode parameter to `--mode test` in the Pythagora command.
 <br>
    ```
-   npx pythagora --initScript ./path/to/your/server.js --mode test
+   npx pythagora --init-command "my start command" --mode test
    ```   
 
 <br><br>
@@ -85,7 +85,7 @@ Code coverage is a great metric while building automated tests as it shows us wh
 
 If you want to generate a more detailed report, you can do so by running Pythagora with `--full-code-coverage-report` flag. Eg.
    ```
-   npx pythagora --initScript ./path/to/your/server.js --mode test --full-code-coverage-report
+   npx pythagora --init-command "my start command" --mode test --full-code-coverage-report
    ```
 You can find the code coverage report inside `pythagora_tests` folder in the root of your repository. You can open the HTML view of the report by opening `pythagora_tests/code_coverage_report/lcov-report/index.html`.
 
@@ -210,7 +210,7 @@ For now, we support projects that use:
 | Apollo server | GraphQL | NestJS | Next.js | Nuxt.js | PostgreSQL | 
 |       :---:     |     :---:      |     :---: |       :---:     |     :---:      |     :---: |
 |<img src="https://user-images.githubusercontent.com/10895136/221188154-0d98b059-5cf1-48bd-b96b-400524d3cd55.png" width="50" alt="Logo 1" style="border-radius: 50%;" />|<img src="https://user-images.githubusercontent.com/10895136/221188225-ea8b0c45-fd37-4bf8-861b-8a97802702da.png" width="50" alt="Logo 2" style="border-radius: 50%" />|<img src="https://user-images.githubusercontent.com/10895136/221188433-e9634001-d9cb-40b2-b358-4932398955ef.png" width="50" alt="Logo 3" style="border-radius: 50%" />| <img src="https://user-images.githubusercontent.com/10895136/221188495-aaaa78bc-b31b-47cb-be37-47d55d4ccf0b.png" width="50" alt="Logo 1" style="border-radius: 50%;" />   | <img src="https://user-images.githubusercontent.com/10895136/221188561-24b75f90-01f7-4378-9664-88af12c9f666.png" width="50" alt="Logo 1" style="border-radius: 50%;" />     | <img src="https://user-images.githubusercontent.com/10895136/221188623-508a8238-8bd6-4858-a322-234582a70a87.png" width="50" alt="Logo 1" style="border-radius: 50%;" />   |
-|      |        |       | Upcoming     | Upcoming       |   Upcoming    |
+|   ✅   |    ✅    |   ✅    | Upcoming     | Upcoming       |   Upcoming    |
 
 <br>
 <h1 id="connectwithus">🔗 Connect with us</h1>

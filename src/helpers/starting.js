@@ -9,7 +9,27 @@ function logAndExit(message, type='error') {
     process.exit(1);
 }
 
-function deleteFailedTests() {
+function deleteTest(id) {
+    try {
+        if (typeof id !== 'string') logAndExit(`When using --delete flag with Pythagora you have to give test ID (of test you want to delete).`);
+        let files = fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
+
+        files = files.filter(f => f[0] !== '.');
+        for (let file of files) {
+            if (file[0] !== '|') continue;
+            let tests = JSON.parse(fs.readFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`));
+            let newTests = tests.filter((t) => t.id !== id);
+
+            if (tests.length !== newTests.length) fs.writeFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`, JSON.stringify(newTests, getCircularReplacer(), 2));
+        }
+
+        logAndExit(`Successfully deleted test with id: ${id}!`, 'log');
+    } catch (e) {
+        logAndExit(e);
+    }
+}
+
+function deleteAllFailedTests() {
     try {
         let metadata = fs.readFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`);
         metadata = JSON.parse(metadata);
@@ -61,7 +81,8 @@ function searchAllModuleFolders(rootDir, moduleName) {
 
 module.exports = {
     logAndExit,
-    deleteFailedTests,
+    deleteTest,
+    deleteAllFailedTests,
     checkDependencies,
     searchAllModuleFolders
 }

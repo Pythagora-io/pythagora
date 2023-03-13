@@ -1,8 +1,10 @@
 const AVAILABLE_MODES = ['capture', 'test'];
 const args = require('minimist')(process.argv.slice(2));
-const { logAndExit, deleteFailedTests } = require('../helpers/starting.js');
+const { logAndExit, deleteAllFailedTests, deleteTest } = require('../helpers/starting.js');
 
-if (args.delete_all_failed) deleteFailedTests();
+if (args.delete_all_failed) deleteAllFailedTests();
+
+if (args.delete) deleteTest(args.delete);
 
 if (!args.initScript) {
     logAndExit(`

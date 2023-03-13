@@ -4,7 +4,6 @@
     "axios": "^1.2.2",
     "body-parser": "^1.20.1",
     "lodash": "^4.17.21",
-    "minimist": "^1.2.7",
     "nyc": "^15.1.0",
     "tryrequire": "^3.0.0",
     "uuid": "^9.0.0"

@@ -20,6 +20,10 @@ function setUpExpressMiddlewares(app) {
             if (!global.Pythagora ||
                 !app.isPythagoraExpressInstance ||
                 req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
+
+            if (global.Pythagora.mode === MODES.capture &&
+                global.Pythagora.pick &&
+                !global.Pythagora.pick.includes(req.url)) req.pythagoraIgnore = true;
             return next();
         },
 

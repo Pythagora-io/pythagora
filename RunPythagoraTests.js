@@ -10,13 +10,16 @@ const fs = require('fs');
 
     try {
         let files = fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
+        let testsToExecute = global.Pythagora.getTestsToExecute();
+        if (testsToExecute && !testsToExecute.length) throw new Error('There are no tests to execute. Check if you put arguments in Pythagora command correctly.');
+
         files = files.filter(f => f[0] !== '.');
         logTestsStarting(files);
         for (let file of files) {
             if (file[0] !== '|') continue;
             let tests = JSON.parse(fs.readFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`));
             for (let test of tests) {
-                results.push(await makeTestRequest(test) || false);
+                if (!testsToExecute || testsToExecute.includes(test.id)) results.push(await makeTestRequest(test) || false);
             }
         }
 

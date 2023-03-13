@@ -6,7 +6,7 @@ function checkDependencies() {
     let mongodb = tryrequire('mongodb');
     let express = tryrequire('express');
 
-    if (!mongodb || !express) throw new Error(`'Pythagora is unable to check dependencies. Express and MongoDb are necesssary for Pythagora to run. Exiting...`);
+    if (!mongodb || !express) throw new Error(`'Pythagora is unable to check dependencies. Express and MongoDb are necessary for Pythagora to run. Exiting...`);
 }
 
 function searchAllModuleFolders(rootDir, moduleName) {

@@ -19,16 +19,18 @@ global.asyncLocalStorage = new AsyncLocalStorage();
 
 class Pythagora {
 
-    constructor(mode) {
-        if (!MODES[mode]) throw new Error('Invalid mode');
-        else this.mode = mode;
+    constructor(args) {
+        if (!MODES[args.mode]) throw new Error('Invalid mode');
+        else this.mode = args.mode;
+
+        this.rerun_all_failed = args.rerun_all_failed;
 
         this.expressInstances = [];
         this.version = global.PythagoraVersion;
         this.idSeq = 0;
         this.requests = {};
         this.testingRequests = {};
-        this.loggingEnabled = mode === 'capture';
+        this.loggingEnabled = this.mode === 'capture';
 
         this.setUpPythagoraDirs();
         // this.setUpHttpInterceptor();
@@ -40,7 +42,7 @@ class Pythagora {
     }
 
     async exit() {
-        if (this.cleanupDone) return;
+        if (this.cleanupDone) return process.exit();
         this.cleanupDone = true;
         if (this.mode === MODES.test) {
             this.saveTestRunMetadata();
@@ -87,14 +89,33 @@ class Pythagora {
         process.exit();
     }
 
-    saveTestRunMetadata() {
+    getTestsToExecute() {
+        let metadata = this.getMetadata();
+        if (!metadata || !metadata.runs) return undefined;
+        let runs = metadata.runs;
+
+        if (this.rerun_all_failed) return runs[runs.length - 1].failed;
+
+        return undefined;
+    }
+
+    getMetadata() {
         let metadata = fs.readFileSync(`./${PYTHAGORA_METADATA_DIR}/metadata.json`);
         metadata = JSON.parse(metadata);
+        return metadata;
+    }
+
+    saveTestRunMetadata() {
+        let passed = _.values(this.testingRequests).filter(t => t.passed).map(t => t.id);
+        let failed = _.values(this.testingRequests).filter(t => !t.passed).map(t => t.id);
+        if (!passed.length && !failed.length) return;
+
+        let metadata = this.getMetadata();
         metadata.runs = (metadata.runs || []).concat([{
             date: new Date(),
             version: this.version,
-            passed: _.values(this.testingRequests).filter(t => t.passed).map(t => t.id),
-            failed: _.values(this.testingRequests).filter(t => !t.passed).map(t => t.id)
+            passed,
+            failed
         }]);
         metadata.runs = metadata.runs.slice(-10);
         fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/metadata.json`, JSON.stringify(metadata, getCircularReplacer(), 2));

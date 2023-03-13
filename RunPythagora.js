@@ -26,12 +26,12 @@ try {
     process.exit(1);
 }
 
-let { mode, initScript } = require('./src/utils/argumentsCheck.js');
+let args = require('./src/utils/argumentsCheck.js');
 const Pythagora = require('./src/Pythagora.js');
 
 const path = require('path');
 
-global.Pythagora = new Pythagora(mode);
+global.Pythagora = new Pythagora(args);
 
 process.on('uncaughtException', (error) => {
     console.error('The app has crashed!');
@@ -42,9 +42,9 @@ process.on('uncaughtException', (error) => {
 
 (async () => {
     await global.Pythagora.runRedisInterceptor();
-    require(path.join(process.cwd(), initScript));
+    require(path.join(process.cwd(), args.initScript));
 
-    if (mode === 'test') {
+    if (args.mode === 'test') {
         console.log('Running tests in 3 seconds...');
         setTimeout(() => {
             require('./RunPythagoraTests.js');

@@ -17,6 +17,7 @@ module.exports = function (mongoPath) {
     Object.keys(MONGO_METHODS).forEach(method => {
         const originalMethod = (originalCollection.Collection || originalCollection).prototype[method];
         (originalCollection.Collection || originalCollection).prototype[method] = function () {
+            if (!global.Pythagora) return originalMethod.apply(this, arguments);
             if (global.Pythagora.mode === MODES.test) {
                 this.s.db = global.Pythagora.mongoClient.db('pythagoraDb');
                 this.s.namespace.db = 'pythagoraDb';
@@ -160,5 +161,4 @@ module.exports = function (mongoPath) {
     });
 
     return originalCollection;
-
 }

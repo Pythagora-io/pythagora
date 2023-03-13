@@ -19,10 +19,11 @@ global.asyncLocalStorage = new AsyncLocalStorage();
 class Pythagora {
 
     constructor(args) {
-        if (!MODES[args.mode]) throw new Error('Invalid mode');
+        if (!MODES[args.mode]) throw new Error('Invalid mode ', args.mode);
         else this.mode = args.mode;
 
         this.rerun_all_failed = args.rerun_all_failed;
+        this.testId = args.test;
 
         this.version = global.PythagoraVersion;
         this.idSeq = 0;
@@ -88,6 +89,7 @@ class Pythagora {
     }
 
     getTestsToExecute() {
+        if (this.testId) return [this.testId];
         let metadata = this.getMetadata();
         if (!metadata || !metadata.runs) return undefined;
         let runs = metadata.runs;

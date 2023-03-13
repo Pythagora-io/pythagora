@@ -1,13 +1,15 @@
 module.exports = function (httpModule) {
+    let args = require('../utils/argumentsCheck.js');
+
     const originalHttp = require(httpModule);
     const Pythagora = require("../Pythagora");
 
     const originalCreateServer = originalHttp.createServer;
     originalHttp.createServer = function (app) {
-        global.Pythagora = new Pythagora(process.env.PYTHAGORA_MODE);
+        global.Pythagora = new Pythagora(args);
         global.Pythagora.setMongoClient(global.pythagoraMongoClient);
         global.Pythagora.runRedisInterceptor().then(() => {
-            if (process.env.PYTHAGORA_MODE === 'test') {
+            if (args.mode === 'test') {
                 require('../../RunPythagoraTests.js');
             }
         });

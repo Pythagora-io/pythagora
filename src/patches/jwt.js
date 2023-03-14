@@ -1,19 +1,31 @@
 // const sinon = require("sinon");
 
 module.exports = function(jwtPath) {
-    let originalJwt = require(`${jwtPath}/verify`);
-    const patchedJwt = function(token, secretOrPublicKey, options={}, callback) {
+    let originalJwt = require(`${jwtPath}`);
+
+    let originalVerify = originalJwt.verify;
+    const patchedVerify = function(token, secretOrPublicKey, options={}, callback) {
         if (global.Pythagora &&
             global.Pythagora.tempVars &&
             global.Pythagora.tempVars.clockTimestamp) {
             // let clock = sinon.useFakeTimers(clockTimestamp);
             // clock.shouldClearNativeTimers = true;
 
-            options.clockTimestamp = global.Pythagora.tempVars.clockTimestamp;
+            options.clockTimestamp = global.Pythagora.tempVars.clockTimestamp / 1000;
 
             // clock.restore();
         }
-        return originalJwt(token, secretOrPublicKey, options, callback);
+
+        return originalVerify.apply(this, arguments);
     }
-    return patchedJwt;
+
+    patchedVerify.prototype = originalVerify.prototype;
+
+    for (const key in originalVerify) {
+        patchedVerify[key] = originalVerify[key];
+    }
+
+    originalJwt.verify = patchedVerify;
+
+    return originalJwt;
 }

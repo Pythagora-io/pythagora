@@ -32,6 +32,8 @@ class Pythagora {
         this.requests = {};
         this.testingRequests = {};
         this.loggingEnabled = this.mode === 'capture';
+        //todo move all global vars to tempVars
+        this.tempVars = {};
 
         this.setUpPythagoraDirs();
         // this.setUpHttpInterceptor();

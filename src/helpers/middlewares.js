@@ -207,7 +207,7 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     }
 
     let timestamp = new Date(request.createdAt).getTime();
-    const originalFunction = patchJwtVerify(timestamp);
+    pythagora.tempVars.clockTimestamp = timestamp;
 
     pythagora.RedisInterceptor.setIntermediateData(request.intermediateData);
     let reqId = pythagora.idSeq++;
@@ -222,7 +222,6 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     const _redirect = res.redirect;
 
     res.end = function(body) {
-        unpatchJwtVerify(originalFunction);
         logWithStoreId('testing end');
         checkForFinalErrors(reqId, pythagora);
         global.Pythagora.request = {
@@ -233,7 +232,6 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     };
 
     res.send = function(body) {
-        unpatchJwtVerify(originalFunction);
         logWithStoreId('testing send');
         checkForFinalErrors(reqId, pythagora);
         global.Pythagora.request = {
@@ -244,7 +242,6 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     };
 
     res.redirect = function(url) {
-        unpatchJwtVerify(originalFunction);
         logWithStoreId('testing redirect');
         checkForFinalErrors(reqId, pythagora);
         global.Pythagora.request = {

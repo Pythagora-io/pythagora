@@ -32,6 +32,16 @@ try {
         }
     }
 
+    for (let jwtPath of searchAllModuleFolders(process.cwd(), 'jsonwebtoken')) {
+        try {
+            require.cache[require.resolve('jsonwebtoken/verify')] = {
+                exports: require('./src/patches/jwt.js')(jwtPath)
+            };
+        } catch (e) {
+            // console.log(`Can't patch JWT at ${jwtPath}`);
+        }
+    }
+
     checkDependencies();
 } catch (e) {
     console.log(`\x1b[31m${e.stack}\x1b[0m`);

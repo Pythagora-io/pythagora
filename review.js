@@ -1,10 +1,10 @@
 const fs = require('fs');
 const readline = require('readline');
-const { PYTHAGORA_TESTS_DIR, PYTHAGORA_DATA_DIR, REVIEW_DATA_FILENAME } = require('./src/const/common.js');
+const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('./src/const/common.js');
 const { logChange } = require('./src/utils/cmdPrint.js');
 const { compareJson } = require("./src/utils/common.js");
 
-const reviewFilePath = `./${PYTHAGORA_DATA_DIR}/${REVIEW_DATA_FILENAME}`;
+const reviewFilePath = `./${PYTHAGORA_METADATA_DIR}/${REVIEW_DATA_FILENAME}`;
 
 if (!fs.existsSync(reviewFilePath)) return console.log('There is no changes stored for review. Please run tests first.');
 

@@ -1,7 +1,7 @@
 const { logTestsFinished, logTestsStarting } = require('./src/utils/cmdPrint.js');
 const { makeTestRequest } = require('./src/helpers/testing.js');
 const { getCircularReplacer } = require('./src/utils/common.js')
-const { PYTHAGORA_TESTS_DIR, PYTHAGORA_DATA_DIR, REVIEW_DATA_FILENAME } = require('./src/const/common.js');
+const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('./src/const/common.js');
 
 const fs = require('fs');
 
@@ -38,7 +38,7 @@ const fs = require('fs');
             failedCount = results.filter(r => !r).length;
         logTestsFinished(passedCount, failedCount);
 
-        if (reviewData.length) fs.writeFileSync(`./${PYTHAGORA_DATA_DIR}/${REVIEW_DATA_FILENAME}`, JSON.stringify(reviewData, getCircularReplacer(), 2));
+        if (reviewData.length) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${REVIEW_DATA_FILENAME}`, JSON.stringify(reviewData, getCircularReplacer(), 2));
         console.log(`Time it took to run all Pythagora tests: \x1b[32m${((new Date() - startTime)/1000).toFixed(2)}s\x1b[0m`);
     } catch (err) {
         console.error("Error occured while running Pythagora tests: ", err);

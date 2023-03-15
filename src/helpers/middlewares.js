@@ -213,9 +213,8 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     let reqId = pythagora.idSeq++;
     pythagora.testingRequests[reqId] = _.extend({
         mongoQueriesTest: [],
-        errors: [],
-        intermediateData: []
-    }, _.omit(request, ['intermediateData']));
+        errors: []
+    }, request);
 
     //todo check what else needs to be added eg. res.json, res.end, res.write,...
     const _end = res.end;

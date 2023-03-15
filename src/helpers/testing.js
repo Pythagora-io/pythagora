@@ -24,7 +24,10 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
             return e.response;
         });
         // TODO fix this along with managing the case where a request is overwritter during the capture so doesn't exist during capture filtering
-        if (!global.Pythagora.request) return false;
+        if (!global.Pythagora.request) {
+            // TODO add log why the request failed
+            return false;
+        }
 
         // TODO show if we got 500 for a response
         if(response.status >= 300 && response.status < 400) {

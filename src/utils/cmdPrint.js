@@ -35,8 +35,9 @@ let logAppError = (message, error) => {
 
 let logTestFailed = (test, response, pythagora) => {
     let errLog = '';
-    for (const err in pythagoraErrors) {
-        if (getOccurrenceInArray(pythagora.request.errors, pythagoraErrors[err]) > 0) errLog += `\t${pythagoraErrors[err]}\n`;
+    let errors = [...new Set(pythagora.request.errors.map((e) => e.type))];
+    for (const err of errors) {
+        errLog += `\t${pythagoraErrors[err]}\n`;
     }
     console.log(`❌ Test ${red+bold}FAILED!${reset}
     ${red+bold}${test.method} ${test.endpoint} ${reset}
@@ -87,6 +88,26 @@ let pythagoraFinishingUp = () => {
     console.log(`\n\n${blue+bold}Pythagora capturing done. Finishing up...${reset}\n`);
 }
 
+function logChange(change, ignoreKeys, mongoNotExecuted, mongoExecutedTooManyTimes) {
+    console.log(`\n${blue}${change.filename.replaceAll('|', '/')}${reset}`);
+    console.log(`${reset}${change.id}`);
+    for (let key of Object.keys(change).filter((k) => !ignoreKeys.includes(k))) {
+        console.log(`\n${reset}Difference: ${bold}${key}`);
+        console.log(`${red}- ${change[key].capture}${reset}`);
+        console.log(`${green}+ ${change[key].test}${reset}`);
+    }
+    if (mongoNotExecuted && mongoNotExecuted.length) {
+        console.log(`${reset}Mongo queries not executed:`);
+        console.log(`${yellow}${mongoNotExecuted.map((m) => 'OP: ' + m.op + '\nCollection: ' + m.collection + '\nQuery: ' + JSON.stringify(m.query)).join('\n\n')}`);
+        console.log(`${reset}`);
+    }
+    if (mongoExecutedTooManyTimes && mongoExecutedTooManyTimes.length) {
+        console.log(`${reset}Extra mongo queries that didn't execute while capturing:`);
+        console.log(`${yellow}${mongoExecutedTooManyTimes.map((m) => 'OP: ' + m.op + '\nCollection: ' + m.collection + '\nQuery: ' + JSON.stringify(m.query)).join('\n\n')}`);
+        console.log(`${reset}`);
+    }
+}
+
 
 module.exports = {
     logEndpointCaptured,
@@ -98,5 +119,6 @@ module.exports = {
     logCaptureFinished,
     pythagoraFinishingUp,
     logWithStoreId,
-    logAppError
+    logAppError,
+    logChange
 }

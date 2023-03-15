@@ -31,17 +31,24 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
             response.data = {type: 'redirect', url: `${response.headers.location}`};
         }
         // TODO we should compare JSON files and ignore _id during creation because it changes every time
-        let testResult = compareResponse(response.data, test.responseData);
+        let reviewJson = {};
+        let correctId = global.Pythagora.request.id === test.id;
 
-        testResult = testResult ? test.statusCode === response.status : testResult;
-        testResult = global.Pythagora.request.id === test.id && global.Pythagora.request.errors.length ? false : testResult;
+        let dataResult = compareResponse(response.data, test.responseData);
+        if (correctId && !dataResult) reviewJson.responseData = { capture: test.responseData, test: response.data };
+        let statusCodeResult = test.statusCode === response.status;
+        if (correctId && !statusCodeResult) reviewJson.statusCode = { capture: test.statusCode, test: response.status };
+        let errors = global.Pythagora.request.errors;
+        //todo capture all intermediate data when testing also
+        if (correctId && errors.length) reviewJson.errors = errors;
 
+        let testResult = dataResult && statusCodeResult && correctId && errors.length === 0;
         // horrible - please refactor at one point
         _.values(global.Pythagora.testingRequests).find(v => v.id === test.id).passed = testResult;
         // TODO add query
         if (showPassedLog && testResult) logTestPassed(test);
         if (showFailedLog && !testResult) logTestFailed(test, response, global.Pythagora);
-        return testResult;
+        return { testResult, reviewJson };
     } catch (error) {
         console.error(error);
     }

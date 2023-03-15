@@ -180,9 +180,19 @@ function findAndCheckCapturedData(collectionName, op, query, options, otherArgs,
         !compareJson(capturedData.mongoRes, mongoObjToJson(mongoResult)) ||
         !compareJson(capturedData.postQueryRes, mongoObjToJson(postQueryRes))
     )) {
-        request.errors.push(pythagoraErrors.mongoResultDifferent);
+        request.errors.push({
+            type: 'mongoResultDifferent',
+            mongoResult,
+            postQueryRes
+        });
     } else if (!capturedData) {
-        request.errors.push(pythagoraErrors.mongoQueryNotFound);
+        request.errors.push({
+            type: 'mongoQueryNotFound',
+            collection: collectionName,
+            op,
+            query,
+            options
+        });
     }
 }
 

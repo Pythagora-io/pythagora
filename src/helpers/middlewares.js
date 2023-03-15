@@ -212,9 +212,10 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     pythagora.RedisInterceptor.setIntermediateData(request.intermediateData);
     let reqId = pythagora.idSeq++;
     pythagora.testingRequests[reqId] = _.extend({
-        mongoQueriesTest: 0,
-        errors: []
-    }, request);
+        mongoQueriesTest: [],
+        errors: [],
+        intermediateData: []
+    }, _.omit(request, ['intermediateData']));
 
     //todo check what else needs to be added eg. res.json, res.end, res.write,...
     const _end = res.end;
@@ -224,30 +225,21 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     res.end = function(body) {
         logWithStoreId('testing end');
         checkForFinalErrors(reqId, pythagora);
-        global.Pythagora.request = {
-            id: pythagora.testingRequests[reqId].id,
-            errors: _.clone(pythagora.testingRequests[reqId].errors)
-        };
+        setGlobalRequest(reqId, pythagora);
         _end.call(this, body);
     };
 
     res.send = function(body) {
         logWithStoreId('testing send');
         checkForFinalErrors(reqId, pythagora);
-        global.Pythagora.request = {
-            id: pythagora.testingRequests[reqId].id,
-            errors: _.clone(pythagora.testingRequests[reqId].errors)
-        };
+        setGlobalRequest(reqId, pythagora);
         _send.call(this, body);
     };
 
     res.redirect = function(url) {
         logWithStoreId('testing redirect');
         checkForFinalErrors(reqId, pythagora);
-        global.Pythagora.request = {
-            id: pythagora.testingRequests[reqId].id,
-            errors: _.clone(pythagora.testingRequests[reqId].errors)
-        };
+        setGlobalRequest(reqId, pythagora);
         _redirect.call(this, url);
     };
 
@@ -257,12 +249,30 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     });
 }
 
+function setGlobalRequest(reqId, pythagora) {
+    global.Pythagora.request = {
+        id: pythagora.testingRequests[reqId].id,
+        errors: _.clone(pythagora.testingRequests[reqId].errors),
+        intermediateData: pythagora.testingRequests[reqId].intermediateData
+    };
+}
+
 function checkForFinalErrors(reqId, pythagora) {
-    if (pythagora.testingRequests[reqId].mongoQueriesCapture > pythagora.testingRequests[reqId].mongoQueriesTest) {
-        pythagora.testingRequests[reqId].errors.push(pythagoraErrors.mongoNotExecuted);
+    if (pythagora.testingRequests[reqId].mongoQueriesCapture > pythagora.testingRequests[reqId].mongoQueriesTest &&
+        !pythagora.testingRequests[reqId].errors.filter((e) => e.type === 'mongoNotExecuted').length
+    ) {
+        pythagora.testingRequests[reqId].errors.push({
+            type: 'mongoNotExecuted',
+            intermediateData: pythagora.testingRequests[reqId].intermediateData
+        });
     }
-    if (pythagora.testingRequests[reqId].mongoQueriesCapture < pythagora.testingRequests[reqId].mongoQueriesTest) {
-        pythagora.testingRequests[reqId].errors.push(pythagoraErrors.mongoExecutedTooManyTimes);
+    if (pythagora.testingRequests[reqId].mongoQueriesCapture < pythagora.testingRequests[reqId].mongoQueriesTest &&
+        !pythagora.testingRequests[reqId].errors.filter((e) => e.type === 'mongoExecutedTooManyTimes').length
+    ) {
+        pythagora.testingRequests[reqId].errors.push({
+            type: 'mongoExecutedTooManyTimes',
+            intermediateData: pythagora.testingRequests[reqId].intermediateData
+        });
     }
 }
 

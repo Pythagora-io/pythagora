@@ -262,7 +262,7 @@ function checkForFinalErrors(reqId, pythagora) {
     ) {
         pythagora.testingRequests[reqId].errors.push({
             type: 'mongoNotExecuted',
-            intermediateData: pythagora.testingRequests[reqId].intermediateData
+            intermediateData: pythagora.testingRequests[reqId].testIntermediateData
         });
     }
     if (pythagora.testingRequests[reqId].mongoQueriesCapture < pythagora.testingRequests[reqId].mongoQueriesTest &&
@@ -270,7 +270,7 @@ function checkForFinalErrors(reqId, pythagora) {
     ) {
         pythagora.testingRequests[reqId].errors.push({
             type: 'mongoExecutedTooManyTimes',
-            intermediateData: pythagora.testingRequests[reqId].intermediateData
+            intermediateData: pythagora.testingRequests[reqId].testIntermediateData
         });
     }
 }

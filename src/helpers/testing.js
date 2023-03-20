@@ -26,6 +26,7 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
         // TODO fix this along with managing the case where a request is overwritter during the capture so doesn't exist during capture filtering
         if (!global.Pythagora.request) {
             // TODO add log why the request failed
+            console.log('⚠️ Server returned 500 status code while making a request');
             return false;
         }
 
@@ -48,6 +49,7 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
         let testResult = dataResult && statusCodeResult && correctId && errors.length === 0;
         // horrible - please refactor at one point
         _.values(global.Pythagora.testingRequests).find(v => v.id === test.id).passed = testResult;
+
         // TODO add query
         if (showPassedLog && testResult) logTestPassed(test);
         if (showFailedLog && !testResult) logTestFailed(test, response, global.Pythagora);

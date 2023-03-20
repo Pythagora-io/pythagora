@@ -82,14 +82,19 @@ function findNotExecutedQueries(intermediateData, req) {
 
 function findExtraQueries(intermediateData, req) {
     return intermediateData.filter((i) => {
-        return !req.some((d) =>
+        let intData = req.intermediateData.find((d) =>
             d.type === 'mongodb' &&
             d.collection === i.collection &&
             d.op === i.op &&
             compareJson(d.query, i.query, true) &&
             compareJson(d.options, i.options, true) &&
-            compareJson(d.otherArgs, i.otherArgs, true)
-        )
+            compareJson(d.otherArgs, i.otherArgs, true) &&
+            !d.processed
+        );
+
+        if (intData) intData.processed = true;
+
+        return !intData;
     })
 }
 

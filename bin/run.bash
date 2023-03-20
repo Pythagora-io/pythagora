@@ -46,6 +46,11 @@ do
   fi
 done
 
+if [ -z "$init_command" ]
+then
+  echo "You need to set '--init-command' flag in Pythagora command! Please check Pythagora options. Exiting..."
+  exit 0
+fi
 
 if [[ " ${args[@]} " =~ " --no-code-coverage " ]] || ([[ ! " ${args[@]} " =~ " --mode test " ]] && [[ ! " ${args[@]} " =~ " --mode=test " ]])
 then

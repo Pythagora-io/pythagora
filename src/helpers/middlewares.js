@@ -1,8 +1,7 @@
 const MODES = require("../const/modes.json");
-const { getCircularReplacer, compareResponse } = require("../utils/common.js");
+const { getCircularReplacer, compareResponse, compareJson } = require("../utils/common.js");
 const pythagoraErrors = require("../const/errors");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
-const { patchJwtVerify, unpatchJwtVerify } = require("../patches/jwt.js");
 const { prepareDB } = require("./mongodb.js");
 const { PYTHAGORA_TESTS_DIR } = require("../const/common.js");
 
@@ -257,22 +256,26 @@ function setGlobalRequest(reqId, pythagora) {
 }
 
 function checkForFinalErrors(reqId, pythagora) {
-    if (pythagora.testingRequests[reqId].mongoQueriesCapture > pythagora.testingRequests[reqId].mongoQueriesTest &&
-        !pythagora.testingRequests[reqId].errors.filter((e) => e.type === 'mongoNotExecuted').length
-    ) {
+    if (pythagora.testingRequests[reqId].checkedForFinalErrors) return;
+
+    let mongoNotExecuted = pythagora.testingRequests[reqId].intermediateData.filter(obj1 => !pythagora.testingRequests[reqId].testIntermediateData.some(obj2 =>
+        obj1.collection === obj2.collection &&
+        obj1.op === obj2.op &&
+        compareJson(obj1.query, obj2.query, true) &&
+        compareJson(obj1.options, obj2.options, true) &&
+        compareJson(obj1.otherArgs, obj2.otherArgs, true)
+    ));
+
+    mongoNotExecuted.forEach((q) => {
         pythagora.testingRequests[reqId].errors.push({
             type: 'mongoNotExecuted',
-            intermediateData: pythagora.testingRequests[reqId].testIntermediateData
+            collection: q.collection,
+            op: q.op,
+            query: q.query,
+            options: q.options
         });
-    }
-    if (pythagora.testingRequests[reqId].mongoQueriesCapture < pythagora.testingRequests[reqId].mongoQueriesTest &&
-        !pythagora.testingRequests[reqId].errors.filter((e) => e.type === 'mongoExecutedTooManyTimes').length
-    ) {
-        pythagora.testingRequests[reqId].errors.push({
-            type: 'mongoExecutedTooManyTimes',
-            intermediateData: pythagora.testingRequests[reqId].testIntermediateData
-        });
-    }
+    });
+    pythagora.testingRequests[reqId].checkedForFinalErrors = true;
 }
 
 function saveCaptureToFile(reqData, pythagora) {

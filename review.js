@@ -2,7 +2,6 @@ const fs = require('fs');
 const readline = require('readline');
 const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('./src/const/common.js');
 const { logChange } = require('./src/utils/cmdPrint.js');
-const { compareJson } = require("./src/utils/common.js");
 
 const reviewFilePath = `./${PYTHAGORA_METADATA_DIR}/${REVIEW_DATA_FILENAME}`;
 
@@ -67,37 +66,6 @@ function generatePrompt() {
     return prompt;
 }
 
-function findNotExecutedQueries(intermediateData, req) {
-    return req.intermediateData.filter((i) => {
-        return !intermediateData.some((d) =>
-            d.type === 'mongodb' &&
-            d.collection === i.collection &&
-            d.op === i.op &&
-            compareJson(d.query, i.query, true) &&
-            compareJson(d.options, i.options, true) &&
-            compareJson(d.otherArgs, i.otherArgs, true)
-        )
-    })
-}
-
-function findExtraQueries(intermediateData, req) {
-    return intermediateData.filter((i) => {
-        let intData = req.intermediateData.find((d) =>
-            d.type === 'mongodb' &&
-            d.collection === i.collection &&
-            d.op === i.op &&
-            compareJson(d.query, i.query, true) &&
-            compareJson(d.options, i.options, true) &&
-            compareJson(d.otherArgs, i.otherArgs, true) &&
-            !d.processed
-        );
-
-        if (intData) intData.processed = true;
-
-        return !intData;
-    })
-}
-
 const displayChangesAndPrompt = (index, arr, displayChange = true) => {
     // Check if we have reached the end of the array
     if (index >= arr.length) {
@@ -109,20 +77,10 @@ const displayChangesAndPrompt = (index, arr, displayChange = true) => {
 
     // Display the JSON data to the user
     if (displayChange) {
-        let path = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
-        let capturedRequests = JSON.parse(fs.readFileSync(path, 'utf8'));
-        let req = capturedRequests.find(request => request.id === change.id);
-        let mongoNotExecuted, mongoExecutedTooManyTimes;
+        let mongoNotExecuted = change.errors ? change.errors.filter((e) => e.type === 'mongoNotExecuted') : [];
+        let mongoQueryNotFound = change.errors ? change.errors.filter((e) => e.type === 'mongoQueryNotFound') : [];
 
-        if (change.errors && change.errors.filter((e) => e.type === 'mongoExecutedTooManyTimes').length) {
-            let intermediateData = change.errors.find((e) => e.type === 'mongoExecutedTooManyTimes').intermediateData;
-            mongoExecutedTooManyTimes = findExtraQueries(intermediateData, req);
-        }
-        if (change.errors && change.errors.filter((e) => e.type === 'mongoNotExecuted').length) {
-            let intermediateData = change.errors.find((e) => e.type === 'mongoNotExecuted').intermediateData;
-            mongoNotExecuted = findNotExecutedQueries(intermediateData, req);
-        }
-        logChange(change, ignoreKeys, mongoNotExecuted, mongoExecutedTooManyTimes);
+        logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound);
     }
 
     // Create a readline interface to prompt the user for input

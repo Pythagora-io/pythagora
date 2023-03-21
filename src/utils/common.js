@@ -62,7 +62,7 @@ function compareResponse(a, b) {
 }
 
 function isDate(date) {
-    return (new Date(date) !== "Invalid Date") && !isNaN(new Date(date));
+    return typeof date === 'string' && (new Date(date) !== "Invalid Date") && !isNaN(new Date(date));
 }
 
 function isJSONObject(value) {

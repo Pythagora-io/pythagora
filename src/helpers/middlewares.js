@@ -1,8 +1,7 @@
 const MODES = require("../const/modes.json");
-const { getCircularReplacer, compareResponse } = require("../utils/common.js");
+const { getCircularReplacer, compareResponse, compareJson } = require("../utils/common.js");
 const pythagoraErrors = require("../const/errors");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
-const { patchJwtVerify, unpatchJwtVerify } = require("../patches/jwt.js");
 const { prepareDB } = require("./mongodb.js");
 const { PYTHAGORA_TESTS_DIR } = require("../const/common.js");
 
@@ -212,7 +211,7 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     pythagora.RedisInterceptor.setIntermediateData(request.intermediateData);
     let reqId = pythagora.idSeq++;
     pythagora.testingRequests[reqId] = _.extend({
-        mongoQueriesTest: 0,
+        mongoQueriesTest: [],
         errors: []
     }, request);
 
@@ -224,30 +223,21 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     res.end = function(body) {
         logWithStoreId('testing end');
         checkForFinalErrors(reqId, pythagora);
-        global.Pythagora.request = {
-            id: pythagora.testingRequests[reqId].id,
-            errors: _.clone(pythagora.testingRequests[reqId].errors)
-        };
+        setGlobalRequest(reqId, pythagora);
         _end.call(this, body);
     };
 
     res.send = function(body) {
         logWithStoreId('testing send');
         checkForFinalErrors(reqId, pythagora);
-        global.Pythagora.request = {
-            id: pythagora.testingRequests[reqId].id,
-            errors: _.clone(pythagora.testingRequests[reqId].errors)
-        };
+        setGlobalRequest(reqId, pythagora);
         _send.call(this, body);
     };
 
     res.redirect = function(url) {
         logWithStoreId('testing redirect');
         checkForFinalErrors(reqId, pythagora);
-        global.Pythagora.request = {
-            id: pythagora.testingRequests[reqId].id,
-            errors: _.clone(pythagora.testingRequests[reqId].errors)
-        };
+        setGlobalRequest(reqId, pythagora);
         _redirect.call(this, url);
     };
 
@@ -257,13 +247,35 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     });
 }
 
+function setGlobalRequest(reqId, pythagora) {
+    global.Pythagora.request = {
+        id: pythagora.testingRequests[reqId].id,
+        errors: _.clone(pythagora.testingRequests[reqId].errors),
+        intermediateData: pythagora.testingRequests[reqId].intermediateData
+    };
+}
+
 function checkForFinalErrors(reqId, pythagora) {
-    if (pythagora.testingRequests[reqId].mongoQueriesCapture > pythagora.testingRequests[reqId].mongoQueriesTest) {
-        pythagora.testingRequests[reqId].errors.push(pythagoraErrors.mongoNotExecuted);
-    }
-    if (pythagora.testingRequests[reqId].mongoQueriesCapture < pythagora.testingRequests[reqId].mongoQueriesTest) {
-        pythagora.testingRequests[reqId].errors.push(pythagoraErrors.mongoExecutedTooManyTimes);
-    }
+    if (pythagora.testingRequests[reqId].checkedForFinalErrors) return;
+
+    let mongoNotExecuted = pythagora.testingRequests[reqId].intermediateData.filter(obj1 => !pythagora.testingRequests[reqId].testIntermediateData.some(obj2 =>
+        obj1.collection === obj2.collection &&
+        obj1.op === obj2.op &&
+        compareJson(obj1.query, obj2.query, true) &&
+        compareJson(obj1.options, obj2.options, true) &&
+        compareJson(obj1.otherArgs, obj2.otherArgs, true)
+    ));
+
+    mongoNotExecuted.forEach((q) => {
+        pythagora.testingRequests[reqId].errors.push({
+            type: 'mongoNotExecuted',
+            collection: q.collection,
+            op: q.op,
+            query: q.query,
+            options: q.options
+        });
+    });
+    pythagora.testingRequests[reqId].checkedForFinalErrors = true;
 }
 
 function saveCaptureToFile(reqData, pythagora) {

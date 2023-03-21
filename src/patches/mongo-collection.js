@@ -1,5 +1,6 @@
 const {v4} = require('uuid');
 const _ = require('lodash');
+const {createCaptureIntermediateData} = require("../helpers/mongodb");
 module.exports = function (mongoPath) {
     const originalCollection = require(`${mongoPath}/lib/collection`);
     const pythagoraErrors = require('../const/errors');
@@ -61,6 +62,8 @@ module.exports = function (mongoPath) {
                 if (global.Pythagora.mode === MODES.capture) {
                     let preQueryRes = await getCurrentMongoDocs(this, query);
                     intermediateData = createCaptureIntermediateData(db, collectionName, method, query, options, otherArgs, preQueryRes);
+                } else if (global.Pythagora.mode === MODES.test) {
+                    intermediateData = createCaptureIntermediateData(db, collectionName, method, query, options, otherArgs);
                 }
             }
 
@@ -78,6 +81,15 @@ module.exports = function (mongoPath) {
                     mongoResult = await cursor;
                     cursor = new Promise((resolve, reject) => resolve(mongoResult));
                 }
+
+                // todo refactor to add path to mongoResult inside src/const/mongodb.js for each method
+                if (mongoResult &&
+                    mongoResult.result &&
+                    mongoResult.__proto__ &&
+                    mongoResult.__proto__.constructor &&
+                    mongoResult.__proto__.constructor.name === 'CommandResult')
+                    mongoResult = mongoResult.result;
+
                 let postQueryRes = await getCurrentMongoDocs(this, query);
                 if (global.Pythagora.mode === MODES.capture) {
                     request.mongoQueriesCapture++;
@@ -90,6 +102,8 @@ module.exports = function (mongoPath) {
                     request.intermediateData.push(intermediateData);
                 } else if (global.Pythagora.mode === MODES.test) {
                     request.mongoQueriesTest++;
+                    if (!request.testIntermediateData) request.testIntermediateData = [];
+                    request.testIntermediateData.push(intermediateData);
                     findAndCheckCapturedData(
                         collectionName, method, mongoObjToJson(query), mongoObjToJson(options), mongoObjToJson(otherArgs),
                         request, mongoResult, postQueryRes

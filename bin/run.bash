@@ -36,15 +36,21 @@ do
   if [[ "${args[$i]}" == "--init-command" ]]
   then
     init_command="${args[$i+1]}"
-  elif [[ "${args[$i]}" == "--init_script" ]]
+  elif [[ "${args[$i]}" == "--review" ]]
   then
-    init_script="${args[$i+1]}"
+    node "./node_modules/${pythagora_dir}/review.js"
+    exit 0
   elif [[ "${args[$i]}" == "--mode" ]]
   then
     mode="${args[$i+1]}"
   fi
 done
 
+if [ -z "$init_command" ]
+then
+  echo "You need to set '--init-command' flag in Pythagora command! Please check Pythagora options. Exiting..."
+  exit 0
+fi
 
 if [[ " ${args[@]} " =~ " --no-code-coverage " ]] || ([[ ! " ${args[@]} " =~ " --mode test " ]] && [[ ! " ${args[@]} " =~ " --mode=test " ]])
 then

@@ -12,7 +12,6 @@ let  fs = require("fs");
 let  _ = require("lodash");
 let  { AsyncLocalStorage } = require('node:async_hooks');
 // const duplexify = require('duplexify');
-// const MockDate = require('mockdate'); todo find solution for expiration of tokens (we need to run capture and tests on same date/time)
 
 global.asyncLocalStorage = new AsyncLocalStorage();
 
@@ -61,6 +60,7 @@ class Pythagora {
                     continue;
                 }
                 let result = await makeTestRequest(request, true, false);
+                result = result.testResult;
                 if (!result) {
                     failedRequests.push(request.endpoint);
                     console.log(`Capture is not valid for endpoint ${request.endpoint} (${request.method}). Erasing...`)

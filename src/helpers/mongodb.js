@@ -1,5 +1,4 @@
 const pythagoraErrors = require("../const/errors");
-const MODES = require("../const/modes.json");
 const {
     compareJson,
     convertToRegularObject,
@@ -11,7 +10,6 @@ const {
     isJSONObject,
     isObjectId
 } = require("../utils/common.js");
-const { logWithStoreId } = require("../utils/cmdPrint.js");
 
 const {v4} = require("uuid");
 const _ = require("lodash");
@@ -19,7 +17,8 @@ const {MONGO_METHODS} = require("../const/mongodb");
 const {PYTHAGORA_DB} = require('../const/mongodb');
 let unsupportedMethods = ['aggregate'];
 
-let methods = ['save','find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
+// todo remove this methods?
+// let methods = ['save','find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
 
 function mongoObjToJson(originalObj) {
     let obj = _.clone(originalObj);
@@ -180,9 +179,19 @@ function findAndCheckCapturedData(collectionName, op, query, options, otherArgs,
         !compareJson(capturedData.mongoRes, mongoObjToJson(mongoResult)) ||
         !compareJson(capturedData.postQueryRes, mongoObjToJson(postQueryRes))
     )) {
-        request.errors.push(pythagoraErrors.mongoResultDifferent);
+        request.errors.push({
+            type: 'mongoResultDifferent',
+            mongoResult,
+            postQueryRes
+        });
     } else if (!capturedData) {
-        request.errors.push(pythagoraErrors.mongoQueryNotFound);
+        request.errors.push({
+            type: 'mongoQueryNotFound',
+            collection: collectionName,
+            op,
+            query,
+            options
+        });
     }
 }
 

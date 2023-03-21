@@ -1,4 +1,4 @@
-let { cutWithDots, getOccurrenceInArray } = require('./common');
+let { cutWithDots } = require('./common');
 let pythagoraErrors = require('../const/errors');
 
 let red = '\x1b[31m',
@@ -35,8 +35,9 @@ let logAppError = (message, error) => {
 
 let logTestFailed = (test, response, pythagora) => {
     let errLog = '';
-    for (const err in pythagoraErrors) {
-        if (getOccurrenceInArray(pythagora.request.errors, pythagoraErrors[err]) > 0) errLog += `\t${pythagoraErrors[err]}\n`;
+    let errors = [...new Set(pythagora.request.errors.map((e) => e.type))];
+    for (const err of errors) {
+        errLog += `\t${pythagoraErrors[err]}\n`;
     }
     console.log(`❌ Test ${red+bold}FAILED!${reset}
     ${red+bold}${test.method} ${test.endpoint} ${reset}
@@ -48,8 +49,7 @@ let logTestFailed = (test, response, pythagora) => {
     ${red+bold}Response:   ${reset}${cutWithDots(JSON.stringify(response.data))}
     ${red+bold}Expected Response:   ${reset}${cutWithDots(JSON.stringify(test.responseData))}
     ${red+bold}Errors:   [
-${reset}${errLog}
-    ${red+bold}]
+${reset}${errLog}\t${red+bold}]
     ${red+bold}-----------------------------------------------${reset}`);
 }
 
@@ -87,6 +87,26 @@ let pythagoraFinishingUp = () => {
     console.log(`\n\n${blue+bold}Pythagora capturing done. Finishing up...${reset}\n`);
 }
 
+function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound) {
+    console.log(`\n${blue}${change.filename.replaceAll('|', '/')}${reset}`);
+    console.log(`${reset}${change.id}`);
+    for (let key of Object.keys(change).filter((k) => !ignoreKeys.includes(k))) {
+        console.log(`\n${reset}Difference: ${bold}${key}`);
+        console.log(`${red}- ${change[key].capture}${reset}`);
+        console.log(`${green}+ ${change[key].test}${reset}`);
+    }
+    if (mongoNotExecuted && mongoNotExecuted.length) {
+        console.log(`\n${reset}Mongo queries that executed while ${bold+blue}capturing${reset} (but didn't while testing):`);
+        console.log(`${yellow}${mongoNotExecuted.map((m) => 'OP: ' + m.op + '\nCollection: ' + m.collection + '\nQuery: ' + JSON.stringify(m.query)).join('\n\n')}`);
+        console.log(`${reset}`);
+    }
+    if (mongoQueryNotFound && mongoQueryNotFound.length) {
+        console.log(`\n${reset}Mongo queries that executed while ${bold+blue}testing${reset} (but didn't while capturing):`);
+        console.log(`${yellow}${mongoQueryNotFound.map((m) => 'OP: ' + m.op + '\nCollection: ' + m.collection + '\nQuery: ' + JSON.stringify(m.query)).join('\n\n')}`);
+        console.log(`${reset}`);
+    }
+}
+
 
 module.exports = {
     logEndpointCaptured,
@@ -98,5 +118,6 @@ module.exports = {
     logCaptureFinished,
     pythagoraFinishingUp,
     logWithStoreId,
-    logAppError
+    logAppError,
+    logChange
 }

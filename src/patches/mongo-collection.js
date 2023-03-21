@@ -81,6 +81,15 @@ module.exports = function (mongoPath) {
                     mongoResult = await cursor;
                     cursor = new Promise((resolve, reject) => resolve(mongoResult));
                 }
+
+                // todo refactor to add path to mongoResult inside src/const/mongodb.js for each method
+                if (mongoResult &&
+                    mongoResult.result &&
+                    mongoResult.__proto__ &&
+                    mongoResult.__proto__.constructor &&
+                    mongoResult.__proto__.constructor.name === 'CommandResult')
+                    mongoResult = mongoResult.result;
+
                 let postQueryRes = await getCurrentMongoDocs(this, query);
                 if (global.Pythagora.mode === MODES.capture) {
                     request.mongoQueriesCapture++;

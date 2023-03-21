@@ -77,6 +77,46 @@ After you captured all requests you want, you just need to change the mode param
    ```   
 
 <br><br>
+<h1 id="options">📖 Options</h1>
+
+These are available options for Pythagora command:
+<br><br><br>
+<b>--rerun-all-failed</b> (runs again only tests that failed in previous run)
+   ```
+   npx pythagora --init-command "my start command" --mode test --rerun-all-failed
+   ```
+<br>
+
+<b>--delete-all-failed</b> (deletes all previously failed tests)
+   ```
+   npx pythagora --init-command "my start command" --delete-all-failed
+   ```
+<br>
+
+<b>--delete testId</b> (deletes test with testId)
+   ```
+   npx pythagora --init-command "my start command" --delete testId
+   ```
+<br>
+
+<b>--pick endpoint1 endpoint2</b> (starts capturing only listed endpoints)
+   ```
+   npx pythagora --init-command "my start command" --mode capture --pick /endpoint1 /endpoint2
+   ```
+<br>
+
+<b>--ignore endpoint1 endpoint2</b> (starts capturing but ignores all listed endpoints)
+   ```
+   npx pythagora --init-command "my start command" --mode capture --ignore /endpoint1 /endpoint2
+   ```
+<br>
+
+<b>--review</b> (runs review process of failed tests, allowing you to update old captured tests or to delete them)
+   ```
+   npx pythagora --review
+   ```
+
+<br><br>
 <h1 id="codecoveragereport">📝 Code Coverage Report</h1>
 
 Code coverage is a great metric while building automated tests as it shows us which lines of code are covered by the tests. Pythagora uses `nyc` to generate a report about code that was covered with Pythagora tests. By default, Pythagora will show you the basic code coverage report summary when you run tests.

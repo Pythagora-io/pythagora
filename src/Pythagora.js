@@ -60,6 +60,7 @@ class Pythagora {
                     continue;
                 }
                 let result = await makeTestRequest(request, true, false);
+                result = result.testResult;
                 if (!result) {
                     failedRequests.push(request.endpoint);
                     console.log(`Capture is not valid for endpoint ${request.endpoint} (${request.method}). Erasing...`)

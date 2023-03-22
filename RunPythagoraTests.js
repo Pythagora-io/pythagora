@@ -8,6 +8,8 @@ const fs = require('fs');
 (async () => {
     const startTime = new Date();
     const results = [];
+    let oldReviewData = [];
+    let reviewFilePath = `./${PYTHAGORA_METADATA_DIR}/${REVIEW_DATA_FILENAME}`;
 
     try {
         let reviewData = [];
@@ -38,7 +40,12 @@ const fs = require('fs');
             failedCount = results.filter(r => !r).length;
         logTestsFinished(passedCount, failedCount);
 
-        if (reviewData.length) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${REVIEW_DATA_FILENAME}`, JSON.stringify(reviewData, getCircularReplacer(), 2));
+        if (testsToExecute && fs.existsSync(reviewFilePath)) {
+            oldReviewData = fs.readFileSync(reviewFilePath);
+            oldReviewData = JSON.parse(oldReviewData);
+            oldReviewData = oldReviewData.filter((test) => !testsToExecute.includes(test.id));
+        }
+        fs.writeFileSync(reviewFilePath, JSON.stringify(oldReviewData.concat(reviewData), getCircularReplacer(), 2));
         console.log(`Time it took to run all Pythagora tests: \x1b[32m${((new Date() - startTime)/1000).toFixed(2)}s\x1b[0m`);
     } catch (err) {
         console.error("Error occured while running Pythagora tests: ", err);

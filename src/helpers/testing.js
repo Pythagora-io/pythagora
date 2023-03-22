@@ -53,6 +53,7 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
         // TODO add query
         if (showPassedLog && testResult) logTestPassed(test);
         if (showFailedLog && !testResult) logTestFailed(test, response, global.Pythagora);
+        if (!testResult) reviewJson.intermediateData = global.Pythagora.request.intermediateData;
         return { testResult, reviewJson };
     } catch (error) {
         console.error(error);

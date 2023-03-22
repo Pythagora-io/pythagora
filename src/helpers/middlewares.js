@@ -248,26 +248,37 @@ async function apiTestInterceptor(req, res, next, pythagora) {
 }
 
 function setGlobalRequest(reqId, pythagora) {
+    let req = pythagora.testingRequests[reqId];
+    req.testIntermediateData.forEach((obj) => { delete obj.processed });
+
     global.Pythagora.request = {
-        id: pythagora.testingRequests[reqId].id,
-        errors: _.clone(pythagora.testingRequests[reqId].errors),
-        intermediateData: pythagora.testingRequests[reqId].intermediateData
+        id: req.id,
+        errors: _.clone(req.errors),
+        intermediateData: req.testIntermediateData
     };
 }
 
 function checkForFinalErrors(reqId, pythagora) {
-    if (pythagora.testingRequests[reqId].checkedForFinalErrors) return;
+    let req = pythagora.testingRequests[reqId];
+    if (req.checkedForFinalErrors) return;
 
-    let mongoNotExecuted = pythagora.testingRequests[reqId].intermediateData.filter(obj1 => !pythagora.testingRequests[reqId].testIntermediateData.some(obj2 =>
-        obj1.collection === obj2.collection &&
-        obj1.op === obj2.op &&
-        compareJson(obj1.query, obj2.query, true) &&
-        compareJson(obj1.options, obj2.options, true) &&
-        compareJson(obj1.otherArgs, obj2.otherArgs, true)
+    let intData = req.intermediateData;
+    let testIntData = req.testIntermediateData;
+    let mongoNotExecuted = intData.filter(obj1 => !testIntData.find((obj2, i) =>{
+            let compare = !obj2.processed &&
+                obj1.collection === obj2.collection &&
+                obj1.op === obj2.op &&
+                compareJson(obj1.query, obj2.query, true) &&
+                compareJson(obj1.options, obj2.options, true) &&
+                compareJson(obj1.otherArgs, obj2.otherArgs, true);
+
+            if (compare) testIntData[i].processed = true;
+            return compare
+        }
     ));
 
     mongoNotExecuted.forEach((q) => {
-        pythagora.testingRequests[reqId].errors.push({
+        req.errors.push({
             type: 'mongoNotExecuted',
             collection: q.collection,
             op: q.op,
@@ -275,7 +286,7 @@ function checkForFinalErrors(reqId, pythagora) {
             options: q.options
         });
     });
-    pythagora.testingRequests[reqId].checkedForFinalErrors = true;
+    req.checkedForFinalErrors = true;
 }
 
 function saveCaptureToFile(reqData, pythagora) {

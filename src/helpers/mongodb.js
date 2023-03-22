@@ -13,8 +13,8 @@ const {
 
 const {v4} = require("uuid");
 const _ = require("lodash");
-const {MONGO_METHODS} = require("../const/mongodb");
-const {PYTHAGORA_DB} = require('../const/mongodb');
+const { MONGO_METHODS, PYTHAGORA_DB } = require("../const/mongodb");
+const { PYTHAGORA_ASYNC_STORE } = require('../const/common');
 let unsupportedMethods = ['aggregate'];
 
 // todo remove this methods?
@@ -81,7 +81,7 @@ function stringToMongoObjectId(str) {
 // usually, we won't pass any options because we want to get whole documents
 async function getCurrentMongoDocs(collection, query, options = {}) {
     return await new Promise((resolve, reject) => {
-        global.asyncLocalStorage.run(undefined, async () => {
+        global.asyncLocalStorage.run(PYTHAGORA_ASYNC_STORE, async () => {
             if (Array.isArray(query)) {
                 let results = query.map(async q => {
                     let qRes = await collection.find(q.query, options);

@@ -1,5 +1,6 @@
 const pythagoraErrors = require("../const/errors");
 const MODES = require("../const/modes.json");
+const { PYTHAGORA_ASYNC_STORE } = require("../const/common");
 const { mongoObjToJson, compareJson, jsonObjToMongo, noUndefined } = require("../utils/common.js");
 const { logWithStoreId } = require("../utils/cmdPrint.js");
 
@@ -117,7 +118,7 @@ async function getMongoDocs(self, stage) {
     if (query && req && req.op) {
         let findQuery = noUndefined(query);//jsonObjToMongo(noUndefined(query));
         let mongoRes = await new Promise(async (resolve, reject) => {
-            global.asyncLocalStorage.run(undefined, async () => {
+            global.asyncLocalStorage.run(PYTHAGORA_ASYNC_STORE, async () => {
                 if (isQuery) {
                     let explaination = await self.model.find(findQuery).explain();
                     try {
@@ -136,7 +137,7 @@ async function getMongoDocs(self, stage) {
         if (populatedFields && stage === 'pre') for (let field in populatedFields) {
             field = populatedFields[field];
             await new Promise(async (resolve, reject) => {
-                global.asyncLocalStorage.run(undefined, async () => {
+                global.asyncLocalStorage.run(PYTHAGORA_ASYNC_STORE, async () => {
                     try {
                         populateDocs = await getPopData(populateDocs, field, mongoRes, getSchemaTree(collection.slice(0, -1)));
                     } catch (e) {

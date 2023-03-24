@@ -16,7 +16,7 @@ module.exports = function(jwtPath) {
             // clock.restore();
         }
 
-        return originalVerify.apply(this, arguments);
+        return originalVerify.apply(this, [token, secretOrPublicKey, options, callback]);
     }
 
     patchedVerify.prototype = originalVerify.prototype;

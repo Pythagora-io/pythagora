@@ -21,7 +21,7 @@ class Pythagora {
         if (!MODES[args.mode]) throw new Error('Invalid mode ', args.mode);
         else this.mode = args.mode;
 
-        this.rerun_all_failed = args.rerun_all_failed;
+        this.rerunAllFailed = args.rerun_all_failed;
         this.testId = args.test;
         this.pick = args.pick;
         this.ignore = args.ignore;
@@ -98,7 +98,7 @@ class Pythagora {
         if (!metadata || !metadata.runs) return undefined;
         let runs = metadata.runs;
 
-        if (this.rerun_all_failed) return runs[runs.length - 1].failed;
+        if (this.rerunAllFailed) return runs[runs.length - 1].failed;
 
         return undefined;
     }

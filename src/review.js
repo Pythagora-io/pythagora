@@ -1,7 +1,7 @@
 const fs = require('fs');
 const readline = require('readline');
-const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('./src/const/common.js');
-const { logChange } = require('./src/utils/cmdPrint.js');
+const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('./const/common.js');
+const { logChange } = require('./utils/cmdPrint.js');
 
 const reviewFilePath = `./${PYTHAGORA_METADATA_DIR}/${REVIEW_DATA_FILENAME}`;
 

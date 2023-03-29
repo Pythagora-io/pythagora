@@ -80,7 +80,7 @@ const displayChangesAndPrompt = (index, arr, displayChange = true) => {
         let mongoNotExecuted = change.errors ? change.errors.filter((e) => e.type === 'mongoNotExecuted') : [];
         let mongoQueryNotFound = change.errors ? change.errors.filter((e) => e.type === 'mongoQueryNotFound') : [];
 
-        logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound);
+        logChange(change, ignoreKeys.concat(['intermediateData']), mongoNotExecuted, mongoQueryNotFound);
     }
 
     // Create a readline interface to prompt the user for input

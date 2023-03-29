@@ -1,6 +1,5 @@
-const {v4} = require('uuid');
 const _ = require('lodash');
-const {createCaptureIntermediateData} = require("../helpers/mongodb");
+
 module.exports = function (mongoPath) {
     const originalCollection = require(`${mongoPath}/lib/collection`);
     const pythagoraErrors = require('../const/errors');
@@ -59,11 +58,9 @@ module.exports = function (mongoPath) {
             }
 
             const preHook = async () => {
-                if (global.Pythagora.mode === MODES.capture) {
+                if (global.Pythagora.mode === MODES.capture || global.Pythagora.mode === MODES.test) {
                     let preQueryRes = await getCurrentMongoDocs(this, query);
                     intermediateData = createCaptureIntermediateData(db, collectionName, method, query, options, otherArgs, preQueryRes);
-                } else if (global.Pythagora.mode === MODES.test) {
-                    intermediateData = createCaptureIntermediateData(db, collectionName, method, query, options, otherArgs);
                 }
             }
 
@@ -91,14 +88,14 @@ module.exports = function (mongoPath) {
                     mongoResult = mongoResult.result;
 
                 let postQueryRes = await getCurrentMongoDocs(this, query);
+                if (intermediateData.mongoRes !== undefined) {
+                    // TODO this is for when people do multiple cursor.next() calls - double check different cases
+                    intermediateData = _.cloneDeep(intermediateData);
+                }
+                intermediateData.mongoRes = mongoObjToJson(mongoResult);
+                intermediateData.postQueryRes = mongoObjToJson(postQueryRes);
                 if (global.Pythagora.mode === MODES.capture) {
                     request.mongoQueriesCapture++;
-                    if (intermediateData.mongoRes !== undefined) {
-                        // TODO this is for when people do multiple cursor.next() calls - double check different cases
-                        intermediateData = _.cloneDeep(intermediateData);
-                    }
-                    intermediateData.mongoRes = mongoObjToJson(mongoResult);
-                    intermediateData.postQueryRes = mongoObjToJson(postQueryRes);
                     request.intermediateData.push(intermediateData);
                 } else if (global.Pythagora.mode === MODES.test) {
                     request.mongoQueriesTest++;

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-let { checkDependencies, searchAllModuleFolders } = require('./src/helpers/starting.js');
+let { checkDependencies, searchAllModuleFolders } = require('./helpers/starting.js');
 try {
 
     for (let httpModule of ['http', 'https']) {
         require.cache[require.resolve(httpModule)] = {
-            exports: require('./src/patches/http.js')(httpModule)
+            exports: require('./patches/http.js')(httpModule)
         };
     }
 
@@ -12,7 +12,7 @@ try {
     for (let expressPath of searchAllModuleFolders(process.cwd(), 'express')) {
         try {
             require.cache[require.resolve('express')] = {
-                exports: require('./src/patches/express.js')
+                exports: require('./patches/express.js')
             };
         } catch (e) {
             // console.log(`Can't patch Express at ${expressPath}`);
@@ -22,10 +22,10 @@ try {
     for (let mongoPath of searchAllModuleFolders(process.cwd(), 'mongodb')) {
         try {
             require.cache[require.resolve(mongoPath + '/lib/collection.js')] = {
-                exports: require('./src/patches/mongo-collection.js')(mongoPath)
+                exports: require('./patches/mongo-collection.js')(mongoPath)
             };
             require.cache[require.resolve(mongoPath + '/lib/mongo_client.js')] = {
-                exports: require('./src/patches/mongo-client.js')(mongoPath)
+                exports: require('./patches/mongo-client.js')(mongoPath)
             };
         } catch (e) {
             // dummy catch
@@ -35,7 +35,7 @@ try {
     for (let jwtPath of searchAllModuleFolders(process.cwd(), 'jsonwebtoken')) {
         try {
             require.cache[require.resolve('jsonwebtoken/verify')] = {
-                exports: require('./src/patches/jwt.js')(jwtPath)
+                exports: require('./patches/jwt.js')(jwtPath)
             };
         } catch (e) {
             // console.log(`Can't patch JWT at ${jwtPath}`);

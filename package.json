@@ -15,11 +15,11 @@
     "test": "tests"
   },
   "scripts": {
-    "publish-pythagora": "bin/publish.bash",
-    "prepublishOnly": "node bin/prepublish.js"
+    "publish-pythagora": "src/bin/publish.bash",
+    "prepublishOnly": "node src/bin/prepublish.js"
   },
   "bin": {
-    "pythagora": "bin/run.bash"
+    "pythagora": "src/bin/run.bash"
   },
   "author": "",
   "license": "ISC",

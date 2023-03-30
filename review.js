@@ -16,7 +16,8 @@ const changes = JSON.parse(data);
 const changesActions = {
     A: 'accept',
     D: 'delete',
-    S: 'skip'
+    S: 'skip',
+    R: 'getRunCmd'
 };
 const ignoreKeys = ['id', 'filename', 'errors'];
 
@@ -52,6 +53,13 @@ function deleteChanges(change) {
 
 function skipChanges(change) {
     console.log(`Skipped reviewing change for test with id: ${change.id}`);
+}
+
+function getRunCmdChanges(change) {
+    let args = require('./src/utils/argumentsCheck.js');
+    console.log(`You can run this test with command:`);
+    console.log(`\x1b[34m\x1b[1mnpx pythagora --init-command "${args.init_command.join(' ')}" --mode test --test-id ${change.id}\x1b[0m`);
+    process.exit(0);
 }
 
 function findDiffQueries(intermediateData1, intermediateData2) {

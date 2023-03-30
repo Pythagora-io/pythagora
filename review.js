@@ -1,7 +1,10 @@
 const fs = require('fs');
 const readline = require('readline');
+const _ = require('lodash');
+
 const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('./src/const/common.js');
 const { logChange } = require('./src/utils/cmdPrint.js');
+const { compareJson } = require('./src/utils/common.js');
 
 const reviewFilePath = `./${PYTHAGORA_METADATA_DIR}/${REVIEW_DATA_FILENAME}`;
 
@@ -51,6 +54,64 @@ function skipChanges(change) {
     console.log(`Skipped reviewing change for test with id: ${change.id}`);
 }
 
+function findDiffQueries(intermediateData1, intermediateData2) {
+    let mongoDiff = [];
+
+    intermediateData1.forEach((data) => {
+        let data2 = intermediateData2.find((d) =>
+            d.type === 'mongodb' &&
+            d.collection === data.collection &&
+            d.op === data.op &&
+            !d.processed
+        );
+
+        mongoDiff.push({
+            capture: data,
+            test: data2
+        });
+
+        if (data2) data2.processed = true;
+    });
+
+    intermediateData2.forEach((data) => { if (data.processed) delete data.processed; });
+
+    return mongoDiff;
+}
+
+function findNonMatchingQueries(intermediateData1, intermediateData2) {
+    let nonMatchingQueries = intermediateData1.filter((i) => {
+        let intData = intermediateData2.find((d) =>
+            d.type === 'mongodb' &&
+            d.collection === i.collection &&
+            d.op === i.op &&
+            compareJson(d.query, i.query, true) &&
+            compareJson(d.options, i.options, true) &&
+            compareJson(d.otherArgs, i.otherArgs, true) &&
+            !d.processed
+        );
+
+        if (intData) intData.processed = true;
+
+        return !intData;
+    });
+
+    intermediateData2.forEach((data) => { if (data.processed) delete data.processed; });
+
+    return nonMatchingQueries;
+}
+
+function processIntermediateData(captureIntermediateData, testIntermediateData) {
+    let mongoQueryNotFound = findNonMatchingQueries(captureIntermediateData, testIntermediateData);
+    let mongoNotExecuted = findNonMatchingQueries(testIntermediateData, captureIntermediateData);
+    let mongoDiff = findDiffQueries(mongoQueryNotFound, mongoNotExecuted);
+    let idMap = _.flatten(mongoDiff.map((m) => [m.capture.id, m.test.id]));
+
+    mongoQueryNotFound = mongoQueryNotFound.filter((q) => !idMap.includes(q.id));
+    mongoNotExecuted = mongoNotExecuted.filter((q) => !idMap.includes(q.id));
+
+    return { mongoDiff, mongoQueryNotFound, mongoNotExecuted }
+}
+
 function generatePrompt() {
     let prompt = '';
 
@@ -77,10 +138,12 @@ const displayChangesAndPrompt = (index, arr, displayChange = true) => {
 
     // Display the JSON data to the user
     if (displayChange) {
-        let mongoNotExecuted = change.errors ? change.errors.filter((e) => e.type === 'mongoNotExecuted') : [];
-        let mongoQueryNotFound = change.errors ? change.errors.filter((e) => e.type === 'mongoQueryNotFound') : [];
+        let path = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
+        let capturedRequests = JSON.parse(fs.readFileSync(path, 'utf8'));
+        let req = capturedRequests.find(request => request.id === change.id);
+        let { mongoNotExecuted, mongoQueryNotFound, mongoDiff } = processIntermediateData(req.intermediateData, change.intermediateData.test);
 
-        logChange(change, ignoreKeys.concat(['intermediateData']), mongoNotExecuted, mongoQueryNotFound);
+        logChange(change, ignoreKeys.concat(['intermediateData']), mongoNotExecuted, mongoQueryNotFound, mongoDiff);
     }
 
     // Create a readline interface to prompt the user for input

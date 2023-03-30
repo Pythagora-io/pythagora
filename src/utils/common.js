@@ -107,6 +107,74 @@ function compareJson(a, b, strict) {
     return true;
 }
 
+function compareJsonDetailed(a, b, strict) {
+    let differencesCapture = {};
+    let differencesTest = {};
+
+    if (a === b) {
+        return { capture: differencesCapture, test: differencesTest };
+    } else if (typeof a !== typeof b) {
+        differencesCapture.type = { a: typeof a, b: typeof b };
+        differencesTest.type = { a: typeof a, b: typeof b };
+    } else if (!a || !b) {
+        differencesCapture.missing = !!a;
+        differencesTest.missing = !!b;
+    } else if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length !== b.length) {
+            differencesCapture.length = a.length;
+            differencesTest.length = b.length;
+        }
+        // TODO optimize because this is O(n^2)
+        for (let i = 0; i < a.length; i++) {
+            const itemDifferences = compareJsonDetailed(a[i], b[i], strict);
+            if (Object.keys(itemDifferences.capture).length > 0) {
+                differencesCapture[`[${i}]`] = itemDifferences.capture;
+            }
+            if (Object.keys(itemDifferences.test).length > 0) {
+                differencesTest[`[${i}]`] = itemDifferences.test;
+            }
+        }
+    } else if (typeof a === 'string' && typeof b === 'string') {
+        if (objectIdAsStringRegex.test(a) && objectIdAsStringRegex.test(b) && !strict) {
+            return { capture: differencesCapture, test: differencesTest };
+        } else if (a !== b) {
+            differencesCapture.value = a;
+            differencesTest.value = b;
+        }
+    } else {
+        let ignoreKeys = ['stacktrace'];
+        let aProps = Object.getOwnPropertyNames(a);
+        let bProps = Object.getOwnPropertyNames(b);
+        if (aProps.length !== bProps.length) {
+            differencesCapture.propsLength = aProps.length;
+            differencesTest.propsLength = bProps.length;
+        }
+        for (let i = 0; i < aProps.length; i++) {
+            let propName = aProps[i];
+            if (
+                a[propName] !== b[propName] &&
+                (!isDate(a[propName]) && !isDate(b[propName])) &&
+                !ignoreKeys.includes(propName) &&
+                !(isObjectId(a[propName]) && isObjectId(b[propName]))
+            ) {
+                if (typeof a[propName] === 'object') {
+                    const propDifferences = compareJsonDetailed(a[propName], b[propName], strict);
+                    if (Object.keys(propDifferences.capture).length > 0) {
+                        differencesCapture[propName] = propDifferences.capture;
+                    }
+                    if (Object.keys(propDifferences.test).length > 0) {
+                        differencesTest[propName] = propDifferences.test;
+                    }
+                } else {
+                    differencesCapture[propName] = a[propName];
+                    differencesTest[propName] = b[propName];
+                }
+            }
+        }
+    }
+    return { capture: differencesCapture, test: differencesTest };
+}
+
 function noUndefined(value, replaceValue = {}) {
     return value === undefined || value === null ? replaceValue : value;
 }
@@ -162,6 +230,7 @@ module.exports = {
     cutWithDots,
     compareResponse,
     compareJson,
+    compareJsonDetailed,
     isObjectId,
     isLegacyObjectId,
     noUndefined,

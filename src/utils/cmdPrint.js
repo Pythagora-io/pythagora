@@ -1,4 +1,4 @@
-let { cutWithDots } = require('./common');
+let { cutWithDots, compareJson, compareJsonDetailed } = require('./common');
 let pythagoraErrors = require('../const/errors');
 
 let red = '\x1b[31m',
@@ -87,13 +87,28 @@ let pythagoraFinishingUp = () => {
     console.log(`\n\n${blue+bold}Pythagora capturing done. Finishing up...${reset}\n`);
 }
 
-function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound) {
+function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound, mongoDiff) {
     console.log(`\n${blue}${change.filename.replaceAll('|', '/')}${reset}`);
     console.log(`${reset}${change.id}`);
     for (let key of Object.keys(change).filter((k) => !ignoreKeys.includes(k))) {
         console.log(`\n${reset}Difference: ${bold}${key}`);
         console.log(`${red}- ${change[key].capture}${reset}`);
         console.log(`${green}+ ${change[key].test}${reset}`);
+    }
+    if (mongoDiff && mongoDiff.length) {
+        let logProp = ['query', 'options', 'otherArgs']
+        mongoDiff.forEach((diff) => {
+            console.log(`\n${reset}Mongo difference:`);
+            console.log(`Collection: ${diff.capture.collection}, OP: ${diff.capture.op}`);
+            logProp.forEach((p) => {
+                if (!compareJson(diff.capture[p], diff.test[p], true)) {
+                    let diffRes = compareJsonDetailed(diff.capture[p], diff.test[p], true);
+                    console.log(`\n${p}:`);
+                    console.log(`${red}- ${JSON.stringify(diffRes.capture)}${reset}`);
+                    console.log(`${green}+ ${JSON.stringify(diffRes.test)}${reset}`);
+                }
+            });
+        })
     }
     if (mongoNotExecuted && mongoNotExecuted.length) {
         console.log(`\n${reset}Mongo queries that executed while ${bold+blue}capturing${reset} (but didn't while testing):`);

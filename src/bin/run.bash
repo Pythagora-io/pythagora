@@ -9,7 +9,7 @@ yellow=$(tput setaf 3)
 green=$(tput setaf 2)
 reset=$(tput sgr0)
 bold=$(tput bold)
-pythagora_dir=$(basename $(dirname $(dirname $script_path)))
+pythagora_dir=$(basename $(dirname $(dirname $(dirname $script_path))))
 
 function exit_handler {
   while [ ! -f "./.pythagora/finishingup" ]
@@ -38,7 +38,7 @@ do
     init_command="${args[$i+1]}"
   elif [[ "${args[$i]}" == "--review" ]]
   then
-    node "./node_modules/${pythagora_dir}/review.js"
+    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/review.js"
     exit 0
   elif [[ "${args[$i]}" == "--mode" ]]
   then

@@ -106,3 +106,8 @@ dist
 
 ../.idea/
 package-lock.json
+test.js
+
+# Pythagora
+.pythagora/
+pythagora_tests/

@@ -104,7 +104,7 @@ dist
 .tern-port
 
 
-.idea/
+../.idea/
 package-lock.json
 test.js
 

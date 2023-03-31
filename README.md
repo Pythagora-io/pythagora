@@ -1,27 +1,48 @@
 <p align=center>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/10895136/217571898-14e94ea7-75a5-4a50-a7dc-486e10a8b462.png">
-    <img height="300px" alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="https://user-images.githubusercontent.com/10895136/217490853-013a21d3-e4a2-4c1d-a38c-e3c835788592.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/10895136/228003796-7e3319ad-f0b1-4da9-a2d0-6cf67ccc7a32.png">
+    <img height="200px" alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="https://user-images.githubusercontent.com/10895136/228003796-7e3319ad-f0b1-4da9-a2d0-6cf67ccc7a32.png">
   </picture>
 </p>
 <p align=center>
-  Generate 90% code coverage with integration tests in 1 hour
+  Developers spend 20-30% of their time writing tests!
 </p>
-<br>
-Pythagora is a tool that generates integration tests for your Node.js app by recording server activity without you having to write a single line of code.
-
-
-<br>
-<h1 id="alphaversion">🏁 Alpha version</h1>
-This is an alpha version of Pythagora. To get an update about the beta release or to give a <b>suggestion on tech (framework / database) you want Pythagora to support</b> you can 👉 <a href="http://eepurl.com/ikg_nT" target="_blank">add your email / comment here</a> 👈 .
-<br>
+<h3 align="center">With Pythagora, devs spend 0.2% time on tests while having 100% code coverage w/ negative tests</h3>
 <br>
 
+<table>
+  <tr>
+    <td colspan="2"><h3 align="center">Pythagora is a dev tool that generates integration tests for web apps by recording server activity without you having to write a single line of code<br><br></h3></td>
+  </tr>
+  <tr>
+    <td><br>🔍 Pythagora creates detailed integration tests that check <b>API response</b>, <b>database queries and responses</b>, <b>3rd party API requests</b> and more 🔍 <br><br></td>
+    <td><br>💯 Within a <b>couple of hours</b> of playing around your app while Pythagora capturing is on, you can cover your codebase with <b>100% code coverage</b> 💯<br><br></td>
+  </tr>
+  <tr>
+    <td><br>🦸 You don’t need to think about covering edge cases since our <b>GPT-4 integration creates negative tests to superpower your test suite</b> 🦸<br><br></td>
+    <td><br>🎚 If you have a QA team, you can easily give them access to creating automated tests for backend with Pythagora 🎚<br><br></td>
+  </tr>
+</table>
+
+<br>
+<br>
+<div align="center">
+  <a href="https://youtu.be/BVR7rCdBVdY"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
+</div>
+
+<h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
+<p align=center>
+  <a target="_blank" href="https://youtu.be/BVR7rCdBVdY">Pythagora Demo (4 min)</a>
+  <br>
+  <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
+  <br>
+  <a target="_blank" href="https://youtu.be/opQP8NMCiPw">Dev Workflow With Pythagora (4 min)</a>
+</p>
 
 <h1 id="howitworks">🏗️ How it works</h1>
 
 To integrate Pythagora into your Node.js app, you just need to install the pythagora package
-```
+```bash
 npm install pythagora
 ```
 and run the Pythagora capture command. Then, just play around with your app and from all API requests and database queries Pythagora will generate integration tests.
@@ -35,44 +56,37 @@ When running tests, it doesn’t matter what database is your Node.js connected 
 <b>If a test does an update to the database, Pythagora also checks the database to see if it was updated correctly.</b>
 <br>
 <br>
-<div align="center">
-  <a href="https://youtu.be/BVR7rCdBVdY"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
-</div>
-<p align=center>
-  <a target="_blank" href="https://youtu.be/BVR7rCdBVdY">Watch Pythagora Demo (3 min)</a>
-</p>
-<br>
-<br>
+
 <h1 id="setup">⚙️ Setup</h1>
 
 1. Install Pythagora by running
    <br><br>
-   ```
+   ```bash
    npm install pythagora
    ```
    And that's it! You are ready to start recording your integration tests!
-<br>
+   <br>
 <h1 id="capturingtests">🎥 Capturing tests</h1>
 
 1. <b>From the root directory</b> run Pythagora in a capture mode first to capture test data and mocks.
    <br><br>
-      ```
+      ```bash
       npx pythagora --init-command "my start command" --mode capture
       ```
    Eg. if you start your Node.js app with `nest start` then the command would be:
    <br><br>
-      ```
+      ```bash
       npx pythagora --init-command "nest start" --mode capture
       ```
 2. Click around your application or make requests to your API. Pythagora will capture all requests and responses.
    <br><br>
-NOTE: To stop the capture, you can exit the process like you usually do (Eg. `Ctrl + C`)   
-<br>
+   NOTE: To stop the capture, you can exit the process like you usually do (Eg. `Ctrl + C`)   
+   <br>
 <h1 id="executingtests">▶️ Executing tests</h1>
 
 After you captured all requests you want, you just need to change the mode parameter to `--mode test` in the Pythagora command.
 <br>
-   ```
+   ```bash
    npx pythagora --init-command "my start command" --mode test
    ```   
 
@@ -82,37 +96,37 @@ After you captured all requests you want, you just need to change the mode param
 These are available options for Pythagora command:
 <br><br><br>
 <b>--rerun-all-failed</b> (runs again only tests that failed in previous run)
-   ```
+   ```bash
    npx pythagora --init-command "my start command" --mode test --rerun-all-failed
    ```
 <br>
 
 <b>--delete-all-failed</b> (deletes all previously failed tests)
-   ```
+   ```bash
    npx pythagora --init-command "my start command" --delete-all-failed
    ```
 <br>
 
 <b>--delete testId</b> (deletes test with testId)
-   ```
+   ```bash
    npx pythagora --init-command "my start command" --delete testId
    ```
 <br>
 
 <b>--pick endpoint1 endpoint2</b> (starts capturing only listed endpoints)
-   ```
+   ```bash
    npx pythagora --init-command "my start command" --mode capture --pick /endpoint1 /endpoint2
    ```
 <br>
 
 <b>--ignore endpoint1 endpoint2</b> (starts capturing but ignores all listed endpoints)
-   ```
+   ```bash
    npx pythagora --init-command "my start command" --mode capture --ignore /endpoint1 /endpoint2
    ```
 <br>
 
 <b>--review</b> (runs review process of failed tests, allowing you to update old captured tests or to delete them)
-   ```
+   ```bash
    npx pythagora --review
    ```
 
@@ -124,7 +138,7 @@ Code coverage is a great metric while building automated tests as it shows us wh
 <br>
 
 If you want to generate a more detailed report, you can do so by running Pythagora with `--full-code-coverage-report` flag. Eg.
-   ```
+   ```bash
    npx pythagora --init-command "my start command" --mode test --full-code-coverage-report
    ```
 You can find the code coverage report inside `pythagora_tests` folder in the root of your repository. You can open the HTML view of the report by opening `pythagora_tests/code_coverage_report/lcov-report/index.html`.
@@ -135,21 +149,19 @@ In case you don't want the code coverage to be shown at all while running tests,
 during debugging process since the code coverage report can clash with your IDE's debugger.
 
 <br><br>
-<h1 id="authentication"> Authentication</h1>
+<h1 id="authentication"> 🔑 Authentication</h1>
 For authentication we support <a href="https://www.npmjs.com/package/jsonwebtoken" target="_blank">JWT</a>, sessions stored in
 <a href="https://redis.io/" target="_blank">Redis</a> and sessions stored in <a href="https://www.npmjs.com/package/mongodb" target="_blank">MongoDB</a>.
 First 2 cases cases (JWT and sessions stored in Redis) should work just fine without
 any additional implementation but for session that are stored in MongoDB you need to add this one line of code:
 
-```
+```javascript
 if (global.Pythagora) global.Pythagora.authenticationMiddleware = true;
 ```
 just before your authentication middleware. For example, if you are using <a href="https://www.npmjs.com/package/express-session" target="_blank">express-session</a>
 you would have to add our line of code just above your middleware that is managing sessions in your DB, like this:
 
-```
-...
-
+```javascript
 if (global.Pythagora) global.Pythagora.authenticationMiddleware = true;
 
 app.use(session({
@@ -167,8 +179,6 @@ app.use(session({
         }
     })
 }));
-
-...
 ```
 That's it! You are ready to go and all your API requests with authentication should PASS!
 
@@ -181,57 +191,64 @@ is stored in this object. Here is an example of a test object.
 
 ```json
 {
-  "id": "b47cbee2-4a47-4b2c-80a0-feddae3081b3",
-  "endpoint": "/api/boards/", // endpoint that was called
-  "body": {}, // body payload that was sent with the request
-  "query": {}, // query params that were sent with the request
-  "params": {}, // params that were sent with the request
-  "method": "GET", // HTTP method that was used
-  "headers": { // headers that were sent with the request
-    "x-forwarded-host": "localhost:3000",
-    ...
-  },
-  "statusCode": 200, // status code that was returned
-  "responseData": "...", // response data that was received
-  "intermediateData": [ // server activity that was captured during the request
-    {
-      "type": "mongo", // type of the activity - mongo query in this case
-      "req": { // data for mongo query that was executed
-        "collection": "users",
-        "op": "update",
-        "options": {},
-        "_conditions": {
-          "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")"
-        },
-         "_update": { // data that needs to be updated
-            "name": "Steve",
+   "id": "b47cbee2-4a47-4b2c-80a0-feddae3081b3",
+   "endpoint": "/api/boards/", // endpoint that was called
+   "body": {}, // body payload that was sent with the request
+   "query": {}, // query params that were sent with the request
+   "params": {}, // params that were sent with the request
+   "method": "GET", // HTTP method that was used
+   "headers": { // headers that were sent with the request
+      "x-forwarded-host": "localhost:3000",
+      ...
+   },
+   "statusCode": 200, // status code that was returned
+   "responseData": "...", // response data that was received
+   "intermediateData": [ // server activity that was captured during the request
+      {
+         "type": "mongodb", // type of the activity - mongo query in this case
+         "op": "findOneAndUpdate",
+         "db": "ecomm",
+         "collection": "users",
+         "query": { // mongo match query that was executed
+            "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")"
+         },
+         "otherArgs": {
+            "update": { // data that needs to be updated
+               "$set": {
+                  "name": "Steve",
+                  ...
+               }
+            },
             ...
-         }
-      },
-      "preQueryRes": [ // data that was present in the database before the query was executed
-        {
-          "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")",
-          "name": "Michael",
-          ...
-        }
-      ],
-      "mongoRes": [ // data that was returned by the query
-        {
-          "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")",
-          "name": "Steve",
-          ...
-        }
-      ],
-      "postQueryRes": [ // data that was present in the database after the query was executed
-        {
-          "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")",
-          "name": "Steve",
-           ...
-        }
-      ]
-    }
-  ],
-  "createdAt": "2023-02-22T14:57:52.362Z" // date when the test was captured
+         },
+         "options": {
+            "upsert": false,
+            ...
+         },
+         "preQueryRes": [ // data that was present in the database before the query was executed
+            {
+               "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")",
+               "name": "Michael",
+               ...
+            }
+         ],
+         "mongoRes": [ // data that was returned by the query
+            {
+               "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")",
+               "name": "Steve",
+               ...
+            }
+         ],
+         "postQueryRes": [ // data that was present in the database after the query was executed
+            {
+               "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")",
+               "name": "Steve",
+               ...
+            }
+         ]
+      }
+   ],
+   "createdAt": "2023-02-22T14:57:52.362Z" // date when the test was captured
 }
 ```
 
@@ -252,9 +269,17 @@ For now, we support projects that use:
 |<img src="https://user-images.githubusercontent.com/10895136/221188154-0d98b059-5cf1-48bd-b96b-400524d3cd55.png" width="50" alt="Logo 1" style="border-radius: 50%;" />|<img src="https://user-images.githubusercontent.com/10895136/221188225-ea8b0c45-fd37-4bf8-861b-8a97802702da.png" width="50" alt="Logo 2" style="border-radius: 50%" />|<img src="https://user-images.githubusercontent.com/10895136/221188433-e9634001-d9cb-40b2-b358-4932398955ef.png" width="50" alt="Logo 3" style="border-radius: 50%" />| <img src="https://user-images.githubusercontent.com/10895136/221188495-aaaa78bc-b31b-47cb-be37-47d55d4ccf0b.png" width="50" alt="Logo 1" style="border-radius: 50%;" />   | <img src="https://user-images.githubusercontent.com/10895136/221188561-24b75f90-01f7-4378-9664-88af12c9f666.png" width="50" alt="Logo 1" style="border-radius: 50%;" />     | <img src="https://user-images.githubusercontent.com/10895136/221188623-508a8238-8bd6-4858-a322-234582a70a87.png" width="50" alt="Logo 1" style="border-radius: 50%;" />   |
 |   ✅   |    ✅    |   ✅    | Upcoming     | Upcoming       |   Upcoming    |
 
+
+<br>
+<h1 id="alphaversion">🏁 Alpha version</h1>
+This is an alpha version of Pythagora. To get an update about the beta release or to give a <b>suggestion on tech (framework / database) you want Pythagora to support</b> you can 👉 <a href="http://eepurl.com/ikg_nT" target="_blank">add your email / comment here</a> 👈 .
+<br>
+<br>
 <br>
 <h1 id="connectwithus">🔗 Connect with us</h1>
 💬 Join the discussion on <a href="https://discord.gg/npC5TAfj6e" target="_blank">our Discord server</a>.
+<br><br>
+📨 Get updates on new fetures and beta release by <a href="http://eepurl.com/ikg_nT" target="_blank">adding your email here</a>.
 <br><br>
 ⭐ Star this repo to show support.
 <br><br>

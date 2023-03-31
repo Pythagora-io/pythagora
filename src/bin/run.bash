@@ -38,7 +38,7 @@ do
     init_command="${args[$i+1]}"
   elif [[ "${args[$i]}" == "--review" ]]
   then
-    node "./node_modules/${pythagora_dir}/review.js"
+    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/review.js"
     exit 0
   elif [[ "${args[$i]}" == "--mode" ]]
   then

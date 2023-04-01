@@ -32,7 +32,7 @@
 
 <h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
 <p align=center>
-  <a target="_blank" href="https://youtu.be/BVR7rCdBVdY">Pythagora Demo (4 min)</a>
+  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Demo (4 min)</a>
   <br>
   <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
   <br>

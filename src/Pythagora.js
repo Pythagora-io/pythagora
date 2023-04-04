@@ -22,6 +22,7 @@ class Pythagora {
         else this.mode = args.mode;
 
         this.rerunAllFailed = args.rerun_all_failed;
+        this.ignoreRedis = args.ignore_redis;
         this.testId = args.test;
         this.pick = args.pick;
         this.ignore = args.ignore;
@@ -241,6 +242,7 @@ class Pythagora {
     }
 
     async runRedisInterceptor(intermediateData) {
+        if (this.ignoreRedis) return;
         this.RedisInterceptor = new RedisInterceptor(
             this,
             16379,

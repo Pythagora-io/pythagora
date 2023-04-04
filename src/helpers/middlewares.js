@@ -82,7 +82,7 @@ function setUpExpressMiddlewares(app) {
 
         setUpInterceptorMiddleware: async (req, res, next) => {
             if (req.pythagoraIgnore) return next();
-            global.Pythagora.RedisInterceptor.setMode(global.Pythagora.mode);
+            if (!global.Pythagora.ignoreRedis) global.Pythagora.RedisInterceptor.setMode(global.Pythagora.mode);
             if (global.Pythagora.mode === MODES.capture) await apiCaptureInterceptor(req, res, next, global.Pythagora);
             else if (global.Pythagora.mode === MODES.test) await apiTestInterceptor(req, res, next, global.Pythagora);
         }
@@ -208,7 +208,7 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     let timestamp = new Date(request.createdAt).getTime();
     pythagora.tempVars.clockTimestamp = timestamp;
 
-    pythagora.RedisInterceptor.setIntermediateData(request.intermediateData);
+    if (!global.Pythagora.ignoreRedis) pythagora.RedisInterceptor.setIntermediateData(request.intermediateData);
     let reqId = pythagora.idSeq++;
     pythagora.testingRequests[reqId] = _.extend({
         mongoQueriesTest: [],

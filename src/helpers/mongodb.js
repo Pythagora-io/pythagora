@@ -4,6 +4,8 @@ const {
     convertToRegularObject,
     ObjectId,
     objectIdAsStringRegex,
+    dateAsStringRegex,
+    stringToDate,
     regExpRegex,
     mongoIdRegex,
     stringToRegExp,
@@ -34,6 +36,9 @@ function mongoObjToJson(originalObj) {
         if (isObjectId(obj[key])) {
             // TODO label a key as ObjectId better (not through a string)
             obj[key] = `ObjectId("${obj[key].toString()}")`;
+        } else if (obj[key] instanceof Date) {
+            // TODO label a key as Date better (not through a string)
+            obj[key] = `Date("${obj[key].toISOString()}")`;
         } else if (obj[key] instanceof RegExp) {
             obj[key] = `RegExp("${obj[key].toString()}")`;
         } else if (typeof obj[key] === 'object') {
@@ -49,6 +54,7 @@ function jsonObjToMongo(originalObj) {
     if (Array.isArray(obj)) return obj.map(d => jsonObjToMongo(d));
     else if (typeof obj === 'string' && objectIdAsStringRegex.test(obj)) return stringToMongoObjectId(obj);
     else if (typeof obj === 'string' && mongoIdRegex.test(obj)) return stringToMongoObjectId(`ObjectId("${obj}")`);
+    else if (typeof obj === 'string' && dateAsStringRegex.test(obj)) return stringToDate(obj);
     else if (typeof obj === 'string' && regExpRegex.test(obj)) return stringToRegExp(obj);
     else if (isJSONObject(obj)) {
         obj = convertToRegularObject(obj);
@@ -58,6 +64,7 @@ function jsonObjToMongo(originalObj) {
                 // TODO label a key as ObjectId better (not through a string)
                 if (objectIdAsStringRegex.test(obj[key])) obj[key] = stringToMongoObjectId(obj[key]);
                 else if (mongoIdRegex.test(obj[key])) obj[key] = stringToMongoObjectId(`ObjectId("${obj[key]}")`);
+                else if (dateAsStringRegex.test(obj[key])) obj[key] = stringToDate(obj[key]);
                 else if (regExpRegex.test(obj[key])) obj[key] = stringToRegExp(obj[key]);
             } else if (obj[key]._bsontype === "ObjectID") {
                 continue;

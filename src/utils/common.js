@@ -13,6 +13,8 @@ const ObjectId = class {
     }
 };
 const objectIdAsStringRegex = /^ObjectId\("([0-9a-fA-F]{24})"\)$/;
+const dateAsStringRegex = /^Date\("(.+)"\)$/;
+const iso8601DateRegex = /^(\d{4})-(\d{2})-(\d{2})(T(\d{2}):(\d{2}):(\d{2})(\.(\d{1,3}))?(Z|([+\-])(\d{2}):(\d{2})))?$/;
 const regExpRegex = /^RegExp\("(.*)"\)$/;
 const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
 
@@ -62,7 +64,21 @@ function compareResponse(a, b) {
 }
 
 function isDate(date) {
-    return typeof date === 'string' && (new Date(date) !== "Invalid Date") && !isNaN(new Date(date));
+    return (typeof date === 'string' && iso8601DateRegex.exec(date) && (new Date(date) !== "Invalid Date") && !isNaN(new Date(date))) ||
+        (typeof date === 'string' && dateAsStringRegex.exec(date)) ||
+        (typeof date === 'object' && date instanceof Date);
+}
+
+function stringToDate(str) {
+    const match = dateAsStringRegex.exec(str);
+    if (match) {
+        const dateString = match[1];
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+            return date;
+        }
+    }
+    return str;
 }
 
 function isJSONObject(value) {
@@ -216,6 +232,7 @@ function convertToRegularObject(obj) {
     const reviver = (key, value) => {
         if (typeof value === 'string') {
             if (value.length === 24 && mongoIdRegex.test(value)) return new ObjectId(value);
+            else if (iso8601DateRegex.test(value)) return new Date(value);
             else if (regExpRegex.test(value)) return stringToRegExp(value);
         }
         return value;
@@ -241,6 +258,8 @@ module.exports = {
     objectIdAsStringRegex,
     regExpRegex,
     mongoIdRegex,
+    dateAsStringRegex,
+    stringToDate,
     stringToRegExp,
     isJSONObject
 }

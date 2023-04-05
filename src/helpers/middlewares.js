@@ -128,21 +128,37 @@ async function apiCaptureInterceptor(req, res, next, pythagora) {
     res.status = function(code) {
         logWithStoreId('status');
         pythagora.requests[req.id].statusCode = code;
-        return _status.call(this, code);
+        return _status.apply(this, arguments);
     }
 
-    res.json = function(json) {
+    res.json = function(resJson) {
+        let json, statusCode;
+        // allow status / body
+        if (arguments.length === 2) {
+            // res.json(body, status) backwards compat
+            if (typeof arguments[1] === 'number') {
+                json = arguments[0];
+                statusCode = arguments[1];
+            } else {
+                statusCode = arguments[0];
+                json = arguments[1];
+            }
+        }
+        json = json || resJson;
+        pythagora.requests[req.id].statusCode = statusCode || res.statusCode;
+
         logWithStoreId('json');
-        if (pythagora.requests[req.id].finished) return _json.call(this, json);
+        if (pythagora.requests[req.id].finished) return _json.apply(this, arguments);
         storeRequestData(res.statusCode, req.id, json);
         if (!pythagora.requests[req.id].finished) finishCapture(pythagora.requests[req.id], json);
         pythagora.requests[req.id].finished = true;
-        return _json.call(this, json);
+        return _json.apply(this, arguments);
     }
 
-    res.end = function(body) {
+    res.end = function() {
+        let body = arguments[0];
         logWithStoreId('end');
-        if (pythagora.requests[req.id].finished) return _end.call(this, body);
+        if (pythagora.requests[req.id].finished) return _end.apply(this, arguments);
         let path = '.' + this.req.originalUrl;
         //todo find better solution for storing static files to body
         if (body === undefined && fs.existsSync(path) && fs.lstatSync(path).isFile()) {
@@ -152,16 +168,31 @@ async function apiCaptureInterceptor(req, res, next, pythagora) {
         storeRequestData(res.statusCode, req.id, body);
         if (!pythagora.requests[req.id].finished) finishCapture(pythagora.requests[req.id], body);
         pythagora.requests[req.id].finished = true;
-        _end.call(this, body);
+        _end.apply(this, arguments);
     };
 
-    res.send = function(body) {
+    res.send = function(resBody) {
+        let statusCode, body;
+        // allow status / body
+        if (arguments.length === 2) {
+            // res.send(body, status) backwards compat
+            if (typeof arguments[0] !== 'number' && typeof arguments[1] === 'number') {
+                body = arguments[0];
+                statusCode = arguments[1];
+            } else {
+                statusCode = arguments[0];
+                body = arguments[1];
+            }
+        }
+        body = body || resBody;
+        pythagora.requests[req.id].statusCode = statusCode || res.statusCode;
+
         logWithStoreId('send');
-        if (pythagora.requests[req.id].finished) return _send.call(this, pythagora.requests[req.id].responseData);
+        if (pythagora.requests[req.id].finished) return _send.apply(this, arguments);
         storeRequestData(res.statusCode, req.id, body);
         if (!pythagora.requests[req.id].finished) finishCapture(pythagora.requests[req.id], body);
         pythagora.requests[req.id].finished = true;
-        _send.call(this, pythagora.requests[req.id].responseData);
+        _send.apply(this, arguments);
     };
 
     res.sendFile = function(path) {
@@ -174,20 +205,29 @@ async function apiCaptureInterceptor(req, res, next, pythagora) {
         storeRequestData(res.statusCode, req.id, file);
         if (!pythagora.requests[req.id].finished) finishCapture(pythagora.requests[req.id], file);
         pythagora.requests[req.id].finished = true;
-        _sendFile.call(this, path);
+        _sendFile.apply(this, arguments);
     };
 
-    res.redirect = function(redirectUrl) {
+    res.redirect = function(url) {
+        let statusCode, redirectUrl;
+        if (arguments.length === 2) {
+            if (typeof arguments[0] === 'number' && typeof arguments[1] === 'string') {
+                statusCode = arguments[0];
+                redirectUrl = arguments[1];
+            }
+        }
+        redirectUrl = redirectUrl || url;
+        pythagora.requests[req.id].statusCode = statusCode || res.statusCode;
+
         logWithStoreId('redirect');
-        pythagora.requests[req.id].statusCode = res.statusCode;
-        if (pythagora.requests[req.id].finished) return _redirect.call(this, redirectUrl);
+        if (pythagora.requests[req.id].finished) return _redirect.apply(this, arguments);
         pythagora.requests[req.id].responseData = {
             'type': 'redirect',
             'url': redirectUrl
         };
         finishCapture(pythagora.requests[req.id]);
         pythagora.requests[req.id].finished = true;
-        _redirect.call(this, redirectUrl);
+        _redirect.apply(this, arguments);
     };
 
 
@@ -202,7 +242,7 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     if (!request) {
         // TODO we're overwriting requests during the capture phase so this might happen durign the final filtering of the capture
         console.error('No request found for', req.path, req.method, req.body, req.query, req.params);
-        return next();
+        return res.status(404).send(); //todo check if this is ok for requests that we cant find. Reason not to let them process is so that they cant crash server
     }
 
     let timestamp = new Date(request.createdAt).getTime();
@@ -221,25 +261,25 @@ async function apiTestInterceptor(req, res, next, pythagora) {
     const _send = res.send;
     const _redirect = res.redirect;
 
-    res.end = function(body) {
+    res.end = function() {
         logWithStoreId('testing end');
         checkForFinalErrors(reqId, pythagora);
         setGlobalRequest(reqId, pythagora);
-        _end.call(this, body);
+        _end.apply(this, arguments);
     };
 
-    res.send = function(body) {
+    res.send = function() {
         logWithStoreId('testing send');
         checkForFinalErrors(reqId, pythagora);
         setGlobalRequest(reqId, pythagora);
-        _send.call(this, body);
+        _send.apply(this, arguments);
     };
 
-    res.redirect = function(url) {
+    res.redirect = function() {
         logWithStoreId('testing redirect');
         checkForFinalErrors(reqId, pythagora);
         setGlobalRequest(reqId, pythagora);
-        _redirect.call(this, url);
+        _redirect.apply(this, arguments);
     };
 
     global.asyncLocalStorage.run(reqId, () => {

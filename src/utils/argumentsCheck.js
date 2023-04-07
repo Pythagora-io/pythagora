@@ -9,7 +9,7 @@ for (let i = 0; i < argArray.length; i++) {
     const arg = argArray[i].trim().split(' ');
 
     if (!arg[0]) continue;
-    args[arg[0].replaceAll('-', '_')] = arg.length > 2 ? arg.slice(1) : (arg[1] || true);
+    args[arg[0].replace(/-/g, '_')] = arg.length > 2 ? arg.slice(1) : (arg[1] || true);
 }
 
 if (args.delete_all_failed) deleteAllFailedTests();

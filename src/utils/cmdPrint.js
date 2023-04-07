@@ -89,7 +89,7 @@ let pythagoraFinishingUp = () => {
 
 function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound, mongoDiff) {
     console.log(`\n${blue+bold}************************************************************${reset}`);
-    console.log(`Endpoint: ${blue}${change.filename.replaceAll('|', '/').replace('.json', '')}${reset}`);
+    console.log(`Endpoint: ${blue}${change.filename.replace(/\|/g, "/").replace('.json', '')}${reset}`);
     console.log(`Test id: ${blue}${change.id}${reset}`);
     for (let key of Object.keys(change).filter((k) => !ignoreKeys.includes(k))) {
         console.log(`\n${reset}Difference: ${bold}${blue}${key}${reset}`);

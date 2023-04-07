@@ -1,6 +1,5 @@
 #!/bin/bash
 args=("$@")
-script_path=$(realpath $0)
 init_command=
 init_script=
 APP_PID=
@@ -9,7 +8,7 @@ yellow=$(tput setaf 3)
 green=$(tput setaf 2)
 reset=$(tput sgr0)
 bold=$(tput bold)
-pythagora_dir=$(basename $(dirname $(dirname $(dirname $script_path))))
+pythagora_dir="pythagora"
 
 function exit_handler {
   while [ ! -f "./.pythagora/finishingup" ]

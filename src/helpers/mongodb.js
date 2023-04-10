@@ -151,9 +151,17 @@ function checkForErrors(method, request) {
     }
 }
 
+async function clearAllCollections(db) {
+    if (db.databaseName !== PYTHAGORA_DB) return;
+    const collections = await db.listCollections().toArray();
+    for (const collection of collections) {
+        await db.collection(collection.name).deleteMany({});
+    }
+}
+
 async function cleanupDb(pythagora) {
     const dbConnection = pythagora.mongoClient.db(PYTHAGORA_DB);
-    if (dbConnection.databaseName === PYTHAGORA_DB) dbConnection.dropDatabase();
+    await clearAllCollections(dbConnection);
 }
 
 function createCaptureIntermediateData(db, collection, op, query, options, otherArgs, preQueryRes) {

@@ -260,6 +260,22 @@ class Pythagora {
         }));
     }
 
+    isMongoConnected() {
+        return this.mongoClient.connected ||
+            (this.mongoClient.isConnected && this.mongoClient.isConnected()) ||
+            (this.mongoClient.topology && this.mongoClient.topology.isConnected && this.mongoClient.topology.isConnected())
+    }
+
+    runWhenServerReady(callback) {
+        let interval = setInterval(() => {
+            // todo add here all checks that server is ready (express, redis,...)
+            if (this.isMongoConnected()) {
+                clearInterval(interval);
+                callback();
+            }
+        }, 200);
+    }
+
 }
 
 module.exports = Pythagora;

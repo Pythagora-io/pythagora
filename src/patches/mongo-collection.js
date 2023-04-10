@@ -3,7 +3,7 @@ const _ = require('lodash');
 module.exports = function (mongoPath) {
     const originalCollection = require(`${mongoPath}/lib/collection`);
     const pythagoraErrors = require('../const/errors');
-    const {MONGO_METHODS} = require('../const/mongodb');
+    const {MONGO_METHODS, PYTHAGORA_DB} = require('../const/mongodb');
     const {
         getCurrentMongoDocs,
         extractArguments,
@@ -19,8 +19,8 @@ module.exports = function (mongoPath) {
         (originalCollection.Collection || originalCollection).prototype[method] = function () {
             if (!global.Pythagora) return originalMethod.apply(this, arguments);
             if (global.Pythagora.mode === MODES.test) {
-                this.s.db = global.Pythagora.mongoClient.db('pythagoraDb');
-                this.s.namespace.db = 'pythagoraDb';
+                this.s.db = global.Pythagora.mongoClient.db(PYTHAGORA_DB);
+                this.s.namespace.db = PYTHAGORA_DB;
             }
 
             let asyncContextId = global.asyncLocalStorage.getStore(),
@@ -85,7 +85,16 @@ module.exports = function (mongoPath) {
                     mongoResult.__proto__ &&
                     mongoResult.__proto__.constructor &&
                     mongoResult.__proto__.constructor.name === 'CommandResult')
-                    mongoResult = mongoResult.result;
+                    mongoResult = _.omit(mongoResult.result, ['electionId', 'opTime', '$clusterTime', 'operationTime']);
+                // todo refactor to add path to mongoResult inside src/const/mongodb.js for each method
+                if (mongoResult &&
+                    mongoResult.value &&
+                    mongoResult.lastErrorObject &&
+                    mongoResult.ok &&
+                    mongoResult.__proto__ &&
+                    mongoResult.__proto__.constructor &&
+                    mongoResult.__proto__.constructor.name === 'Object')
+                    mongoResult = mongoResult.value;
 
                 let postQueryRes = await getCurrentMongoDocs(this, query);
                 if (intermediateData.mongoRes !== undefined) {

@@ -10,7 +10,9 @@ module.exports = function (httpModule) {
         global.Pythagora.setMongoClient(global.pythagoraMongoClient);
         global.Pythagora.runRedisInterceptor().then(() => {
             if (args.mode === 'test') {
-                require('../RunPythagoraTests.js');
+                global.Pythagora.runWhenServerReady(() => {
+                    require('../RunPythagoraTests.js');
+                });
             }
         });
 

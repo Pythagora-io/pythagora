@@ -1,8 +1,5 @@
 module.exports = function(mongoPath) {
     const originalMongoClient = require(`${mongoPath}/lib/mongo_client`);
-    const MODES = require("../const/modes.json");
-    const {PYTHAGORA_DB} = require('../const/mongodb');
-    const urlParser = require('url');
 
     if (originalMongoClient.MongoClient) {
         const patchedMongoClient = class MongoClient extends originalMongoClient.MongoClient {

@@ -29,12 +29,16 @@
     "testing",
     "automation",
     "automated testing",
+    "integration",
+    "integration testing",
     "mock",
     "api",
     "http",
     "MERN",
     "MEAN",
     "mongoose",
+    "mongodb",
+    "redis",
     "express"
   ]
 }

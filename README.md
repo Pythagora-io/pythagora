@@ -10,19 +10,6 @@
 <h3 align="center">With Pythagora, devs spend 0.2% time on tests while having 100% code coverage w/ negative tests</h3>
 <br>
 
-<table>
-  <tr>
-    <td colspan="2"><h3 align="center">Pythagora is a dev tool that generates integration tests for web apps by recording server activity without you having to write a single line of code<br><br></h3></td>
-  </tr>
-  <tr>
-    <td><br>🔍 Pythagora creates detailed integration tests that check <b>API response</b>, <b>database queries and responses</b>, <b>3rd party API requests</b> and more 🔍 <br><br></td>
-    <td><br>💯 Within a <b>couple of hours</b> of playing around your app while Pythagora capturing is on, you can cover your codebase with <b>100% code coverage</b> 💯<br><br></td>
-  </tr>
-  <tr>
-    <td><br>🦸 You don’t need to think about covering edge cases since our <b>GPT-4 integration creates negative tests to superpower your test suite</b> 🦸<br><br></td>
-    <td><br>🎚 If you have a QA team, you can easily give them access to creating automated tests for backend with Pythagora 🎚<br><br></td>
-  </tr>
-</table>
 
 <br>
 <br>

@@ -24,6 +24,20 @@ function exit_handler {
   exit 0
 }
 
+commands=(basename realpath dirname)
+found_all=true
+
+for cmd in "${commands[@]}"; do
+  if ! command -v "$cmd" >/dev/null 2>&1 ; then
+    echo "$cmd command not found"
+    found_all=false
+  fi
+done
+
+if [ "$found_all" = true ] ;
+then
+  pythagora_dir=$(basename $(dirname $(dirname $(dirname $(realpath $0)))))
+fi
 
 if [ "$pythagora_dir" == "pythagora-dev" ]
 then

@@ -7,11 +7,9 @@
 <p align=center>
   Developers spend 20-30% of their time writing tests!
 </p>
-<h3 align="center">With Pythagora, devs spend 0.2% time on tests while having 100% code coverage w/ negative tests</h3>
+<h3 align="center">✊ Pythagora creates automated tests for you by analysing server activity ✊</h3>
 <br>
-
-
-<br>
+<p align="center">🌟 As an open source tool, it would mean the world to us if you starred Pythagora repo 🌟<br>🙏 Thank you 🙏</p>
 <br>
 <div align="center">
   <a href="https://youtu.be/BVR7rCdBVdY"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
@@ -26,42 +24,27 @@
   <a target="_blank" href="https://youtu.be/opQP8NMCiPw">Dev Workflow With Pythagora (4 min)</a>
 </p>
 
-<h1 id="howitworks">🏗️ How it works</h1>
+<h1 id="setup">⚙️ Installation</h1>
 
 To integrate Pythagora into your Node.js app, you just need to install the pythagora package
-```bash
-npm install pythagora
-```
-and run the Pythagora capture command. Then, just play around with your app and from all API requests and database queries Pythagora will generate integration tests.
-
-<h3>1. Capturing requests</h3>
-Pythagora records all requests to endpoints of your app with the response and everything that's happening during the request. Currently, that means all Mongo and Redis queries with responses (in the future 3rd party API requests, disk IO operations, etc.). Then, when you run the tests, Pythagora can simulate the server conditions from the time when the request was captured.
-<h3>2. Running tests</h3>
-When running tests, it doesn’t matter what database is your Node.js connected to or what is the state of that database. Actually, that database is never touched or used —> instead, Pythagora creates a special, ephemeral `pythagoraDb` database, which it uses to restore the data before each test is executed, which was present at the time when the test was recorded. Because of this, tests can be run on any machine or environment.
-<br>
-<br>
-<b>If a test does an update to the database, Pythagora also checks the database to see if it was updated correctly.</b>
-<br>
-<br>
-
-<h1 id="setup">⚙️ Setup</h1>
-
-1. Install Pythagora by running
-   <br><br>
+   <br>
    ```bash
    npm install pythagora
    ```
-   And that's it! You are ready to start recording your integration tests!
+   And that's it - no config or setup! You are ready to start recording your integration tests!
+   <br>
    <br>
 <h1 id="capturingtests">🎥 Capturing tests</h1>
 
+Pythagora records all requests to endpoints of your app with the response and everything that's happening during the request. Currently, that means all Mongo and Redis queries with responses (in the future 3rd party API requests, disk IO operations, etc.). Then, when you run the tests, Pythagora can simulate the server conditions from the time when the request was captured.
+
 1. <b>From the root directory</b> run Pythagora in a capture mode first to capture test data and mocks.
-   <br><br>
+   <br>
       ```bash
       npx pythagora --init-command "my start command" --mode capture
       ```
    Eg. if you start your Node.js app with `nest start` then the command would be:
-   <br><br>
+   <br>
       ```bash
       npx pythagora --init-command "nest start" --mode capture
       ```
@@ -70,8 +53,11 @@ When running tests, it doesn’t matter what database is your Node.js connected 
    NOTE: To stop the capture, you can exit the process like you usually do (Eg. `Ctrl + C`)   
    <br>
 <h1 id="executingtests">▶️ Executing tests</h1>
+When running tests, it doesn’t matter what database is your Node.js connected to or what is the state of that database. Actually, that database is never touched or used —> instead, Pythagora creates a special, ephemeral pythagoraDb database, which it uses to restore the data before each test is executed, which was present at the time when the test was recorded. Because of this, tests can be run on any machine or environment.
 
-After you captured all requests you want, you just need to change the mode parameter to `--mode test` in the Pythagora command.
+**If a test does an update to the database, Pythagora also checks the database to see if it was updated correctly.**
+
+So, after you captured all requests you want, you just need to change the mode parameter to `--mode test` in the Pythagora command.
 <br>
    ```bash
    npx pythagora --init-command "my start command" --mode test
@@ -238,6 +224,17 @@ is stored in this object. Here is an example of a test object.
    "createdAt": "2023-02-22T14:57:52.362Z" // date when the test was captured
 }
 ```
+
+
+<br><br>
+<h1 id="support">🤔️ FAQ</h1>
+
+- **What happens when I make intential change that breaks tests. How can I update Pythagora tests?**
+    - Pythagora tests can easily be updated by running the review command (`npx pythagora --review`). The review process is basically the same as a git review where you'll find each difference between the captured test and the failed one so you can choose if you need to debug this or you want to accept the new change. If you click `a`(as "accept"), the test will automatically update.
+<br>
+<br>
+- **Automated tests should show me where the bug is - how can I find a bug with Pythagora tests?**
+    - When a test fails, you can easily rerun the test that failed by adding `--test <TEST_ID>` to the test command. This way, if you add breakpoints across your code, you'll be able to easily debug the test itself with all the data the test is using. Also, we have plans for adding bug tracking features but at the moment we don't know when will it be ready.
 
 
 <br><br>

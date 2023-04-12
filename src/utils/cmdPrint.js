@@ -1,5 +1,6 @@
 let { cutWithDots, compareJson, compareJsonDetailed } = require('./common');
 let pythagoraErrors = require('../const/errors');
+let { PYTHAGORA_DELIMITER } = require('../const/common');
 
 let red = '\x1b[31m',
     yellow = '\x1b[33m',
@@ -79,7 +80,7 @@ ${blue+bold}************************************************************${reset}
 
 let logTestsStarting = (files) => {
     console.log(`Starting tests on endpoints:${blue+bold}
-${files.map(file => file.replace(/\|/g, '/').replace('.json', '')).join('\n')}
+${files.map(file => file.replace(`/${PYTHAGORA_DELIMITER}/g`, '/').replace('.json', '')).join('\n')}
 ${reset}`);
 }
 
@@ -89,7 +90,7 @@ let pythagoraFinishingUp = () => {
 
 function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound, mongoDiff) {
     console.log(`\n${blue+bold}************************************************************${reset}`);
-    console.log(`Endpoint: ${blue}${change.filename.replace(/\|/g, "/").replace('.json', '')}${reset}`);
+    console.log(`Endpoint: ${blue}${change.filename.replace(`/${PYTHAGORA_DELIMITER}/g`, "/").replace('.json', '')}${reset}`);
     console.log(`Test id: ${blue}${change.id}${reset}`);
     for (let key of Object.keys(change).filter((k) => !ignoreKeys.includes(k))) {
         console.log(`\n${reset}Difference: ${bold}${blue}${key}${reset}`);

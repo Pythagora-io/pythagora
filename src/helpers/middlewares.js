@@ -3,7 +3,7 @@ const { getCircularReplacer, compareResponse, compareJson } = require("../utils/
 const pythagoraErrors = require("../const/errors");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
 const { prepareDB } = require("./mongodb.js");
-const { PYTHAGORA_TESTS_DIR } = require("../const/common.js");
+const { PYTHAGORA_TESTS_DIR, PYTHAGORA_DELIMITER } = require("../const/common.js");
 
 const bodyParser = require("body-parser");
 const {v4} = require("uuid");
@@ -333,7 +333,7 @@ function checkForFinalErrors(reqId, pythagora) {
 function saveCaptureToFile(reqData, pythagora) {
     reqData.pythagoraVersion = pythagora.version;
     reqData.createdAt = new Date().toISOString();
-    let endpointFileName = `./${PYTHAGORA_TESTS_DIR}/${reqData.endpoint.replace(/\//g, '|')}.json`;
+    let endpointFileName = `./${PYTHAGORA_TESTS_DIR}/${reqData.endpoint.replace(/\//g, PYTHAGORA_DELIMITER)}.json`;
     if (!fs.existsSync(endpointFileName)) fs.writeFileSync(endpointFileName, JSON.stringify([reqData], getCircularReplacer(), 2));
     else {
         let fileContent = JSON.parse(fs.readFileSync(endpointFileName));

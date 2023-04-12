@@ -4,7 +4,7 @@ const { cleanupDb } = require('./helpers/mongodb.js');
 const { makeTestRequest } = require('./helpers/testing.js');
 const { logCaptureFinished, pythagoraFinishingUp } = require('./utils/cmdPrint.js');
 const { getCircularReplacer } = require('./utils/common.js');
-const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, METADATA_FILENAME } = require('./const/common.js');
+const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, METADATA_FILENAME, PYTHAGORA_DELIMITER } = require('./const/common.js');
 
 let  { BatchInterceptor } = require('@mswjs/interceptors');
 let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
@@ -65,7 +65,7 @@ class Pythagora {
                 if (!result) {
                     failedRequests.push(request.endpoint);
                     console.log(`Capture is not valid for endpoint ${request.endpoint} (${request.method}). Erasing...`)
-                    let reqFileName = `./${PYTHAGORA_TESTS_DIR}/${request.endpoint.replace(/\//g, '|')}.json`;
+                    let reqFileName = `./${PYTHAGORA_TESTS_DIR}/${request.endpoint.replace(/\//g, PYTHAGORA_DELIMITER)}.json`;
                     if (!fs.existsSync(reqFileName)) continue;
                     let fileContent = JSON.parse(fs.readFileSync(reqFileName));
                     if (fileContent.length === 1) {
@@ -235,7 +235,7 @@ class Pythagora {
     }
 
     async getRequestMockDataById(req) {
-        let path = `./${PYTHAGORA_TESTS_DIR}/${req.path.replace(/\//g, '|')}.json`;
+        let path = `./${PYTHAGORA_TESTS_DIR}/${req.path.replace(/\//g, PYTHAGORA_DELIMITER)}.json`;
         if (!fs.existsSync(path)) return;
         let capturedRequests = JSON.parse(await fs.promises.readFile(path, 'utf8'));
         return capturedRequests.find(request => request.id === req.headers['pythagora-req-id']);

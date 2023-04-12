@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const tryrequire = require('tryrequire');
-const { PYTHAGORA_METADATA_DIR, PYTHAGORA_TESTS_DIR, METADATA_FILENAME } = require('../const/common.js');
+const { PYTHAGORA_METADATA_DIR, PYTHAGORA_TESTS_DIR, METADATA_FILENAME, PYTHAGORA_DELIMITER } = require('../const/common.js');
 const { getCircularReplacer } = require('../utils/common.js');
 
 function logAndExit(message, type='error') {
@@ -16,7 +16,7 @@ function deleteTest(id) {
 
         files = files.filter(f => f[0] !== '.');
         for (let file of files) {
-            if (file[0] !== '|') continue;
+            if (file.indexOf(PYTHAGORA_DELIMITER) !== 0) continue;
             let tests = JSON.parse(fs.readFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`));
             let newTests = tests.filter((t) => t.id !== id);
 
@@ -41,7 +41,7 @@ function deleteAllFailedTests() {
 
         files = files.filter(f => f[0] !== '.');
         for (let file of files) {
-            if (file[0] !== '|') continue;
+            if (file.indexOf(PYTHAGORA_DELIMITER) !== 0) continue;
             let tests = JSON.parse(fs.readFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`));
             let newTests = tests.filter((t) => !deleteTests.includes(t.id));
 

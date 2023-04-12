@@ -1,4 +1,28 @@
 {
+  "name": "pythagora",
+  "version": "0.0.39",
+  "author": {
+    "name": "Zvonimir Sabljic",
+    "email": "hi@pythagora.io"
+  },
+  "license": "ISC",
+  "description": "Generate integration tests by recording server activity without writing a single line of code.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pythagora-io/pythagora"
+  },
+  "homepage": "https://pythagora.io/",
+  "main": "src/Pythagora.js",
+  "scripts": {
+    "publish-pythagora": "src/bin/publish.bash",
+    "prepublishOnly": "node src/bin/prepublish.js"
+  },
+  "bin": {
+    "pythagora": "src/bin/run.js"
+  },
+  "engines": {
+    "node": ">=16.x"
+  },
   "dependencies": {
     "@mswjs/interceptors": "^0.19.2",
     "axios": "^1.2.2",
@@ -8,22 +32,16 @@
     "tryrequire": "^3.0.0",
     "uuid": "^9.0.0"
   },
-  "name": "pythagora",
-  "version": "0.0.38",
-  "main": "Pythagora.js",
-  "directories": {
-    "test": "tests"
-  },
-  "scripts": {
-    "publish-pythagora": "src/bin/publish.bash",
-    "prepublishOnly": "node src/bin/prepublish.js"
-  },
-  "bin": {
-    "pythagora": "src/bin/run.bash"
-  },
-  "author": "",
-  "license": "ISC",
-  "description": "Generate integration tests by recording server activity without writing a single line of code.",
+  "contributors": [
+    {
+      "name": "Zvonimir Sabljic",
+      "email": "hi@pythagora.io"
+    },
+    {
+      "name": "Leon Ostrez",
+      "email": "hi@pythagora.io"
+    }
+  ],
   "keywords": [
     "test",
     "testing",

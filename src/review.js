@@ -73,12 +73,13 @@ function findDiffQueries(intermediateData1, intermediateData2) {
             !d.processed
         );
 
-        mongoDiff.push({
-            capture: data,
-            test: data2
-        });
-
-        if (data2) data2.processed = true;
+        if (data2) {
+            mongoDiff.push({
+                capture: data,
+                test: data2
+            });
+            data2.processed = true;
+        }
     });
 
     intermediateData2.forEach((data) => { if (data.processed) delete data.processed; });
@@ -109,8 +110,8 @@ function findNonMatchingQueries(intermediateData1, intermediateData2) {
 }
 
 function processIntermediateData(captureIntermediateData, testIntermediateData) {
-    let mongoQueryNotFound = findNonMatchingQueries(captureIntermediateData, testIntermediateData);
-    let mongoNotExecuted = findNonMatchingQueries(testIntermediateData, captureIntermediateData);
+    let mongoNotExecuted = findNonMatchingQueries(captureIntermediateData, testIntermediateData);
+    let mongoQueryNotFound = findNonMatchingQueries(testIntermediateData, captureIntermediateData);
     let mongoDiff = findDiffQueries(mongoQueryNotFound, mongoNotExecuted);
     let idMap = _.flatten(mongoDiff.map((m) => [m.capture.id, m.test.id]));
 

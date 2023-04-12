@@ -3,7 +3,7 @@ args=("$@")
 flag=${args[@]}
 
 # Extract the name field from the package.json file
-name=$(grep '"name"' package.json | awk -F: '{print $2}' | tr -d '", ')
+name=$(grep -m 1 '"name":' package.json | awk -F'"' '{print $4}')
 version=$(grep '"version"' package.json | awk -F: '{print $2}' | tr -d '", ')
 
 if [ "$name" != "@pythagora.io/pythagora-dev" ] && [ "$name" != "pythagora" ]

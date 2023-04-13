@@ -32,6 +32,8 @@ function setUpExpressMiddlewares(app) {
         },
 
         prepareTestingMiddleware: async (req, res, next) => {
+            if (global.Pythagora.mode === MODES.test) resetGlobalRequest();
+
             if (!req.pythagoraIgnore && global.Pythagora.mode === MODES.test) {
                 await prepareDB(global.Pythagora, req);
             }
@@ -286,6 +288,10 @@ async function apiTestInterceptor(req, res, next, pythagora) {
         logWithStoreId('Starting testing...');
         next();
     });
+}
+
+function resetGlobalRequest() {
+    global.Pythagora.request = undefined;
 }
 
 function setGlobalRequest(reqId, pythagora) {

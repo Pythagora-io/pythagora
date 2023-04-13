@@ -124,6 +124,11 @@ function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound, mon
     }
 }
 
+function logAndExit(message, type='error') {
+    console[type](message);
+    process.exit(1);
+}
+
 
 module.exports = {
     logEndpointCaptured,
@@ -136,5 +141,6 @@ module.exports = {
     pythagoraFinishingUp,
     logWithStoreId,
     logAppError,
-    logChange
+    logChange,
+    logAndExit
 }

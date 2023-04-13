@@ -2,6 +2,13 @@
 
 'use strict';
 
+function exit() {
+  // Do not close process until Pythagora finishing up is done
+}
+
+process.on('SIGINT', exit.bind(this));
+process.on('exit', exit.bind(this));
+
 const { exec, spawn } = require('child_process');
 const os = require('os');
 

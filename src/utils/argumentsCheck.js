@@ -1,6 +1,7 @@
 const AVAILABLE_MODES = ['capture', 'test'];
 const argsStr = process.env.PYTHAGORA_CONFIG;
-const { logAndExit, deleteAllFailedTests, deleteTest } = require('../helpers/starting.js');
+const { deleteTest } = require('../helpers/starting.js');
+const { logAndExit } = require('./cmdPrint.js');
 
 const argArray = argsStr.split("--");
 const args = {};
@@ -11,8 +12,6 @@ for (let i = 0; i < argArray.length; i++) {
     if (!arg[0]) continue;
     args[arg[0].replace(/-/g, '_')] = arg.length > 2 ? arg.slice(1) : (arg[1] || true);
 }
-
-if (args.delete_all_failed) deleteAllFailedTests();
 
 if (args.delete) deleteTest(args.delete);
 

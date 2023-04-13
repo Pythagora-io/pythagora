@@ -46,12 +46,20 @@ fi
 
 for (( i=0; i<${#args[@]}; i++ ))
 do
-  if [[ "${args[$i]}" == "--init-command" ]]
+  if [[ "${args[$i]}" =~ ^--init[-_]command$ ]]
   then
     init_command="${args[$i+1]}"
   elif [[ "${args[$i]}" == "--review" ]]
   then
     PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/review.js"
+    exit 0
+  elif [[ "${args[$i]}" =~ ^--rename[-_]tests$ ]]
+  then
+    node "./node_modules/${pythagora_dir}/src/scripts/renameTests.js"
+    exit 0
+  elif [[ "${args[$i]}" =~ ^--delete[-_]all[-_]failed$ ]]
+  then
+    node "./node_modules/${pythagora_dir}/src/scripts/deleteAllFailed.js"
     exit 0
   elif [[ "${args[$i]}" == "--mode" ]]
   then

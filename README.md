@@ -224,7 +224,11 @@ is stored in this object. Here is an example of a test object.
    "createdAt": "2023-02-22T14:57:52.362Z" // date when the test was captured
 }
 ```
-
+<b>NOTE:</b> If you used Pythagora version < 0.0.39 tests were stored in files with delimiter "|" and since we added Windows support that is changed to "-_-".
+To update all your tests to work with new version of Pythagora run:
+```
+npx pythagora --rename-tests
+```
 
 <br><br>
 <h1 id="support">🤔️ FAQ</h1>

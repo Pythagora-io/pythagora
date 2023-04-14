@@ -10,7 +10,8 @@ module.exports = function (mongoPath) {
         checkForErrors,
         createCaptureIntermediateData,
         mongoObjToJson,
-        findAndCheckCapturedData
+        findAndCheckCapturedData,
+        extractDataFromMongoRes
     } = require('../helpers/mongodb');
     const MODES = require("../const/modes.json");
 
@@ -79,22 +80,7 @@ module.exports = function (mongoPath) {
                     cursor = new Promise((resolve, reject) => resolve(mongoResult));
                 }
 
-                // todo refactor to add path to mongoResult inside src/const/mongodb.js for each method
-                if (mongoResult &&
-                    mongoResult.result &&
-                    mongoResult.__proto__ &&
-                    mongoResult.__proto__.constructor &&
-                    mongoResult.__proto__.constructor.name === 'CommandResult')
-                    mongoResult = _.omit(mongoResult.result, ['electionId', 'opTime', '$clusterTime', 'operationTime']);
-                // todo refactor to add path to mongoResult inside src/const/mongodb.js for each method
-                if (mongoResult &&
-                    mongoResult.value &&
-                    mongoResult.lastErrorObject &&
-                    mongoResult.ok &&
-                    mongoResult.__proto__ &&
-                    mongoResult.__proto__.constructor &&
-                    mongoResult.__proto__.constructor.name === 'Object')
-                    mongoResult = mongoResult.value;
+                mongoResult = extractDataFromMongoRes(mongoResult);
 
                 let postQueryRes = await getCurrentMongoDocs(this, query);
                 if (intermediateData.mongoRes !== undefined) {

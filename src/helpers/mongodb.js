@@ -230,6 +230,27 @@ async function prepareDB(pythagora, req) {
     }
 }
 
+function extractDataFromMongoRes(mongoResult) {
+    // todo refactor to add path to mongoResult inside src/const/mongodb.js for each method
+    if (mongoResult &&
+        mongoResult.result &&
+        mongoResult.__proto__ &&
+        mongoResult.__proto__.constructor &&
+        mongoResult.__proto__.constructor.name === 'CommandResult')
+        mongoResult = _.omit(mongoResult.result, ['electionId', 'opTime', '$clusterTime', 'operationTime']);
+    // todo refactor to add path to mongoResult inside src/const/mongodb.js for each method
+    if (mongoResult &&
+        mongoResult.value &&
+        mongoResult.lastErrorObject &&
+        mongoResult.ok &&
+        mongoResult.__proto__ &&
+        mongoResult.__proto__.constructor &&
+        mongoResult.__proto__.constructor.name === 'Object')
+        mongoResult = mongoResult.value;
+
+    return mongoResult
+}
+
 module.exports = {
     cleanupDb,
     prepareDB,
@@ -238,5 +259,6 @@ module.exports = {
     getCurrentMongoDocs,
     extractArguments,
     checkForErrors,
-    createCaptureIntermediateData
+    createCaptureIntermediateData,
+    extractDataFromMongoRes
 }

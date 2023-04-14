@@ -255,7 +255,14 @@ const MONGO_METHODS = {
             'options',
             'callback'
         ],
-        query: { argName: 'pipeline', multi: false, conversionFunction: (pipeline) => {} },
+        query: {
+            argName: 'pipeline',
+            multi: false,
+            conversionFunction: (pipeline) => {
+                // TODO create an array of queries from the aggregate pipeline
+                // each query will be sent to the database to get all documents that will be used in the aggregate pipeline
+            }
+        },
         callback: { argName: 'callback' },
         options: { argName: 'options', ignore: ['session'] }
     },

@@ -17,7 +17,7 @@ const {v4} = require("uuid");
 const _ = require("lodash");
 const { MONGO_METHODS, PYTHAGORA_DB } = require("../const/mongodb");
 const { PYTHAGORA_ASYNC_STORE } = require('../const/common');
-let unsupportedMethods = ['aggregate'];
+let unsupportedMethods = [];
 
 // todo remove this methods?
 // let methods = ['save','find', 'insert', 'update', 'delete', 'deleteOne', 'insertOne', 'updateOne', 'updateMany', 'deleteMany', 'replaceOne', 'replaceOne', 'remove', 'findOneAndUpdate', 'findOneAndReplace', 'findOneAndRemove', 'findOneAndDelete', 'findByIdAndUpdate', 'findByIdAndRemove', 'findByIdAndDelete', 'exists', 'estimatedDocumentCount', 'distinct', 'translateAliases', '$where', 'watch', 'validate', 'startSession', 'diffIndexes', 'syncIndexes', 'populate', 'listIndexes', 'insertMany', 'hydrate', 'findOne', 'findById', 'ensureIndexes', 'createIndexes', 'createCollection', 'create', 'countDocuments', 'count', 'bulkWrite', 'aggregate'];
@@ -112,8 +112,9 @@ function extractArguments(method, arguments) {
     for (let i = 0; i < MONGO_METHODS[method].args.length; i++) {
         let mappedArg = neededArgs.find(d => MONGO_METHODS[method][d].argName === MONGO_METHODS[method].args[i]);
         if (mappedArg) {
-
-            if (MONGO_METHODS[method][mappedArg].multi) {
+            if (MONGO_METHODS[method][mappedArg].conversionFunction) {
+                returnObj[mappedArg] = MONGO_METHODS[method][mappedArg].conversionFunction(arguments[i]);
+            } else if (MONGO_METHODS[method][mappedArg].multi) {
                 let operations = arguments[i];
                 returnObj[mappedArg] = operations.map(d => {
                     let op = Object.keys(d)[0];

@@ -52,7 +52,7 @@ Pythagora records all requests to endpoints of your app with the response and ev
    <br><br>
    NOTE: To stop the capture, you can exit the process like you usually do (Eg. `Ctrl + C`)   
    <br>
-<h1 id="executingtests">▶️ Executing tests</h1>
+<h1 id="executingtests">▶️ Running tests</h1>
 When running tests, it doesn’t matter what database is your Node.js connected to or what is the state of that database. Actually, that database is never touched or used —> instead, Pythagora creates a special, ephemeral pythagoraDb database, which it uses to restore the data before each test is executed, which was present at the time when the test was recorded. Because of this, tests can be run on any machine or environment.
 
 **If a test does an update to the database, Pythagora also checks the database to see if it was updated correctly.**
@@ -64,6 +64,24 @@ So, after you captured all requests you want, you just need to change the mode p
    ```   
 
 <br><br>
+<h1 id="commands">📖 Other commands</h1>
+
+These are other available commands for Pythagora:
+<br><br><br>
+<b>--review</b> (runs review process of failed tests, allowing you to update old captured tests or to delete them)
+   ```bash
+   npx pythagora --review
+   ```
+
+<br>
+
+<b>--delete-all-failed</b> (deletes all previously failed tests)
+   ```bash
+   npx pythagora --delete-all-failed
+   ```
+<br>
+
+<br><br>
 <h1 id="options">📖 Options</h1>
 
 These are available options for Pythagora command:
@@ -71,12 +89,6 @@ These are available options for Pythagora command:
 <b>--rerun-all-failed</b> (runs again only tests that failed in previous run)
    ```bash
    npx pythagora --init-command "my start command" --mode test --rerun-all-failed
-   ```
-<br>
-
-<b>--delete-all-failed</b> (deletes all previously failed tests)
-   ```bash
-   npx pythagora --init-command "my start command" --delete-all-failed
    ```
 <br>
 
@@ -95,12 +107,6 @@ These are available options for Pythagora command:
 <b>--ignore endpoint1 endpoint2</b> (starts capturing but ignores all listed endpoints)
    ```bash
    npx pythagora --init-command "my start command" --mode capture --ignore /endpoint1 /endpoint2
-   ```
-<br>
-
-<b>--review</b> (runs review process of failed tests, allowing you to update old captured tests or to delete them)
-   ```bash
-   npx pythagora --review
    ```
 
 <br><br>

@@ -261,6 +261,16 @@ const MONGO_METHODS = {
             conversionFunction: (pipeline) => {
                 // TODO create an array of queries from the aggregate pipeline
                 // each query will be sent to the database to get all documents that will be used in the aggregate pipeline
+                /**
+                 * Example:
+                 * [
+                 *    {
+                 *        subOp: 'find', // or 'update' in the case of $out and $merge
+                 *        otherArgs: {} // empty if subOp is 'find' - if subOp is 'update' then it will contain the update object
+                 *        query: {} // the query object
+                 *    },
+                 * ]
+                 */
             }
         },
         callback: { argName: 'callback' },

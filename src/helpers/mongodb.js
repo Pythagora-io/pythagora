@@ -84,7 +84,6 @@ function stringToMongoObjectId(str) {
     return str;
 }
 
-// TODO provjeriti s Leonom da li je ok da samo maknemo options zato što elementi iz baze mogu biti manji i takvi se insertaju umjesto cijeli
 // usually, we won't pass any options because we want to get whole documents
 async function getCurrentMongoDocs(collection, query, options = {}) {
     return await new Promise((resolve, reject) => {

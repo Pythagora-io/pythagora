@@ -88,7 +88,7 @@ let pythagoraFinishingUp = () => {
     console.log(`\n\n${blue+bold}Pythagora capturing done. Finishing up...${reset}\n`);
 }
 
-function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound, mongoDiff) {
+function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound, mongoDiff, mongoResDiff) {
     console.log(`\n${blue+bold}************************************************************${reset}`);
     console.log(`Endpoint: ${blue}${change.filename.replace(new RegExp(PYTHAGORA_DELIMITER, 'g'), "/").replace('.json', '')}${reset}`);
     console.log(`Test id: ${blue}${change.id}${reset}`);
@@ -102,6 +102,21 @@ function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound, mon
         mongoDiff.forEach((diff) => {
             console.log(`\n${reset}Mongo difference:`);
             console.log(`Collection: ${blue}${bold}${diff.capture.collection}${reset}, Op: ${blue}${bold}${diff.capture.op}${reset}`);
+            logProp.forEach((p) => {
+                if (!compareJson(diff.capture[p], diff.test[p], true)) {
+                    let diffRes = compareJsonDetailed(diff.capture[p], diff.test[p], true);
+                    console.log(`\n${p}:`);
+                    console.log(`${red}- ${JSON.stringify(diffRes.capture)}${reset}`);
+                    console.log(`${green}+ ${JSON.stringify(diffRes.test)}${reset}`);
+                }
+            });
+        })
+    }
+    if (mongoResDiff && mongoResDiff.length) {
+        let logProp = ['mongoResult', 'postQueryRes']
+        mongoResDiff.forEach((diff) => {
+            console.log(`\n${reset}Mongo result difference:`);
+            console.log(`Collection: ${blue}${bold}${diff.collection}${reset}, Op: ${blue}${bold}${diff.op}${reset}`);
             logProp.forEach((p) => {
                 if (!compareJson(diff.capture[p], diff.test[p], true)) {
                     let diffRes = compareJsonDetailed(diff.capture[p], diff.test[p], true);

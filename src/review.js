@@ -13,16 +13,24 @@ if (!fs.existsSync(reviewFilePath)) return console.log('There is no changes stor
 
 const data = fs.readFileSync(reviewFilePath);
 const changes = JSON.parse(data);
+let processedIndexes = [];
 
 const changesActions = {
     A: 'accept',
     D: 'delete',
     S: 'skip',
-    R: 'getRunCmd'
+    R: 'getRunCmd',
+    Q: 'quit'
 };
 const ignoreKeys = ['id', 'filename', 'errors'];
 
-function acceptChanges(change, reviewJson) {
+function saveReviewJson(i, oldJson) {
+    processedIndexes.push(i);
+    let reviewJson = oldJson.filter((el, i) => !processedIndexes.includes(i))
+    fs.writeFileSync(reviewFilePath, JSON.stringify(reviewJson, null, 2));
+}
+
+function acceptChanges(change, index, reviewJson) {
     let filePath = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
     let file = fs.readFileSync(filePath);
     let json = JSON.parse(file);
@@ -38,11 +46,11 @@ function acceptChanges(change, reviewJson) {
     });
 
     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
-    fs.writeFileSync(reviewFilePath, JSON.stringify(reviewJson, null, 2));
+    saveReviewJson(index, reviewJson);
     console.log('Test updated successfully!');
 }
 
-function deleteChanges(change, reviewJson) {
+function deleteChanges(change, index, reviewJson) {
     let filePath = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
     let file = fs.readFileSync(filePath);
     let json = JSON.parse(file);
@@ -50,7 +58,7 @@ function deleteChanges(change, reviewJson) {
     let newJson = json.filter((test) => test.id !== change.id);
 
     fs.writeFileSync(filePath, JSON.stringify(newJson, null, 2));
-    fs.writeFileSync(reviewFilePath, JSON.stringify(reviewJson, null, 2));
+    saveReviewJson(index, reviewJson);
     console.log('Test deleted successfully!');
 }
 
@@ -62,6 +70,11 @@ function getRunCmdChanges(change) {
     let args = require('../src/utils/argumentsCheck.js');
     console.log(`You can run this test with command:`);
     console.log(`\x1b[34m\x1b[1mnpx pythagora --init-command "${metadata.initCommand}" --mode test --test-id ${change.id}\x1b[0m`);
+    process.exit(0);
+}
+
+function quitChanges(change) {
+    console.log(`Exiting review...`);
     process.exit(0);
 }
 
@@ -160,8 +173,9 @@ const displayChangesAndPrompt = (index, arr, displayChange = true) => {
         }
 
         let { mongoNotExecuted, mongoQueryNotFound, mongoDiff } = processIntermediateData(req.intermediateData, change.intermediateData.test);
+        let mongoResDiff = change.errors.filter((e) => e.type === 'mongoResultDifferent');
 
-        logChange(change, ignoreKeys.concat(['intermediateData']), mongoNotExecuted, mongoQueryNotFound, mongoDiff);
+        logChange(change, ignoreKeys.concat(['intermediateData']), mongoNotExecuted, mongoQueryNotFound, mongoDiff, mongoResDiff);
     }
 
     // Create a readline interface to prompt the user for input
@@ -179,7 +193,7 @@ const displayChangesAndPrompt = (index, arr, displayChange = true) => {
         // Call the appropriate function based on the user's input: acceptChanges(), deleteChanges(), skipChanges()
         if (changesActions[answer]) {
             let functionName = `${changesActions[answer]}Changes`;
-            eval(functionName)(change, arr.filter((el, i) => i !== index));
+            eval(functionName)(change, index, arr);
             // Call the function again for the next element after waiting for user input
             setTimeout(() => {
                 displayChangesAndPrompt(index + 1, arr);

@@ -178,11 +178,11 @@ function createCaptureIntermediateData(db, collection, op, query, options, other
     };
 }
 
-function findAndCheckCapturedData(collectionName, op, query, options, otherArgs, request, mongoResult, postQueryRes) {
+function findAndCheckCapturedData(collection, op, query, options, otherArgs, request, mongoResult, postQueryRes) {
     let capturedData = request.intermediateData.find(d => {
         return !d.processed &&
             d.type === 'mongodb' &&
-            d.collection === collectionName &&
+            d.collection === collection &&
             d.op === op &&
             compareJson(d.query, query, true) &&
             compareJson(d.options, options, true) &&
@@ -196,13 +196,24 @@ function findAndCheckCapturedData(collectionName, op, query, options, otherArgs,
     )) {
         request.errors.push({
             type: 'mongoResultDifferent',
-            mongoResult,
-            postQueryRes
+            collection,
+            op,
+            query,
+            options,
+            otherArgs,
+            test: {
+                mongoResult: mongoObjToJson(mongoResult),
+                postQueryRes: mongoObjToJson(postQueryRes)
+            },
+            capture: {
+                mongoResult: capturedData.mongoRes,
+                postQueryRes: capturedData.postQueryRes
+            }
         });
     } else if (!capturedData) {
         request.errors.push({
             type: 'mongoQueryNotFound',
-            collection: collectionName,
+            collection,
             op,
             query,
             options

@@ -1,4 +1,6 @@
 const _ = require("lodash");
+const fs = require("fs");
+const {PYTHAGORA_METADATA_DIR, METADATA_FILENAME} = require("../const/common");
 let mongodb;
 // this is needed so that "mongodb" is not required before mongo patches are applied
 const ObjectId = class {
@@ -243,6 +245,12 @@ function convertToRegularObject(obj) {
     return JSON.parse(stringified, reviver);
 }
 
+function getMetadata() {
+    let metadata = fs.readFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`);
+    metadata = JSON.parse(metadata);
+    return metadata;
+}
+
 module.exports = {
     cutWithDots,
     compareResponse,
@@ -261,5 +269,6 @@ module.exports = {
     dateAsStringRegex,
     stringToDate,
     stringToRegExp,
-    isJSONObject
+    isJSONObject,
+    getMetadata
 }

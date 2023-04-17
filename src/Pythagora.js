@@ -3,7 +3,7 @@ const RedisInterceptor = require('./helpers/redis.js');
 const { cleanupDb } = require('./helpers/mongodb.js');
 const { makeTestRequest } = require('./helpers/testing.js');
 const { logCaptureFinished, pythagoraFinishingUp } = require('./utils/cmdPrint.js');
-const { getCircularReplacer } = require('./utils/common.js');
+const { getCircularReplacer, getMetadata } = require('./utils/common.js');
 const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, METADATA_FILENAME, PYTHAGORA_DELIMITER } = require('./const/common.js');
 
 let  { BatchInterceptor } = require('@mswjs/interceptors');
@@ -23,9 +23,10 @@ class Pythagora {
 
         this.rerunAllFailed = args.rerun_all_failed;
         this.ignoreRedis = args.ignore_redis;
-        this.testId = args.test;
+        this.testId = args.test_id;
         this.pick = args.pick;
         this.ignore = args.ignore;
+        this.initCommand = args.init_command.join(' ');
 
         this.version = global.PythagoraVersion;
         this.idSeq = 0;
@@ -95,7 +96,7 @@ class Pythagora {
 
     getTestsToExecute() {
         if (this.testId) return [this.testId];
-        let metadata = this.getMetadata();
+        let metadata = getMetadata();
         if (!metadata || !metadata.runs) return undefined;
         let runs = metadata.runs;
 
@@ -104,18 +105,12 @@ class Pythagora {
         return undefined;
     }
 
-    getMetadata() {
-        let metadata = fs.readFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`);
-        metadata = JSON.parse(metadata);
-        return metadata;
-    }
-
     saveTestRunMetadata() {
         let passed = _.values(this.testingRequests).filter(t => t.passed).map(t => t.id);
         let failed = _.values(this.testingRequests).filter(t => !t.passed).map(t => t.id);
         if (!passed.length && !failed.length) return;
 
-        let metadata = this.getMetadata();
+        let metadata = getMetadata();
         metadata.runs = (metadata.runs || []).concat([{
             date: new Date(),
             version: this.version,
@@ -123,6 +118,7 @@ class Pythagora {
             failed
         }]);
         metadata.runs = metadata.runs.slice(-10);
+        metadata.initCommand = this.initCommand;
         fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, JSON.stringify(metadata, getCircularReplacer(), 2));
         console.log('Test run metadata saved.');
     }

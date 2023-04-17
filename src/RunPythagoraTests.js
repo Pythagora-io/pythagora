@@ -17,10 +17,9 @@ const fs = require('fs');
         let testsToExecute = global.Pythagora.getTestsToExecute();
         if (testsToExecute && !testsToExecute.length) throw new Error('There are no tests to execute. Check if you put arguments in Pythagora command correctly.');
 
-        files = files.filter(f => f[0] !== '.');
+        files = files.filter(f => f[0] !== '.' && f.indexOf(PYTHAGORA_DELIMITER) === 0);
         logTestsStarting(files);
         for (let file of files) {
-            if (file.indexOf(PYTHAGORA_DELIMITER) !== 0) continue;
             let tests = JSON.parse(fs.readFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`));
             for (let test of tests) {
                 if (!testsToExecute || testsToExecute.includes(test.id)) {

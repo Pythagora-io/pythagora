@@ -4,9 +4,10 @@ const _ = require('lodash');
 
 const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('./const/common.js');
 const { logChange } = require('./utils/cmdPrint.js');
-const { compareJson } = require('./utils/common.js');
+const { compareJson, getMetadata } = require('./utils/common.js');
 
 const reviewFilePath = `./${PYTHAGORA_METADATA_DIR}/${REVIEW_DATA_FILENAME}`;
+const metadata = getMetadata();
 
 if (!fs.existsSync(reviewFilePath)) return console.log('There is no changes stored for review. Please run tests first.');
 
@@ -21,7 +22,7 @@ const changesActions = {
 };
 const ignoreKeys = ['id', 'filename', 'errors'];
 
-function acceptChanges(change) {
+function acceptChanges(change, reviewJson) {
     let filePath = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
     let file = fs.readFileSync(filePath);
     let json = JSON.parse(file);
@@ -37,10 +38,11 @@ function acceptChanges(change) {
     });
 
     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
+    fs.writeFileSync(reviewFilePath, JSON.stringify(reviewJson, null, 2));
     console.log('Test updated successfully!');
 }
 
-function deleteChanges(change) {
+function deleteChanges(change, reviewJson) {
     let filePath = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
     let file = fs.readFileSync(filePath);
     let json = JSON.parse(file);
@@ -48,6 +50,7 @@ function deleteChanges(change) {
     let newJson = json.filter((test) => test.id !== change.id);
 
     fs.writeFileSync(filePath, JSON.stringify(newJson, null, 2));
+    fs.writeFileSync(reviewFilePath, JSON.stringify(reviewJson, null, 2));
     console.log('Test deleted successfully!');
 }
 
@@ -58,7 +61,7 @@ function skipChanges(change) {
 function getRunCmdChanges(change) {
     let args = require('../src/utils/argumentsCheck.js');
     console.log(`You can run this test with command:`);
-    console.log(`\x1b[34m\x1b[1mnpx pythagora --init-command "${args.init_command.join(' ')}" --mode test --test-id ${change.id}\x1b[0m`);
+    console.log(`\x1b[34m\x1b[1mnpx pythagora --init-command "${metadata.initCommand}" --mode test --test-id ${change.id}\x1b[0m`);
     process.exit(0);
 }
 
@@ -167,10 +170,10 @@ const displayChangesAndPrompt = (index, arr, displayChange = true) => {
         // Close the readline interface
         rl.close();
 
-        // Call the appropriate function based on the user's input
+        // Call the appropriate function based on the user's input: acceptChanges(), deleteChanges(), skipChanges()
         if (changesActions[answer]) {
             let functionName = `${changesActions[answer]}Changes`;
-            eval(functionName)(change);
+            eval(functionName)(change, arr.filter((el, i) => i !== index));
             // Call the function again for the next element after waiting for user input
             setTimeout(() => {
                 displayChangesAndPrompt(index + 1, arr);

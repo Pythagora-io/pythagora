@@ -2,6 +2,9 @@
 
 'use strict';
 
+const path = require('path');
+const fs = require('fs');
+
 function exit() {
   // Do not close process until Pythagora finishing up is done
 }
@@ -32,8 +35,9 @@ exec(bashCommand, (error, stdout, stderr) => {
     return;
   }
 
-  const bashPath = stdout.trim();
-  const bashScript = __dirname + '/run.bash';
+  const bashPaths = stdout.split('\r\n').filter(line => line.trim() !== '').map(line => line.trim());
+  const bashPath = bashPaths.find((p) => fs.existsSync(p));
+  const bashScript = path.resolve(process.argv[1].replace('run.js', 'run.bash'));
   const args = process.argv.slice(2);
 
   // Run the bash script and forward all arguments

@@ -92,6 +92,12 @@ These are available options for Pythagora command:
    ```
 <br>
 
+<b>--test-id</b> (runs test by Id)
+   ```bash
+   npx pythagora --init-command "my start command" --mode test --test-id testId
+   ```
+<br>
+
 <b>--delete testId</b> (deletes test with testId)
    ```bash
    npx pythagora --init-command "my start command" --delete testId
@@ -243,7 +249,7 @@ npx pythagora --rename-tests
     - Pythagora tests can easily be updated by running the review command (`npx pythagora --review`). The review process is basically the same as a git review where you'll find each difference between the captured test and the failed one so you can choose if you need to debug this or you want to accept the new change. If you click `a`(as "accept"), the test will automatically update.
 
 - **Automated tests should show me where the bug is - how can I find a bug with Pythagora tests?**
-    - When a test fails, you can easily rerun the test that failed by adding `--test <TEST_ID>` to the test command. This way, if you add breakpoints across your code, you'll be able to easily debug the test itself with all the data the test is using. Also, we have plans for adding bug tracking features but at the moment we don't know when will it be ready.
+    - When a test fails, you can easily rerun the test that failed by adding `--test-id <TEST_ID>` to the test command. This way, if you add breakpoints across your code, you'll be able to easily debug the test itself with all the data the test is using. Also, we have plans for adding bug tracking features but at the moment we don't know when will it be ready.
 
 
 <br><br>

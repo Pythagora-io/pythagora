@@ -153,6 +153,12 @@ const displayChangesAndPrompt = (index, arr, displayChange = true) => {
         let path = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
         let capturedRequests = JSON.parse(fs.readFileSync(path, 'utf8'));
         let req = capturedRequests.find(request => request.id === change.id);
+        if (!req) {
+            setTimeout(() => {
+                displayChangesAndPrompt(index + 1, arr);
+            }, 0);
+        }
+
         let { mongoNotExecuted, mongoQueryNotFound, mongoDiff } = processIntermediateData(req.intermediateData, change.intermediateData.test);
 
         logChange(change, ignoreKeys.concat(['intermediateData']), mongoNotExecuted, mongoQueryNotFound, mongoDiff);

@@ -251,6 +251,10 @@ function getMetadata() {
     return metadata;
 }
 
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 module.exports = {
     cutWithDots,
     compareResponse,
@@ -270,5 +274,6 @@ module.exports = {
     stringToDate,
     stringToRegExp,
     isJSONObject,
-    getMetadata
+    getMetadata,
+    delay
 }

@@ -37,7 +37,7 @@ exec(bashCommand, (error, stdout, stderr) => {
 
   const bashPaths = stdout.split('\r\n').filter(line => line.trim() !== '').map(line => line.trim());
   const bashPath = bashPaths.find((p) => fs.existsSync(p));
-  const bashScript = winOS ? process.argv[1].replace('run.js', 'run.bash') : path.join(__dirname, '/run.bash');
+  const bashScript = winOS ? process.argv[1].replace('run.js', 'run.bash') : path.join(__dirname, 'run.bash');
   const args = process.argv.slice(2);
 
   // Run the bash script and forward all arguments

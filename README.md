@@ -11,18 +11,6 @@
 <br>
 <p align="center">🌟 As an open source tool, it would mean the world to us if you starred Pythagora repo 🌟<br>🙏 Thank you 🙏</p>
 <br>
-<div align="center">
-  <a href="https://youtu.be/BVR7rCdBVdY"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
-</div>
-
-<h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
-<p align=center>
-  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Demo (4 min)</a>
-  <br>
-  <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
-  <br>
-  <a target="_blank" href="https://youtu.be/opQP8NMCiPw">Dev Workflow With Pythagora (4 min)</a>
-</p>
 
 <h1 id="setup">⚙️ Installation</h1>
 
@@ -114,6 +102,23 @@ These are available options for Pythagora command:
    ```bash
    npx pythagora --init-command "my start command" --mode capture --ignore /endpoint1 /endpoint2
    ```
+
+<br><br>
+<h1 id="demo">🎞 Demo</h1>
+
+Here are some demo videos that can help you get started.
+<div align="center">
+  <a href="https://youtu.be/BVR7rCdBVdY"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
+</div>
+
+<h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
+<p align=center>
+  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Demo (4 min)</a>
+  <br>
+  <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
+  <br>
+  <a target="_blank" href="https://youtu.be/opQP8NMCiPw">Dev Workflow With Pythagora (4 min)</a>
+</p>
 
 <br><br>
 <h1 id="codecoveragereport">📝 Code Coverage Report</h1>

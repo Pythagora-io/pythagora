@@ -94,8 +94,9 @@ function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound, mon
     console.log(`Test id: ${blue}${change.id}${reset}`);
     for (let key of Object.keys(change).filter((k) => !ignoreKeys.includes(k))) {
         console.log(`\n${reset}Difference: ${bold}${blue}${key}${reset}`);
-        console.log(`${red}- ${change[key].capture}${reset}`);
-        console.log(`${green}+ ${change[key].test}${reset}`);
+        let diffRes = compareJsonDetailed(change[key].capture, change[key].test, true);
+        console.log(`${red}- ${diffRes.capture}${reset}`);
+        console.log(`${green}+ ${diffRes.test}${reset}`);
     }
     if (mongoDiff && mongoDiff.length) {
         let logProp = ['query', 'options', 'otherArgs']

@@ -3,7 +3,7 @@ const _ = require('lodash');
 const { compareResponse } = require('../utils/common');
 const { logTestPassed, logTestFailed, logAppError } = require('../utils/cmdPrint');
 
-async function makeTestRequest(test, showPassedLog = true, showFailedLog = true) {
+async function makeTestRequest(test, showPassedLog = true, showFailedLog = true, checkOnlyStatusCode = false) {
     try {
         let testResult;
         let reviewJson = {};
@@ -21,10 +21,14 @@ async function makeTestRequest(test, showPassedLog = true, showFailedLog = true)
         if (test.method !== 'GET') {
             options.data = test.body;
         }
+
         const response = await axios(options).catch(e => {
             logAppError('⚠️ Pythagora encountered error while making a request', e.stack);
             return _.extend(e.response, {testResult, reviewJson});
         });
+
+        if (checkOnlyStatusCode) return (response ? response.status : 100);
+
         // TODO fix this along with managing the case where a request is overwritter during the capture so doesn't exist during capture filtering
         if (!global.Pythagora.request) {
             // TODO add log why the request failed

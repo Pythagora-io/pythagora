@@ -163,6 +163,10 @@ function compareJsonDetailed(a, b, strict) {
         let ignoreKeys = ['stacktrace'];
         let aProps = Object.getOwnPropertyNames(a);
         let bProps = Object.getOwnPropertyNames(b);
+        if (aProps.length === 0 && bProps.length === 0 && a !== b) {
+            differencesCapture.value = a;
+            differencesTest.value = b;
+        }
         if (aProps.length !== bProps.length) {
             differencesCapture.propsLength = aProps.length;
             differencesTest.propsLength = bProps.length;

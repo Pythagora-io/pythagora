@@ -173,7 +173,7 @@ const displayChangesAndPrompt = (index, arr, displayChange = true) => {
         }
 
         let { mongoNotExecuted, mongoQueryNotFound, mongoDiff } = processIntermediateData(req.intermediateData, change.intermediateData.test);
-        let mongoResDiff = change.errors.filter((e) => e.type === 'mongoResultDifferent');
+        let mongoResDiff = change.errors ? change.errors.filter((e) => e.type === 'mongoResultDifferent') : [];
 
         logChange(change, ignoreKeys.concat(['intermediateData']), mongoNotExecuted, mongoQueryNotFound, mongoDiff, mongoResDiff);
     }

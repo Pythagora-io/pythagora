@@ -36,7 +36,7 @@ done
 
 if [ "$found_all" = true ] ;
 then
-  pythagora_dir=$(basename $(dirname $(dirname $(dirname $(realpath $0)))))
+  pythagora_dir=$(basename "$(dirname "$(dirname "$(dirname "$(realpath "$0")")")")")
 fi
 
 if [ "$pythagora_dir" == "pythagora-dev" ]

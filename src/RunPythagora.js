@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-let { checkDependencies, searchAllModuleFolders } = require('./helpers/starting.js');
+const { checkDependencies, searchAllModuleFolders } = require('./helpers/starting.js');
+const { logAppCrashed } = require('./utils/cmdPrint.js');
+
 try {
 
     for (let httpModule of ['http', 'https']) {
@@ -49,9 +51,7 @@ try {
 }
 
 process.on('uncaughtException', (error) => {
-    console.error('The app has crashed!');
-    console.error('This is likely not related to Pythagora, but the app itself.');
-    console.error(error);
+    logAppCrashed(global.Pythagora.request, error);
     process.exit(1);
 });
 

@@ -23,6 +23,7 @@ class Pythagora {
 
         this.rerunAllFailed = args.rerun_all_failed;
         this.ignoreRedis = args.ignore_redis;
+        this.generateNegativeStatusTests = args.generate_negative_tests;
         this.testId = args.test_id;
         this.pick = args.pick;
         this.ignore = args.ignore;
@@ -48,7 +49,7 @@ class Pythagora {
     async exit() {
         if (this.cleanupDone) return process.exit();
         this.cleanupDone = true;
-        if (this.mode === MODES.test) {
+        if (this.mode === MODES.test && !this.generateNegativeStatusTests) {
             this.saveTestRunMetadata();
             await cleanupDb(this);
         } else if (this.mode === MODES.capture) {
@@ -231,7 +232,7 @@ class Pythagora {
     }
 
     async getRequestMockDataById(req) {
-        let path = `./${PYTHAGORA_TESTS_DIR}/${req.path.replace(/\//g, PYTHAGORA_DELIMITER)}.json`;
+        let path = `./${PYTHAGORA_TESTS_DIR}/${req.headers['x-pythagora-special-test-file'] || req.path.replace(/\//g, PYTHAGORA_DELIMITER)}.json`;
         if (!fs.existsSync(path)) return;
         let capturedRequests = JSON.parse(await fs.promises.readFile(path, 'utf8'));
         return capturedRequests.find(request => request.id === req.headers['pythagora-req-id']);

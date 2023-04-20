@@ -1,6 +1,7 @@
 let { cutWithDots, compareJson, compareJsonDetailed } = require('./common');
 let pythagoraErrors = require('../const/errors');
 let { PYTHAGORA_DELIMITER } = require('../const/common');
+let _ = require('lodash');
 
 let red = '\x1b[31m',
     yellow = '\x1b[33m',
@@ -145,6 +146,13 @@ function logAndExit(message, type='error') {
     process.exit(1);
 }
 
+function logAppCrashed(request, error) {
+    console.error('The app has crashed!');
+    console.log(`${blue}Test id: ${bold}${_.get(request, 'id')}${reset}`);
+    console.log(`${blue}Test endpoint: ${bold}${_.get(request, 'endpoint')}${reset}`);
+    console.error('This is likely not related to Pythagora, but the app itself.');
+    console.error(error);
+}
 
 module.exports = {
     logEndpointCaptured,
@@ -158,5 +166,6 @@ module.exports = {
     logWithStoreId,
     logAppError,
     logChange,
-    logAndExit
+    logAndExit,
+    logAppCrashed
 }

@@ -9,7 +9,11 @@ module.exports = function (httpModule) {
         global.Pythagora = new Pythagora(args);
         global.Pythagora.setMongoClient(global.pythagoraMongoClient);
         global.Pythagora.runRedisInterceptor().then(() => {
-            if (args.mode === 'test') {
+            if (args.mode === 'test' && args.generate_negative_status_tests) {
+                global.Pythagora.runWhenServerReady(() => {
+                    require('../commands/generate-negative-status-tests.js')(args.generate_negative_status_tests, args.negative_tests_file);
+                });
+            } else if (args.mode === 'test') {
                 global.Pythagora.runWhenServerReady(() => {
                     require('../RunPythagoraTests.js');
                 });

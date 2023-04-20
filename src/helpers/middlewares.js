@@ -300,6 +300,7 @@ function setGlobalRequest(reqId, pythagora) {
 
     global.Pythagora.request = {
         id: req.id,
+        endpoint: req.endpoint,
         errors: _.clone(req.errors),
         intermediateData: req.testIntermediateData
     };

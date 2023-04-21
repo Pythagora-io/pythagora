@@ -67,7 +67,6 @@ function skipChanges(change) {
 }
 
 function getRunCmdChanges(change) {
-    let args = require('../src/utils/argumentsCheck.js');
     console.log(`You can run this test with command:`);
     console.log(`\x1b[34m\x1b[1mnpx pythagora --init-command "${metadata.initCommand}" --mode test --test-id ${change.id}\x1b[0m`);
     process.exit(0);

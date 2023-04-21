@@ -26,6 +26,7 @@ class Pythagora {
         this.testId = args.test_id;
         this.pick = args.pick;
         this.ignore = args.ignore;
+        this.fullCodeCoverageReport = args.full_code_coverage_report;
         this.initCommand = args.init_command.join(' ');
 
         this.version = global.PythagoraVersion;

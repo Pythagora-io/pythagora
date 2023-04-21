@@ -1,6 +1,6 @@
 {
   "name": "pythagora",
-  "version": "0.0.41",
+  "version": "0.0.43",
   "author": {
     "name": "Zvonimir Sabljic",
     "email": "hi@pythagora.io"
@@ -21,7 +21,7 @@
     "pythagora": "src/bin/run.js"
   },
   "engines": {
-    "node": ">=16.x"
+    "node": ">=14.x"
   },
   "dependencies": {
     "@mswjs/interceptors": "^0.19.2",

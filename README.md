@@ -38,8 +38,11 @@ Pythagora records all requests to endpoints of your app with the response and ev
       ```
 2. Click around your application or make requests to your API. Pythagora will capture all requests and responses.
    <br><br>
-   NOTE: To stop the capture, you can exit the process like you usually do (Eg. `Ctrl + C`)   
-   <br>
+   <br><br>
+   <b>NOTES: </b>
+   - to stop the capture, you can exit the process like you usually do (Eg. `Ctrl + C`)
+   - on Windows make sure to run all commands using `Git Bash` and not `Power Shell` or anything similiar
+      <br>
 <h1 id="executingtests">▶️ Running tests</h1>
 When running tests, it doesn’t matter what database is your Node.js connected to or what is the state of that database. Actually, that database is never touched or used —> instead, Pythagora creates a special, ephemeral pythagoraDb database, which it uses to restore the data before each test is executed, which was present at the time when the test was recorded. Because of this, tests can be run on any machine or environment.
 
@@ -50,6 +53,23 @@ So, after you captured all requests you want, you just need to change the mode p
    ```bash
    npx pythagora --init-command "my start command" --mode test
    ```   
+
+<br><br>
+<h1 id="demo">🎞 Demo</h1>
+
+Here are some demo videos that can help you get started.
+<div align="center">
+  <a href="https://youtu.be/BVR7rCdBVdY"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
+</div>
+
+<h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
+<p align=center>
+  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Demo (4 min)</a>
+  <br>
+  <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
+  <br>
+  <a target="_blank" href="https://youtu.be/opQP8NMCiPw">Dev Workflow With Pythagora (4 min)</a>
+</p>
 
 <br><br>
 <h1 id="commands">📖 Other commands</h1>
@@ -102,23 +122,6 @@ These are available options for Pythagora command:
    ```bash
    npx pythagora --init-command "my start command" --mode capture --ignore /endpoint1 /endpoint2
    ```
-
-<br><br>
-<h1 id="demo">🎞 Demo</h1>
-
-Here are some demo videos that can help you get started.
-<div align="center">
-  <a href="https://youtu.be/BVR7rCdBVdY"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
-</div>
-
-<h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
-<p align=center>
-  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Demo (4 min)</a>
-  <br>
-  <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
-  <br>
-  <a target="_blank" href="https://youtu.be/opQP8NMCiPw">Dev Workflow With Pythagora (4 min)</a>
-</p>
 
 <br><br>
 <h1 id="codecoveragereport">📝 Code Coverage Report</h1>

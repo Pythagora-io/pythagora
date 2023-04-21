@@ -1,0 +1,64 @@
+I will give you the data from an API request from which I want you to create integration automated tests in Jest.
+
+Here are the details about parameters from the request data:
+`endpoint` - endpoint for the API request
+`method` - the HTTP method of the request
+`headers` - the HTTP headers of the request
+`reqBody` - the body of the request (eg. in a POST request)
+`reqQuery` - the query parameters of the request
+`response` - that is the response that the server returned from the request
+`statusCode` - the returned status code for the request
+`mongoQueryNum` - the number of Mongo queries executed during the request processing
+`mongoQueries` - it shows an array of all Mongo queries that were executed during the request processing - each object in this array represents one mongo query that was made
+
+
+Here are the details about the parameters of objects inside `mongoQueries` array:
+`preQueryDocs` - mongo documents that were in the database before the query was made
+`postQueryDocs` - mongo documents that were in the database after the query was made
+`mongoResponse` - a response that Mongo returned
+`mongoQuery` - a query object for finding documents in the database
+`mongoOptions` - options for the mongo query
+`mongoOperation` - mongo operation (eg. "find", "insert", etc.)
+`db` - the database on which the query is being made
+`collection` - the collection on which the query is being made
+
+-----------------------------------------------------------------------------------------------------------------------
+
+`preQueryDocs` and `postQueryDocs` are important so that you can test if an update in the database happened correctly so make sure to include in the test a check to see if the database was correctly updated. Also, since Mongo's `ObjectId` is not a valid JSON value, you might see a string like this - "ObjectId(\"642548c3dabd5517e39b5827\")". Keep in mind that this should be converted to `new ObjectId("642548c3dabd5517e39b5827")` and if you need to initiate ObjectId, you can require it from "@pythagora.io/pythagora-dev/src/utils/common" - like this:
+```javascript
+const { ObjectId } = require("@pythagora.io/pythagora-dev/src/utils/common");
+let someObjectId = new ObjectId(id);
+```
+
+Don't assert or set up every single parameter but only the ones that are important (the ones that are usually used in Jest integration tests).
+
+If the database was updated, check if the database was updated correctly. When you need to make a query to a Mongo collection, use `global.getMongoCollection(collection)` function which will return the MongoDB collection which you can query how you want. For example, if you want to do a `find` query on a collection "users", you can do `global.getMongoCollection('users').find(query)`.
+
+In the Jest code, add appropriate names for each test.
+
+If you need to use the Mongo database for anything, add `await global.setUpMongo(testId);` to the beginning of the `beforeAll` function. You don't need to insert any documents in the database because all needed documents will be inserted in the `setUpMongo` function. You can find the `testId` in the JSON request data that I will give you.
+
+If you need an auth token for the test, you can retrieve it by calling `testAuth` function from the file "./auth". Like this:
+```javascript
+const testAuth = require('./auth');
+let authToken;
+beforeAll(async () => {
+    await global.setUpMongo(testId);
+    authToken = await testAuth();
+});
+```
+It is in the format `Bearer <TOKEN>`. If you use this code, make sure to add the following `afterAll` function:
+```javascript
+afterAll(async () => {
+    await global.dropDatabase();
+});
+```
+
+When you make an API request, make sure to use `axios` to the URL `http://localhost:3000`.
+
+Here is the request data in a JSON format:
+```json
+{{testData}}
+```
+
+Please create automated integration tests in Jest.

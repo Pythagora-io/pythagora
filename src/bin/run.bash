@@ -51,7 +51,7 @@ do
     init_command="${args[$i+1]}"
   elif [[ "${args[$i]}" == "--review" ]]
   then
-    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/review.js"
+    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/review.js"
     exit 0
   elif [[ "${args[$i]}" =~ ^--rename[-_]tests$ ]]
   then

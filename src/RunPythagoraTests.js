@@ -5,6 +5,7 @@ const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHA
 
 const fs = require('fs');
 const { exec } = require('child_process');
+const {getAllGeneratedTests} = require("./utils/common");
 
 function openFullCodeCoverageReport() {
     let fullCodeCoverageReportPath = `./pythagora_tests/code_coverage_report/lcov-report/index.html`;
@@ -17,24 +18,19 @@ function openFullCodeCoverageReport() {
     }
 }
 
-async function runTests(files, testsToExecute) {
+async function runTests(tests, testsToExecute) {
     let results = [];
     let reviewData = [];
 
-    for (let file of files) {
-        let tests = JSON.parse(fs.readFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`));
-        for (let test of tests) {
-            if (!testsToExecute || testsToExecute.includes(test.id)) {
-                let { testResult, reviewJson } = await makeTestRequest(test);
-                if (Object.keys(reviewJson).length) {
-                    reviewJson.id = test.id;
-                    reviewJson.filename = file;
-                }
-
-                if (!testResult) reviewData.push(reviewJson);
-                results.push(testResult || false);
-            }
+    for (let test of tests) {
+        let { testResult, reviewJson } = await makeTestRequest(test);
+        if (Object.keys(reviewJson).length) {
+            reviewJson.id = test.id;
+            reviewJson.filename = file;
         }
+
+        if (!testResult) reviewData.push(reviewJson);
+        results.push(testResult || false);
     }
 
     return { results, reviewData };
@@ -56,14 +52,12 @@ function updateReviewFile(testsToExecute, reviewData) {
     let error;
     try {
         const startTime = new Date();
-        let files = fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
+        let pythagoraTests = getAllGeneratedTests();
         let testsToExecute = global.Pythagora.getTestsToExecute();
         if (testsToExecute && !testsToExecute.length) throw new Error('There are no tests to execute. Check if you put arguments in Pythagora command correctly.');
 
-        files = files.filter(f => f[0] !== '.' && f.indexOf(PYTHAGORA_DELIMITER) === 0);
-        logTestsStarting(files);
-
-        let { results, reviewData } = await runTests(files, testsToExecute);
+        pythagoraTests = pythagoraTests.filter(t => !testsToExecute || testsToExecute.includes(t.id));
+        let { results, reviewData } = await runTests(pythagoraTests);
 
         let passedCount = results.filter(r => r).length,
             failedCount = results.filter(r => !r).length;

@@ -102,7 +102,7 @@ function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound, mon
         let logProp = ['query', 'options', 'otherArgs']
         mongoDiff.forEach((diff) => {
             console.log(`\n${reset}Mongo difference:`);
-            console.log(`Collection: ${blue}${bold}${diff.capture.collection}${reset}, Op: ${blue}${bold}${diff.capture.op}${reset}`);
+            console.log(`Collection: ${blue}${bold}${diff.capture.collection}${reset}, Operation: ${blue}${bold}${diff.capture.op}${reset}`);
             logProp.forEach((p) => {
                 if (!compareJson(diff.capture[p], diff.test[p], true)) {
                     let diffRes = compareJsonDetailed(diff.capture[p], diff.test[p], true);
@@ -117,7 +117,7 @@ function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound, mon
         let logProp = ['mongoResult', 'postQueryRes']
         mongoResDiff.forEach((diff) => {
             console.log(`\n${reset}Mongo result difference:`);
-            console.log(`Collection: ${blue}${bold}${diff.collection}${reset}, Op: ${blue}${bold}${diff.op}${reset}`);
+            console.log(`Collection: ${blue}${bold}${diff.collection}${reset}, Operation: ${blue}${bold}${diff.op}${reset}`);
             logProp.forEach((p) => {
                 if (!compareJson(diff.capture[p], diff.test[p], true)) {
                     let diffRes = compareJsonDetailed(diff.capture[p], diff.test[p], true);
@@ -130,12 +130,12 @@ function logChange(change, ignoreKeys, mongoNotExecuted, mongoQueryNotFound, mon
     }
     if (mongoNotExecuted && mongoNotExecuted.length) {
         console.log(`\n${reset}Mongo queries that executed while ${bold+blue}capturing${reset} (but didn't while testing):`);
-        console.log(`${yellow}${mongoNotExecuted.map((m) => 'Op: ' + m.op + '\nCollection: ' + m.collection + '\nQuery: ' + JSON.stringify(m.query)).join('\n\n')}`);
+        console.log(`${yellow}${mongoNotExecuted.map((m) => 'Operation: ' + m.op + '\nCollection: ' + m.collection + '\nQuery: ' + JSON.stringify(m.query)).join('\n\n')}`);
         console.log(`${reset}`);
     }
     if (mongoQueryNotFound && mongoQueryNotFound.length) {
         console.log(`\n${reset}Mongo queries that executed while ${bold+blue}testing${reset} (but didn't while capturing):`);
-        console.log(`${yellow}${mongoQueryNotFound.map((m) => 'Op: ' + m.op + '\nCollection: ' + m.collection + '\nQuery: ' + JSON.stringify(m.query)).join('\n\n')}`);
+        console.log(`${yellow}${mongoQueryNotFound.map((m) => 'Operation: ' + m.op + '\nCollection: ' + m.collection + '\nQuery: ' + JSON.stringify(m.query)).join('\n\n')}`);
         console.log(`${reset}`);
     }
 }

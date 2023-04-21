@@ -30,7 +30,7 @@ switch(os.type()) {
 
 // Find the location of bash
 exec(bashCommand, (error, stdout, stderr) => {
-  if (error || stderr) {
+  if (error || !stdout) {
     console.error('Bash not found. Please install bash and make sure it is in your PATH.');
     return;
   }

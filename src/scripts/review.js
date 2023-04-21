@@ -2,9 +2,9 @@ const fs = require('fs');
 const readline = require('readline');
 const _ = require('lodash');
 
-const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('./const/common.js');
-const { logChange } = require('./utils/cmdPrint.js');
-const { compareJson, getMetadata } = require('./utils/common.js');
+const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('../const/common.js');
+const { logChange } = require('../utils/cmdPrint.js');
+const { compareJson, getMetadata } = require('../utils/common.js');
 
 const reviewFilePath = `./${PYTHAGORA_METADATA_DIR}/${REVIEW_DATA_FILENAME}`;
 const metadata = getMetadata();

@@ -145,6 +145,12 @@ function logAndExit(message, type='error') {
     process.exit(1);
 }
 
+function testExported(testId) {
+    let args = require('../utils/argumentsCheck.js');
+    console.log(`${green}${bold}Woohoo - you\'ve exported a test to Jest!${reset} You can run it with command:`);
+    console.log(`${blue}${bold}npx pythagora --init-command \"${args.init_command.join(' ')}\" --mode jest --test-id ${testId} --no-code-coverage${reset}`)
+}
+
 
 module.exports = {
     logEndpointCaptured,
@@ -158,5 +164,6 @@ module.exports = {
     logWithStoreId,
     logAppError,
     logChange,
-    logAndExit
+    logAndExit,
+    testExported
 }

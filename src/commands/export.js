@@ -43,11 +43,10 @@ async function exportTest(testId) {
     test = convertOldTestForGPT(test);
     fs.writeFileSync(`./${EXPORTED_TESTS_DATA_DIR}/${testId}.json`, JSON.stringify(test.mongoQueries, null, 2));
 
-    // let gptResponse = await getJestTestFromPythagoraData(test);
-    let gptResponse = fs.readFileSync('./gptResponse.js', 'utf-8');
+    let gptResponse = await getJestTestFromPythagoraData(test);
     let jestTest = cleanupGPTResponse(gptResponse);
 
-    fs.writeFileSync(`./${EXPORTED_TESTS_DIR}/${testId}.js`, jestTest);
+    fs.writeFileSync(`./${EXPORTED_TESTS_DIR}/${testId}.test.js`, jestTest);
     testExported(testId);
 }
 

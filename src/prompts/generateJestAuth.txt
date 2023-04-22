@@ -1,0 +1,35 @@
+I'm going to give you the code for a route for the user login and the mongo queries that are made during the login API request.
+
+I want you to create a function that returns an authentication token that will be used for Jest test suite and will be called in `beforeAll` function. It will be used to retrieve the authentication token so that other tests in the test suite can make API requests that require authentication. Your code needs to create a user in the database, make a login and retrieves an authentication token.
+
+When you need to make a query to a Mongo collection, use `global.getMongoCollection(collection)` function which will return the MongoDB collection which you can query how you want. For example, if you want to do a `find` query on a collection "users", you can do `global.getMongoCollection('users').find(query)`.
+
+When making an API request, don't use the `app` variable (eg. `request(app)`) but use `axios` instead to make a regular API request towards URL `http://localhost:3000`.
+
+Any variable that you don't have, you can get by calling `global.Pythagora.getVariable['variableName']`. For example, if you need to get an `object.key`, you can get it by calling `global.Pythagora.getVariable['object'].key`.
+
+Here is a JSON array of Mongo queries made during the login API request with body:
+BODY:
+```json
+{{loginRequestBody}}
+```
+
+MONGO QUERIES ARRAY:
+```json
+{{mongoQueriesArray}}
+```
+
+Here are the details about the parameters of objects inside the array of mongo queries:
+`preQueryDocs` - mongo documents that were in the database before the query was made
+`postQueryDocs` - mongo documents that were in the database after the query was made
+`mongoResponse` - a response that Mongo returned
+`mongoQuery` - a query object for finding documents in the database
+`mongoOptions` - options for the mongo query
+`mongoOperation` - mongo operation (eg. "find", "insert", etc.)
+`db` - the database on which the query is being made
+`collection` - the collection on which the query is being made
+
+Here is the route code:
+```javascript
+{{loginRouteCode}}
+```

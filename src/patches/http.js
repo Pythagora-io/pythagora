@@ -1,5 +1,4 @@
 let { exportTest } = require('../commands/export');
-let { run: runExportedJestTests } = require('../commands/jest');
 
 module.exports = function (httpModule) {
     let args = require('../utils/argumentsCheck.js');
@@ -18,7 +17,8 @@ module.exports = function (httpModule) {
                 });
             } else if (args.mode === 'jest') {
                 global.Pythagora.runWhenServerReady(() => {
-                    runExportedJestTests();
+                    let { run } = require('../commands/jest');
+                    run();
                 });
             } else if (args.mode === 'test') {
                 global.Pythagora.runWhenServerReady(() => {

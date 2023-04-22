@@ -24,9 +24,9 @@ Here are the details about the parameters of objects inside `mongoQueries` array
 
 -----------------------------------------------------------------------------------------------------------------------
 
-`preQueryDocs` and `postQueryDocs` are important so that you can test if an update in the database happened correctly so make sure to include in the test a check to see if the database was correctly updated. Also, since Mongo's `ObjectId` is not a valid JSON value, you might see a string like this - "ObjectId(\"642548c3dabd5517e39b5827\")". Keep in mind that this should be converted to `new ObjectId("642548c3dabd5517e39b5827")` and if you need to initiate ObjectId, you can require it from "@pythagora.io/pythagora-dev/src/utils/common" - like this:
+`preQueryDocs` and `postQueryDocs` are important so that you can test if an update in the database happened correctly so make sure to include in the test a check to see if the database was correctly updated. Also, since Mongo's `ObjectId` is not a valid JSON value, you might see a string like this - "ObjectId(\"642548c3dabd5517e39b5827\")". Keep in mind that this should be converted to `new ObjectId("642548c3dabd5517e39b5827")` and if you need to initiate ObjectId, you can require it from "pythagora/src/utils/common" - like this:
 ```javascript
-const { ObjectId } = require("@pythagora.io/pythagora-dev/src/utils/common");
+const { ObjectId } = require("pythagora/src/utils/common");
 let someObjectId = new ObjectId(id);
 ```
 
@@ -36,21 +36,21 @@ If the database was updated, check if the database was updated correctly. When y
 
 In the Jest code, add appropriate names for each test.
 
-If you need to use the Mongo database for anything, add `await global.setUpMongo(testId);` to the beginning of the `beforeAll` function. You don't need to insert any documents in the database because all needed documents will be inserted in the `setUpMongo` function. You can find the `testId` in the JSON request data that I will give you.
+If you need to use the Mongo database for anything, add `await global.setUpDb(testId);` to the beginning of the `beforeAll` function. You don't need to insert any documents in the database because all needed documents will be inserted in the `setUpDb` function. You can find the `testId` in the JSON request data that I will give you.
 
 If you need an auth token for the test, you can retrieve it by calling `testAuth` function from the file "./auth". Like this:
 ```javascript
 const testAuth = require('./auth');
 let authToken;
 beforeAll(async () => {
-    await global.setUpMongo(testId);
+    await global.setUpDb(testId);
     authToken = await testAuth();
 });
 ```
 It is in the format `Bearer <TOKEN>`. If you use this code, make sure to add the following `afterAll` function:
 ```javascript
 afterAll(async () => {
-    await global.dropDatabase();
+    await global.cleanUpDb();
 });
 ```
 

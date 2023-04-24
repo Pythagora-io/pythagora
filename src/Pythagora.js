@@ -258,9 +258,9 @@ class Pythagora {
     }
 
     isMongoConnected() {
-        return this.mongoClient.connected ||
+        return this.mongoClient && (this.mongoClient.connected ||
             (this.mongoClient.isConnected && this.mongoClient.isConnected()) ||
-            (this.mongoClient.topology && this.mongoClient.topology.isConnected && this.mongoClient.topology.isConnected())
+            (this.mongoClient.topology && this.mongoClient.topology.isConnected && this.mongoClient.topology.isConnected()))
     }
 
     runWhenServerReady(callback) {

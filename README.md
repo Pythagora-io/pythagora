@@ -59,7 +59,7 @@ So, after you captured all requests you want, you just need to change the mode p
 
 Here are some demo videos that can help you get started.
 <div align="center">
-  <a href="https://youtu.be/BVR7rCdBVdY"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
+  <a href="https://youtu.be/YxzvljVyaEA"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
 </div>
 
 <h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
@@ -72,18 +72,20 @@ Here are some demo videos that can help you get started.
 </p>
 
 <br><br>
-<h1 id="commands">📖 Other commands</h1>
+<h1 id="commands">🔧 Maintenance / update of tests</h1>
 
-These are other available commands for Pythagora:
-<br><br><br>
-<b>--review</b> (runs review process of failed tests, allowing you to update old captured tests or to delete them)
+To update failed tests you can run review command. With review process it allows you to update, delete or rerun old captured tests that are failing now.
+<br><br>
    ```bash
    npx pythagora --review
    ```
 
-<br>
+<br><br>
 
-<b>--delete-all-failed</b> (deletes all previously failed tests)
+<h1 id="commands">❌ Deleting tests</h1>
+This command allows you to delete all tests that failed in last test run.
+<br><br>
+
    ```bash
    npx pythagora --delete-all-failed
    ```

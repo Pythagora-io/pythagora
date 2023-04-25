@@ -33,21 +33,24 @@ function checkDependencies() {
     if (!mongodb || !express) throw new Error(`'Pythagora is unable to check dependencies. Express and MongoDb are necessary for Pythagora to run. Exiting...`);
 }
 
-function searchAllModuleFolders(rootDir, moduleName) {
-    let listOfModulePaths = [];
+function searchAllModuleFolders(rootDir, moduleNames) {
+    let modulePaths = moduleNames.reduce((obj, key) => ({ ...obj, [key]: [] }), {});
     fs.readdirSync(rootDir).forEach(file => {
         const filePath = path.join(rootDir, file);
         const isDirectory = fs.lstatSync(filePath).isDirectory();
 
         if (isDirectory) {
-            if (file === moduleName && filePath.includes('node_modules')) {
-                listOfModulePaths.push(filePath);
+            if (moduleNames.includes(file) && filePath.includes('node_modules')) {
+                modulePaths[file].push(filePath);
             } else {
-                listOfModulePaths = listOfModulePaths.concat(searchAllModuleFolders(filePath, moduleName));
+                let  modulePathsRecursive = searchAllModuleFolders(filePath, moduleNames);
+                for (const key of moduleNames) {
+                    modulePaths[key] = [...modulePaths[key], ...modulePathsRecursive[key]];
+                }
             }
         }
     });
-    return listOfModulePaths;
+    return modulePaths;
 }
 
 module.exports = {

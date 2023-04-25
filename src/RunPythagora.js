@@ -2,14 +2,16 @@
 let { checkDependencies, searchAllModuleFolders } = require('./helpers/starting.js');
 try {
 
+    let findModules = ['express', 'mongodb', 'jsonwebtoken'];
+    let mapModules = searchAllModuleFolders(process.cwd(), findModules);
+
     for (let httpModule of ['http', 'https']) {
         require.cache[require.resolve(httpModule)] = {
             exports: require('./patches/http.js')(httpModule)
         };
     }
 
-    // TODO - optimize by runnning only once through folders for both express and mongo
-    for (let expressPath of searchAllModuleFolders(process.cwd(), 'express')) {
+    for (let expressPath of mapModules.express) {
         try {
             require.cache[require.resolve('express')] = {
                 exports: require('./patches/express.js')
@@ -19,7 +21,7 @@ try {
         }
     }
 
-    for (let mongoPath of searchAllModuleFolders(process.cwd(), 'mongodb')) {
+    for (let mongoPath of mapModules.mongodb) {
         try {
             require.cache[require.resolve(mongoPath + '/lib/collection.js')] = {
                 exports: require('./patches/mongo-collection.js')(mongoPath)
@@ -28,11 +30,11 @@ try {
                 exports: require('./patches/mongo-client.js')(mongoPath)
             };
         } catch (e) {
-            // dummy catch
+            // console.log(`Can't patch mongodb at ${mongoPath}`);
         }
     }
 
-    for (let jwtPath of searchAllModuleFolders(process.cwd(), 'jsonwebtoken')) {
+    for (let jwtPath of mapModules.jsonwebtoken) {
         try {
             require.cache[require.resolve('jsonwebtoken/verify')] = {
                 exports: require('./patches/jwt.js')(jwtPath)

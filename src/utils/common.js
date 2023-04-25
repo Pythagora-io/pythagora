@@ -1,5 +1,6 @@
 const _ = require("lodash");
 const fs = require("fs");
+const net = require('net');
 const {PYTHAGORA_METADATA_DIR, METADATA_FILENAME} = require("../const/common");
 let mongodb;
 // this is needed so that "mongodb" is not required before mongo patches are applied
@@ -259,6 +260,40 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function isPortTaken(port) {
+    return new Promise((resolve, reject) => {
+        const server = net.createServer();
+        server.once('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                resolve(true);
+            } else {
+                reject(err);
+            }
+        });
+        server.once('listening', () => {
+            server.close();
+            resolve(false);
+        });
+        server.listen(port);
+    });
+}
+
+async function getFreePortInRange(minPort, maxPort) {
+    let listenPort = 0;
+
+    while (!listenPort) {
+        listenPort = Math.floor(Math.random() * (maxPort - minPort + 1)) + minPort;
+        if (await isPortTaken(listenPort)) {
+            console.log(`Port ${listenPort} is already in use`);
+            listenPort = 0;
+        } else {
+            console.log(`Using port ${listenPort}`);
+        }
+    }
+
+    return listenPort;
+}
+
 module.exports = {
     cutWithDots,
     compareResponse,
@@ -279,5 +314,7 @@ module.exports = {
     stringToRegExp,
     isJSONObject,
     getMetadata,
-    delay
+    delay,
+    isPortTaken,
+    getFreePortInRange
 }

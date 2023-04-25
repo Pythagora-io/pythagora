@@ -72,27 +72,36 @@ Here are some demo videos that can help you get started.
 </p>
 
 <br><br>
+<h1 id="commands">🔎 Examples</h1>
+Here are examples of open sourced repositories which we forked and created tests with Pythagora so you can easily see it in action. 
+
+[![MERN E-commerce](https://img.shields.io/badge/MERN%20E--commerce-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--mern--ecommerce-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-mern-ecommerce)
+
+
+<br><br>
 <h1 id="commands">🔧 Maintenance / update of tests</h1>
 
-To update failed tests you can run review command. With review process it allows you to update, delete or rerun old captured tests that are failing now.
+Sometimes tests failing is expected behaviour if the code behaviour is updated. In those cases, tests need to be updated. Pythagora provides a git like interface where you can review
+all changes that are breaking the test and easily (A)ccept them if they are expected or (D)elete the test if you think it's invalid. To start the review process, just run the Pythagora command with `--review` flag.
 <br><br>
-   ```bash
-   npx pythagora --review
-   ```
+```bash
+npx pythagora --review
+```
 
+You can watch the [workflow with Pythagora video](https://www.youtube.com/watch?v=opQP8NMCiPw) in which I go deeper into details of the review process.
 <br><br>
 
 <h1 id="commands">❌ Deleting tests</h1>
-This command allows you to delete all tests that failed in last test run.
+
+If you made some bigger changes to the repo and you want to rewrite many tests, you can delete all of them with `--delete-all-failed` flag.
 <br><br>
 
-   ```bash
-   npx pythagora --delete-all-failed
-   ```
+```bash
+npx pythagora --delete-all-failed
+```
 <br>
 
-<br><br>
-<h1 id="options">📖 Options</h1>
+<h1 id="options">📖 Other Options</h1>
 
 These are available options for Pythagora command:
 <br><br><br>

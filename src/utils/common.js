@@ -284,10 +284,10 @@ async function getFreePortInRange(minPort, maxPort) {
     while (!listenPort) {
         listenPort = Math.floor(Math.random() * (maxPort - minPort + 1)) + minPort;
         if (await isPortTaken(listenPort)) {
-            console.log(`Port ${listenPort} is already in use`);
+            // console.log(`Port ${listenPort} is already in use`);
             listenPort = 0;
         } else {
-            console.log(`Using port ${listenPort}`);
+            // console.log(`Using port ${listenPort}`);
         }
     }
 

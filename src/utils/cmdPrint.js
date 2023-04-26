@@ -151,8 +151,12 @@ function testExported(testId) {
     console.log(`${blue}${bold}npx pythagora --init-command \"${args.init_command.join(' ')}\" --mode jest --test-id ${testId} --no-code-coverage${reset}`)
 }
 
-function testExportStarted(testId) {
-    console.log(`${green}${bold}Exporting test ${testId} started - waiting on GPT...${reset}`);
+function testExportStartedLog() {
+    console.log(`${green}${bold}Exporting test started - waiting on GPT...${reset}`);
+}
+
+function jestAuthFileGenerationLog() {
+    console.log(`${green}${bold}Creating auth file for Jest tests...${reset}`);
 }
 
 
@@ -167,7 +171,8 @@ module.exports = {
     pythagoraFinishingUp,
     logWithStoreId,
     logAppError,
-    testExportStarted,
+    testExportStartedLog,
     logAndExit,
-    testExported
+    testExported,
+    jestAuthFileGenerationLog
 }

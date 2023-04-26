@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const { Configuration, OpenAIApi } = require("openai");
 const {insertVariablesInText} = require("../utils/common");
+const {testExportStartedLog, jestAuthFileGenerationLog} = require("../utils/cmdPrint");
 let configuration, openai;
 
 async function getOpenAIClient() {
@@ -18,6 +19,7 @@ function getPromptFromFile(fileName, variables) {
 }
 
 async function getJestTestFromPythagoraData(reqData) {
+    testExportStartedLog();
     await getOpenAIClient();
     const completion = await openai.createChatCompletion({
         model: "gpt-4",
@@ -40,8 +42,16 @@ async function getJestTestFromPythagoraData(reqData) {
     return completion.data.choices[0].message.content;
 }
 
-async function getJestAuthFunction(reqData) {
+async function getJestAuthFunction(loginMongoQueriesArray, loginRequestBody, loginEndpointPath) {
+    jestAuthFileGenerationLog();
     await getOpenAIClient();
+
+    let prompt = getPromptFromFile('generateJestAuth.txt', {
+        loginRequestBody,
+        loginMongoQueriesArray,
+        loginEndpointPath
+    });
+
     const completion = await openai.createChatCompletion({
         model: "gpt-4",
         n: 1,
@@ -55,7 +65,7 @@ async function getJestAuthFunction(reqData) {
                     "When you create names for your tests you make sure that they are very intuitive and in a human-readable form."},
             {
                 "role": "user",
-                "content": getPromptFromFile('generateJestAuth.txt', { testData: reqData }),
+                "content": prompt,
             },
         ],
     });
@@ -64,5 +74,6 @@ async function getJestAuthFunction(reqData) {
 }
 
 module.exports = {
-    getJestTestFromPythagoraData
+    getJestTestFromPythagoraData,
+    getJestAuthFunction
 }

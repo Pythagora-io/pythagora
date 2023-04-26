@@ -38,13 +38,13 @@ In the Jest code, add appropriate names for each test.
 
 If you need to use the Mongo database for anything, add `await global.setUpDb(testId);` to the beginning of the `beforeAll` function. You don't need to insert any documents in the database because all needed documents will be inserted in the `setUpDb` function. You can find the `testId` in the JSON request data that I will give you.
 
-If you need an auth token for the test, you can retrieve it by calling `testAuth` function from the file "./auth". Like this:
+If you need an auth token for the test, you can retrieve it by calling `getAuthToken` function from the file "./auth" and passing the URL of the app (eg. "http://localhost:3000"). Like this:
 ```javascript
-const testAuth = require('./auth');
+const getAuthToken = require('./auth');
 let authToken;
 beforeAll(async () => {
     await global.setUpDb(testId);
-    authToken = await testAuth();
+    authToken = await getAuthToken();
 });
 ```
 It is in the format `Bearer <TOKEN>`. If you use this code, make sure to add the following `afterAll` function:

@@ -1,22 +1,19 @@
-I'm going to give you the code for a route for the user login and the mongo queries that are made during the login API request.
-
-I want you to create a function that returns an authentication token that will be used for Jest test suite and will be called in `beforeAll` function. It will be used to retrieve the authentication token so that other tests in the test suite can make API requests that require authentication. Your code needs to create a user in the database, make a login and retrieves an authentication token.
-
-When you need to make a query to a Mongo collection, use `global.getMongoCollection(collection)` function which will return the MongoDB collection which you can query how you want. For example, if you want to do a `find` query on a collection "users", you can do `global.getMongoCollection('users').find(query)`.
-
-When making an API request, don't use the `app` variable (eg. `request(app)`) but use `axios` instead to make a regular API request towards URL `http://localhost:3000`.
-
-Any variable that you don't have, you can get by calling `global.Pythagora.getVariable['variableName']`. For example, if you need to get an `object.key`, you can get it by calling `global.Pythagora.getVariable['object'].key`.
-
-Here is a JSON array of Mongo queries made during the login API request with body:
-BODY:
-```json
-{{loginRequestBody}}
+I want you to create a function that will authenticate the user (I will call this function getAuthToken) and return the token needed to pass the authentication. With that token, I will make API requests and send it in the HTML headers like this:
+```javascript
+const response = await axios.post(url, reqBody, {
+  headers: {
+    "Content-Type": "application/json",
+    "authorization": authToken,
+  },
+});
 ```
 
-MONGO QUERIES ARRAY:
+getAuthToken function needs to insert the user in the database, make an API request to the login route, get the authentication token from the response, and return it.
+
+The data from which you need to create getAuthToken is:
+1. Mongo queries made during the execution of the login endpoint
 ```json
-{{mongoQueriesArray}}
+{{loginMongoQueriesArray}}
 ```
 
 Here are the details about the parameters of objects inside the array of mongo queries:
@@ -29,7 +26,49 @@ Here are the details about the parameters of objects inside the array of mongo q
 `db` - the database on which the query is being made
 `collection` - the collection on which the query is being made
 
-Here is the route code:
+`preQueryDocs` and `postQueryDocs` are important so that you can test if an update in the database happened correctly so make sure to include in the test a check to see if the database was correctly updated. Also, since Mongo's `ObjectId` is not a valid JSON value, you might see a string like this - "ObjectId(\"642548c3dabd5517e39b5827\")". Keep in mind that this should be converted to `new ObjectId("642548c3dabd5517e39b5827")` and if you need to initiate ObjectId, you can require it from "pythagora/src/utils/common" - like this:
 ```javascript
-{{loginRouteCode}}
+const { ObjectId } = require("pythagora/src/utils/common");
+let someObjectId = new ObjectId(id);
+```
+
+2. The login URL endpoint path is `{{loginEndpointPath}}`
+
+3. Data that's sent in the request body during the login is:
+```json
+{{loginRequestBody}}
+```
+
+Here is a template for the getAuthToken function:
+```javascript
+async function getAuthToken(appUrl) {
+    const User = global.getMongoCollection(<USER_COLLECTION>);
+    const email = <USER_EMAIL>;
+    const userObj = <USER_OBJECT>;
+    <REPLACE_PASSWORD_HASH_WITH_HARDCODED_ONE>
+
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+        await User.insertOne(userObj);
+    }
+
+    const response = await axios.post(appUrl + <LOGIN_ENDPOINT_PATH>, <LOGIN_BODY>)
+        .catch((err) => {
+            console.log("err", err);
+        });
+
+    return response.data.token;
+}
+```
+
+You need to basically create this exact same function but replace all places with `<SOME_VARIABLE>` and add all the requires at the top but make sure that you don't require any variable that you won't use in the function. Also, `global` is a global variable in node.js which doesn't need to be required.
+For example:
+```javascript
+const somePackage = require('...');
+const someOtherPackage = require('...');
+
+async function getAuthToken() {
+...
+}
+module.exports = getAuthToken;
 ```

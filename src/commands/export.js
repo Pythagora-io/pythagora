@@ -4,7 +4,7 @@ const { EXPORTED_TESTS_DIR, EXPORTED_TESTS_DATA_DIR} = require('../const/common'
 const {getAllGeneratedTests} = require("../utils/common");
 const {convertOldTestForGPT} = require("../utils/legacy");
 const {getJestTestFromPythagoraData} = require("../helpers/openai");
-const {testExported} = require("../utils/cmdPrint");
+const {testExported, testExportStarted} = require("../utils/cmdPrint");
 
 function createDefaultFiles() {
     if (!fs.existsSync('jest.config.js')) {
@@ -35,6 +35,7 @@ function cleanupGPTResponse(gptResponse) {
 async function exportTest(testId) {
     createDefaultFiles();
 
+    testExportStarted(testId);
     let generatedTests = getAllGeneratedTests();
     let test = generatedTests.find(t => t.id === testId);
     if (!test) throw new Error(`Test with id ${testId} not found`);

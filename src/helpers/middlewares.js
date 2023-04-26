@@ -338,6 +338,7 @@ function checkForFinalErrors(reqId, pythagora) {
 
 function saveCaptureToFile(reqData, pythagora) {
     reqData.pythagoraVersion = pythagora.version;
+    reqData.pythagoraDevVersion = pythagora.devVersion;
     reqData.createdAt = new Date().toISOString();
     let endpointFileName = `./${PYTHAGORA_TESTS_DIR}/${reqData.endpoint.replace(/\//g, PYTHAGORA_DELIMITER)}.json`;
     if (!fs.existsSync(endpointFileName)) fs.writeFileSync(endpointFileName, JSON.stringify([reqData], getCircularReplacer(), 2));

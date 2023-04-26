@@ -53,9 +53,36 @@ function searchAllModuleFolders(rootDir, moduleNames) {
     return modulePaths;
 }
 
+function getPythagoraVersion(pythagora) {
+    const searchPath = process.cwd();
+
+    const findPackageJson = (dir) => {
+        const files = fs.readdirSync(dir);
+
+        files.forEach(file => {
+            const filePath = path.resolve(dir, file);
+            const fileStat = fs.statSync(filePath);
+
+            if (fileStat.isDirectory() && file[0] !== '.' && file !== 'node_modules') {
+                findPackageJson(filePath);
+            } else if (file === "package.json") {
+                const dependencies = JSON.parse(
+                    fs.readFileSync(filePath, "utf-8")
+                ).dependencies;
+
+                if(dependencies.pythagora) pythagora.version = dependencies.pythagora;
+                if(dependencies['@pythagora.io/pythagora-dev']) pythagora.devVersion = dependencies['@pythagora.io/pythagora-dev'];
+            }
+        });
+    };
+
+    findPackageJson(searchPath);
+}
+
 module.exports = {
     logAndExit,
     deleteTest,
     checkDependencies,
-    searchAllModuleFolders
+    searchAllModuleFolders,
+    getPythagoraVersion
 }

@@ -83,7 +83,7 @@ function setUpExpressMiddlewares(app) {
         },
 
         setUpInterceptorMiddleware: async (req, res, next) => {
-            if (req.pythagoraIgnore) return next();
+            if (req.pythagoraIgnore || global.Pythagora.mode === 'jest') return next();
             if (!global.Pythagora.ignoreRedis) global.Pythagora.RedisInterceptor.setMode(global.Pythagora.mode);
             if (global.Pythagora.mode === MODES.capture) await apiCaptureInterceptor(req, res, next, global.Pythagora);
             else if (global.Pythagora.mode === MODES.test) await apiTestInterceptor(req, res, next, global.Pythagora);

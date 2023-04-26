@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const {PYTHAGORA_JEST_DB} = require("pythagora/src/const/mongodb");
 
 module.exports = function (mongoPath) {
     const originalCollection = require(`${mongoPath}/lib/collection`);
@@ -22,6 +23,10 @@ module.exports = function (mongoPath) {
             if (global.Pythagora.mode === MODES.test) {
                 this.s.db = global.Pythagora.mongoClient.db(PYTHAGORA_DB);
                 this.s.namespace.db = PYTHAGORA_DB;
+            } else if (global.Pythagora.mode === MODES.jest) {
+                this.s.db = global.Pythagora.mongoClient.db(PYTHAGORA_JEST_DB);
+                this.s.namespace.db = PYTHAGORA_JEST_DB;
+                return originalMethod.apply(this, arguments);
             }
 
             let asyncContextId = global.asyncLocalStorage.getStore(),

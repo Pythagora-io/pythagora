@@ -50,9 +50,36 @@ function searchAllModuleFolders(rootDir, moduleName) {
     return listOfModulePaths;
 }
 
+function getAllJavascriptFiles(dir, excludeNodeModules = true) {
+    const result = [];
+
+    function walk(currentDir) {
+        const files = fs.readdirSync(currentDir);
+
+        for (const file of files) {
+            const filePath = path.join(currentDir, file);
+            const stat = fs.statSync(filePath);
+
+            if (excludeNodeModules && path.basename(currentDir) === 'node_modules') {
+                continue;
+            }
+
+            if (stat.isDirectory()) {
+                walk(filePath);
+            } else if (stat.isFile() && /\.(js|mjs|cjs|ts|tsx)$/i.test(file)) {
+                result.push(filePath);
+            }
+        }
+    }
+
+    walk(dir);
+    return result;
+}
+
 module.exports = {
     logAndExit,
     deleteTest,
     checkDependencies,
-    searchAllModuleFolders
+    searchAllModuleFolders,
+    getAllJavascriptFiles
 }

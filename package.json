@@ -27,6 +27,7 @@
     "@mswjs/interceptors": "^0.19.2",
     "axios": "^1.2.2",
     "body-parser": "^1.20.1",
+    "falafel": "^2.2.5",
     "lodash": "^4.17.21",
     "nyc": "^15.1.0",
     "tryrequire": "^3.0.0",

@@ -112,6 +112,9 @@ async function apiCaptureInterceptor(req, res, next, pythagora) {
     const _redirect = res.redirect;
     const _status = res.status;
     const _json = res.json;
+
+    pythagora.functionsTriggered = [];
+
     const finishCapture = (request, responseBody) => {
         if (request.error) {
             return logEndpointNotCaptured(req.originalUrl, req.method, request.error);

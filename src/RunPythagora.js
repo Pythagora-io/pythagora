@@ -1,6 +1,10 @@
 #!/usr/bin/env node
-let { checkDependencies, searchAllModuleFolders } = require('./helpers/starting.js');
+let { checkDependencies, searchAllModuleFolders, getAllJavascriptFiles } = require('./helpers/starting.js');
+const codeTracer = require('./helpers/tracer');
 try {
+
+    let repoFiles = getAllJavascriptFiles(process.cwd(), true);
+    codeTracer.patchModuleLoad(repoFiles);
 
     for (let httpModule of ['http', 'https']) {
         require.cache[require.resolve(httpModule)] = {

@@ -18,6 +18,7 @@ let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
 let  fs = require("fs");
 let  _ = require("lodash");
 let  { AsyncLocalStorage } = require('node:async_hooks');
+const {functionAlreadyCaptured} = require("./helpers/tracer");
 // const duplexify = require('duplexify');
 
 global.asyncLocalStorage = new AsyncLocalStorage();
@@ -43,6 +44,7 @@ class Pythagora {
         this.loggingEnabled = this.mode === 'capture';
         //todo move all global vars to tempVars
         this.tempVars = {};
+        this.functionsTriggered = [];
 
         this.setUpPythagoraDirs();
         // this.setUpHttpInterceptor();
@@ -280,6 +282,15 @@ class Pythagora {
                 callback();
             }
         }, 200);
+    }
+
+    functionTriggered(functionCode) {
+        if (!this.getTestingRequestByAsyncStore()) return;
+        // there can be a potential issue here if there is an exact same function inlined as a named function
+        // in this case named function will be unknown to GPT because it has it inlined already
+        if (!functionAlreadyCaptured(functionCode, this.functionsTriggered)) {
+            this.functionsTriggered.push(functionCode);
+        }
     }
 
 }

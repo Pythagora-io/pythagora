@@ -1,5 +1,6 @@
 const _ = require("lodash");
 const fs = require("fs");
+const net = require('net');
 const {
     PYTHAGORA_METADATA_DIR,
     METADATA_FILENAME,
@@ -264,6 +265,40 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function isPortTaken(port) {
+    return new Promise((resolve, reject) => {
+        const server = net.createServer();
+        server.once('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                resolve(true);
+            } else {
+                reject(err);
+            }
+        });
+        server.once('listening', () => {
+            server.close();
+            resolve(false);
+        });
+        server.listen(port);
+    });
+}
+
+async function getFreePortInRange(minPort, maxPort) {
+    let listenPort = 0;
+
+    while (!listenPort) {
+        listenPort = Math.floor(Math.random() * (maxPort - minPort + 1)) + minPort;
+        if (await isPortTaken(listenPort)) {
+            // console.log(`Port ${listenPort} is already in use`);
+            listenPort = 0;
+        } else {
+            // console.log(`Using port ${listenPort}`);
+        }
+    }
+
+    return listenPort;
+}
+
 function getAllGeneratedTests() {
     let allTests = [];
     let files = fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
@@ -314,6 +349,8 @@ module.exports = {
     isJSONObject,
     getMetadata,
     delay,
+    isPortTaken,
+    getFreePortInRange,
     getAllGeneratedTests,
     insertVariablesInText,
     updateMetadata

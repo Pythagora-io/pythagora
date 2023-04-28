@@ -33,26 +33,83 @@ function checkDependencies() {
     if (!mongodb || !express) throw new Error(`'Pythagora is unable to check dependencies. Express and MongoDb are necessary for Pythagora to run. Exiting...`);
 }
 
-function searchAllModuleFolders(rootDir, moduleName) {
-    let listOfModulePaths = [];
+function searchAllModuleFolders(rootDir, moduleNames) {
+    let modulePaths = moduleNames.reduce((obj, key) => ({ ...obj, [key]: [] }), {});
     fs.readdirSync(rootDir).forEach(file => {
         const filePath = path.join(rootDir, file);
         const isDirectory = fs.lstatSync(filePath).isDirectory();
 
         if (isDirectory) {
-            if (file === moduleName && filePath.includes('node_modules')) {
-                listOfModulePaths.push(filePath);
+            if (moduleNames.includes(file) && filePath.includes('node_modules')) {
+                modulePaths[file].push(filePath);
             } else {
-                listOfModulePaths = listOfModulePaths.concat(searchAllModuleFolders(filePath, moduleName));
+                let  modulePathsRecursive = searchAllModuleFolders(filePath, moduleNames);
+                for (const key of moduleNames) {
+                    modulePaths[key] = [...modulePaths[key], ...modulePathsRecursive[key]];
+                }
             }
         }
     });
-    return listOfModulePaths;
+    return modulePaths;
+}
+
+function getPythagoraVersion(pythagora) {
+    const searchPath = process.cwd();
+
+    const findPackageJson = (dir) => {
+        const files = fs.readdirSync(dir);
+
+        files.forEach(file => {
+            const filePath = path.resolve(dir, file);
+            const fileStat = fs.statSync(filePath);
+
+            if (fileStat.isDirectory() && file[0] !== '.' && file !== 'node_modules') {
+                findPackageJson(filePath);
+            } else if (file === "package.json") {
+                const dependencies = JSON.parse(
+                    fs.readFileSync(filePath, "utf-8")
+                ).dependencies;
+
+                if(dependencies.pythagora) pythagora.version = dependencies.pythagora;
+                if(dependencies['@pythagora.io/pythagora-dev']) pythagora.devVersion = dependencies['@pythagora.io/pythagora-dev'];
+            }
+        });
+    };
+
+    findPackageJson(searchPath);
+}
+
+function startPythagora(args, app) {
+    if (!app) return;
+    const Pythagora = require("../Pythagora");
+
+    global.Pythagora = new Pythagora(args);
+    global.Pythagora.setMongoClient(global.pythagoraMongoClient);
+    global.Pythagora.runRedisInterceptor().then(() => {
+        if (args.export) {
+            global.Pythagora.runWhenServerReady(async () => {
+                await exportTest(args.test_id);
+            });
+        } else if (args.mode === 'jest') {
+            global.Pythagora.runWhenServerReady(() => {
+                let { run } = require('../commands/jest');
+                run();
+            });
+        } else if (args.mode === 'test') {
+            global.Pythagora.runWhenServerReady(() => {
+                require('../RunPythagoraTests.js');
+            });
+        }
+    });
+
+    app.isPythagoraExpressInstance = true;
 }
 
 module.exports = {
     logAndExit,
     deleteTest,
     checkDependencies,
-    searchAllModuleFolders
+    searchAllModuleFolders,
+    getPythagoraVersion,
+    startPythagora
 }

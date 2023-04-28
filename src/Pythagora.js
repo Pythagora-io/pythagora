@@ -2,8 +2,9 @@ const MODES = require('./const/modes.json');
 const RedisInterceptor = require('./helpers/redis.js');
 const { cleanupDb } = require('./helpers/mongodb.js');
 const { makeTestRequest } = require('./helpers/testing.js');
+const { getPythagoraVersion } = require("./helpers/starting.js");
 const { logCaptureFinished, pythagoraFinishingUp } = require('./utils/cmdPrint.js');
-const { getCircularReplacer, getMetadata } = require('./utils/common.js');
+const { getCircularReplacer, getMetadata, getFreePortInRange } = require('./utils/common.js');
 const {
     PYTHAGORA_TESTS_DIR,
     PYTHAGORA_METADATA_DIR,
@@ -36,13 +37,14 @@ class Pythagora {
         this.fullCodeCoverageReport = args.full_code_coverage_report;
         this.initCommand = args.init_command.join(' ');
 
-        this.version = global.PythagoraVersion;
         this.idSeq = 0;
         this.requests = {};
         this.testingRequests = {};
         this.loggingEnabled = this.mode === 'capture';
         //todo move all global vars to tempVars
         this.tempVars = {};
+
+        getPythagoraVersion(this);
 
         this.setUpPythagoraDirs();
         // this.setUpHttpInterceptor();
@@ -248,9 +250,11 @@ class Pythagora {
 
     async runRedisInterceptor(intermediateData) {
         if (this.ignoreRedis) return;
+
+        let listenPort = await getFreePortInRange(16000, 17000);
         this.RedisInterceptor = new RedisInterceptor(
             this,
-            16379,
+            listenPort,
             6379,
             intermediateData
         );
@@ -266,9 +270,9 @@ class Pythagora {
     }
 
     isMongoConnected() {
-        return this.mongoClient.connected ||
+        return this.mongoClient && (this.mongoClient.connected ||
             (this.mongoClient.isConnected && this.mongoClient.isConnected()) ||
-            (this.mongoClient.topology && this.mongoClient.topology.isConnected && this.mongoClient.topology.isConnected())
+            (this.mongoClient.topology && this.mongoClient.topology.isConnected && this.mongoClient.topology.isConnected()))
     }
 
     runWhenServerReady(callback) {

@@ -2,32 +2,19 @@ let { exportTest } = require('../commands/export');
 
 module.exports = function (httpModule) {
     let args = require('../utils/argumentsCheck.js');
+    let { startPythagora } = require ('../helpers/starting.js');
 
     const originalHttp = require(httpModule);
-    const Pythagora = require("../Pythagora");
+
+    const originalServer = originalHttp.Server;
+    originalHttp.Server = function (app) {
+        startPythagora(args, app);
+        return originalServer.apply(this, arguments);
+    }
 
     const originalCreateServer = originalHttp.createServer;
     originalHttp.createServer = function (app) {
-        global.Pythagora = new Pythagora(args);
-        global.Pythagora.setMongoClient(global.pythagoraMongoClient);
-        global.Pythagora.runRedisInterceptor().then(() => {
-            if (args.export) {
-                global.Pythagora.runWhenServerReady(async () => {
-                    await exportTest(args.test_id);
-                });
-            } else if (args.mode === 'jest') {
-                global.Pythagora.runWhenServerReady(() => {
-                    let { run } = require('../commands/jest');
-                    run();
-                });
-            } else if (args.mode === 'test') {
-                global.Pythagora.runWhenServerReady(() => {
-                    require('../RunPythagoraTests.js');
-                });
-            }
-        });
-
-        if (app) app.isPythagoraExpressInstance = true;
+        startPythagora(args, app);
         let server = originalCreateServer.apply(this, arguments);
 
         const originalServerOnRequest = server.on;

@@ -1,5 +1,6 @@
 {
   "capture": "capture",
   "test": "test",
-  "jest": "jest"
+  "jest": "jest",
+  "export": "export"
 }

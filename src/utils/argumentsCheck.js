@@ -31,7 +31,7 @@ if (!args.mode) {
 }
 
 if (args.rerun_all_failed && args.mode !== MODES.test) logAndExit(`Flag --rerun_all_failed allowed only in "--mode test"`);
-if (args.test_id && !(args.mode === MODES.test || args.mode === MODES.jest)) logAndExit(`Flag --test-id allowed only in "--mode test"`);
+if (args.test_id && args.mode === MODES.capture) logAndExit(`Flag --test-id not allowed only in capture mode`);
 if (args.rerun_all_failed && args.test_id) logAndExit(`Not allowed to set flags --rerun_all_failed and --test-id at same time.`);
 
 if (args.pick && args.mode !== MODES.capture) logAndExit(`Flag --pick allowed only in "--mode capture"`);

@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 let { checkDependencies, searchAllModuleFolders, getAllJavascriptFiles } = require('./helpers/starting.js');
 const codeTracer = require('./helpers/tracer');
+let args = require('./utils/argumentsCheck.js');
 try {
 
-    let repoFiles = getAllJavascriptFiles(process.cwd(), true);
-    codeTracer.patchModuleLoad(repoFiles);
+    if (args.mode === 'export' && args.deep_export) {
+        console.log('Setting up Pythagora tracer...');
+        let repoFiles = getAllJavascriptFiles(process.cwd(), true);
+        codeTracer.patchModuleLoad(repoFiles);
+    }
 
     for (let httpModule of ['http', 'https']) {
         require.cache[require.resolve(httpModule)] = {

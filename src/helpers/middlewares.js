@@ -10,6 +10,8 @@ const {v4} = require("uuid");
 const _ = require("lodash");
 let  { executionAsyncId } = require('node:async_hooks');
 const fs = require('fs');
+const {logLoginEndpointCaptured} = require("../utils/cmdPrint");
+const {updateMetadata} = require("../utils/common");
 
 
 function setUpExpressMiddlewares(app) {
@@ -118,6 +120,17 @@ async function apiCaptureInterceptor(req, res, next, pythagora) {
         }
         if (pythagora.loggingEnabled) saveCaptureToFile(pythagora.requests[req.id], pythagora);
         logEndpointCaptured(req.originalUrl, req.method, req.body, req.query, responseBody);
+        if (_.get(pythagora.metadata, 'exportRequirements.login.endpointPath') &&
+            !_.get(pythagora.metadata, 'exportRequirements.login.requestBody')) {
+            logLoginEndpointCaptured();
+            _.set(
+                pythagora.metadata,
+                'exportRequirements.login.mongoQueriesArray',
+                pythagora.requests[req.id].intermediateData.filter(d => d.type === 'mongodb')
+            );
+            _.set(pythagora.metadata, 'exportRequirements.login.requestBody', pythagora.requests[req.id].body);
+            updateMetadata(pythagora.metadata);
+        }
     }
     const storeRequestData = (statusCode, id, body) => {
         pythagora.requests[id].responseData = !body || statusCode === 204 ? '' :

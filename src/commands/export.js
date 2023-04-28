@@ -4,7 +4,7 @@ const { EXPORTED_TESTS_DIR, EXPORTED_TESTS_DATA_DIR, METADATA_FILENAME } = requi
 const {getAllGeneratedTests, getCircularReplacer, updateMetadata} = require("../utils/common");
 const {convertOldTestForGPT} = require("../utils/legacy");
 const {getJestTestFromPythagoraData, getJestAuthFunction} = require("../helpers/openai");
-const {testExported, loginRouteEnteredLog} = require("../utils/cmdPrint");
+const {testExported, loginRouteEnteredLog, pleaseCaptureLoginTestLog} = require("../utils/cmdPrint");
 const _ = require('lodash');
 const readlineSync = require('readline-sync');
 
@@ -26,7 +26,7 @@ function askForLoginRoute() {
     }
 }
 
-async function createDefaultFiles() {
+async function createDefaultFiles(generatedTests) {
     if (!fs.existsSync('jest.config.js')) {
         fs.copyFileSync(path.join(__dirname, '../templates/jest-config.js'), './jest.config.js');
     }
@@ -36,21 +36,33 @@ async function createDefaultFiles() {
     }
 
     if (!fs.existsSync(`./${EXPORTED_TESTS_DIR}/auth.js`)) {
-        await configureAuthFile();
+        await configureAuthFile(generatedTests);
     }
 }
 
-async function configureAuthFile() {
+async function configureAuthFile(generatedTests) {
     // TODO make require path better
     let pythagoraMetadata = require(`../../../../.pythagora/${METADATA_FILENAME}`);
-    if (!_.get(pythagoraMetadata, 'exportRequirements.login.endpointPath')) {
-        let endpointPath = askForLoginRoute();
-        _.set(pythagoraMetadata, 'exportRequirements.login.endpointPath', endpointPath);
+    let loginPath = _.get(pythagoraMetadata, 'exportRequirements.login.endpointPath');
+    let loginRequestBody = _.get(pythagoraMetadata, 'exportRequirements.login.requestBody');
+    let loginMongoQueries = _.get(pythagoraMetadata, 'exportRequirements.login.mongoQueriesArray');
+
+    if (!loginPath) {
+        loginPath = askForLoginRoute();
+        _.set(pythagoraMetadata, 'exportRequirements.login.endpointPath', loginPath);
         updateMetadata(pythagoraMetadata);
     }
 
-    if (!pythagoraMetadata.exportRequirements.password) {
-        throw new Error(`Please run Pythagora capture and log into your app once so Pythagora can export tests to Jest.`);
+    if (!loginRequestBody || !loginMongoQueries) {
+        let loginTest = generatedTests.find(t => t.endpoint === loginPath);
+        if (loginTest) {
+            _.set(pythagoraMetadata, 'exportRequirements.login.mongoQueriesArray', loginTest.intermediateData.filter(d => d.type === 'mongodb'));
+            _.set(pythagoraMetadata, 'exportRequirements.login.requestBody', loginTest.body);
+            updateMetadata(pythagoraMetadata);
+        } else {
+            pleaseCaptureLoginTestLog(loginPath);
+            process.exit(1);
+        }
     }
 
     let loginData = pythagoraMetadata.exportRequirements.login;
@@ -73,9 +85,9 @@ function cleanupGPTResponse(gptResponse) {
 }
 
 async function exportTest(testId) {
-    await createDefaultFiles();
-
     let generatedTests = getAllGeneratedTests();
+    await createDefaultFiles(generatedTests);
+
     let test = generatedTests.find(t => t.id === testId);
     if (!test) throw new Error(`Test with id ${testId} not found`);
 

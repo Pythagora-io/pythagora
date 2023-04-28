@@ -163,6 +163,23 @@ function loginRouteEnteredLog(endpointPath) {
     console.log(`You entered: ${green}${bold}${endpointPath}${reset}`);
 }
 
+function pleaseCaptureLoginTestLog(loginEndpointPath) {
+    let args = require('../utils/argumentsCheck.js');
+    console.log(`${red}${bold}To export test to Jest, Pythagora needs a captured test with a successful login to your app!${reset}`);
+    console.log(`Login path is: ${green}${bold}${loginEndpointPath}${reset}`);
+    console.log('Please run the Pythagora capture command, log into your app and try the export again.');
+    console.log('To start Pythagora capture, run:');
+    console.log(`${blue}${bold}npx pythagora --init-command \"${args.init_command.join(' ')}\" --mode capture${reset}`);
+}
+
+function logLoginEndpointCaptured() {
+    console.log(`${green}${bold}------------------------------------------------------------${reset}`);
+    console.log(`${green}${bold}------------------------------------------------------------${reset}`);
+    console.log(`${green}${bold}Login endpoint captured - you can now start exporting tests!${reset}`);
+    console.log(`${green}${bold}------------------------------------------------------------${reset}`);
+    console.log(`${green}${bold}------------------------------------------------------------${reset}`);
+}
+
 
 module.exports = {
     logEndpointCaptured,
@@ -179,5 +196,7 @@ module.exports = {
     logAndExit,
     testExported,
     jestAuthFileGenerationLog,
-    loginRouteEnteredLog
+    loginRouteEnteredLog,
+    pleaseCaptureLoginTestLog,
+    logLoginEndpointCaptured
 }

@@ -27,12 +27,12 @@
     "@mswjs/interceptors": "^0.19.2",
     "axios": "^1.2.2",
     "body-parser": "^1.20.1",
+    "jest": "^29.5.0",
     "lodash": "^4.17.21",
     "nyc": "^15.1.0",
-    "readline-sync": "^1.4.10",
+    "openai": "^3.2.1",
     "tryrequire": "^3.0.0",
-    "uuid": "^9.0.0",
-    "jest": "^29.5.0"
+    "uuid": "^9.0.0"
   },
   "contributors": [
     {

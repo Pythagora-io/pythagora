@@ -12,8 +12,8 @@ module.exports = function (httpModule) {
         global.Pythagora.setMongoClient(global.pythagoraMongoClient);
         global.Pythagora.runRedisInterceptor().then(() => {
             if (args.export) {
-                global.Pythagora.runWhenServerReady(() => {
-                    exportTest(args.test_id);
+                global.Pythagora.runWhenServerReady(async () => {
+                    await exportTest(args.test_id);
                 });
             } else if (args.mode === 'jest') {
                 global.Pythagora.runWhenServerReady(() => {

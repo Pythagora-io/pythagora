@@ -5,7 +5,7 @@ const Module = require('module');
 const moduleCache = new Map();
 
 function cleanInstrumentedCode(functionCode) {
-    const logCodeRegex = /\/\*PYTHAGORA_START\*\/[\s\S]*?\/\*PYTHAGORA_END\*\/\}/g;
+    const logCodeRegex = /\/\*PYTHAGORA_START\*\/[\s\S]*?\/\*PYTHAGORA_END\*\//g;
     return functionCode.replace(logCodeRegex, '').trim();
 }
 
@@ -26,7 +26,7 @@ function instrumentCode(code, baseDir) {
             const functionCode = node.source();
             const cleanedFunctionCode = cleanInstrumentedCode(functionCode);
             const escapedCleanedFunctionCode = JSON.stringify(cleanedFunctionCode);
-            const logCode = `/*PYTHAGORA_START*/if (global.Pythagora && typeof global.Pythagora.functionTriggered === 'function') { global.Pythagora.functionTriggered(${escapedCleanedFunctionCode}); /*PYTHAGORA_END*/}`;
+            const logCode = `/*PYTHAGORA_START*/if (global.Pythagora && global.Pythagora.functionTriggered) { global.Pythagora.functionTriggered(${escapedCleanedFunctionCode}); }/*PYTHAGORA_END*/`;
 
             if (node.type === 'ArrowFunctionExpression' && node.expression) {
                 const paramsSource = node.params.map(param => param.source()).join(', ');

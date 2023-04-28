@@ -48,6 +48,7 @@ class Pythagora {
         // this.setUpHttpInterceptor();
 
         this.cleanupDone = false;
+        this.metadata = getMetadata();
 
         process.on('SIGINT', this.exit.bind(this));
         process.on('exit', this.exit.bind(this));
@@ -104,9 +105,8 @@ class Pythagora {
 
     getTestsToExecute() {
         if (this.testId) return [this.testId];
-        let metadata = getMetadata();
-        if (!metadata || !metadata.runs) return undefined;
-        let runs = metadata.runs;
+        if (!this.metadata || !this.metadata.runs) return undefined;
+        let runs = this.metadata.runs;
 
         if (this.rerunAllFailed) return runs[runs.length - 1].failed;
 
@@ -118,16 +118,15 @@ class Pythagora {
         let failed = _.values(this.testingRequests).filter(t => !t.passed).map(t => t.id);
         if (!passed.length && !failed.length) return;
 
-        let metadata = getMetadata();
-        metadata.runs = (metadata.runs || []).concat([{
+        this.metadata.runs = (this.metadata.runs || []).concat([{
             date: new Date(),
             version: this.version,
             passed,
             failed
         }]);
-        metadata.runs = metadata.runs.slice(-10);
-        metadata.initCommand = this.initCommand;
-        fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, JSON.stringify(metadata, getCircularReplacer(), 2));
+        this.metadata.runs = this.metadata.runs.slice(-10);
+        this.metadata.initCommand = this.initCommand;
+        fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, JSON.stringify(this.metadata, getCircularReplacer(), 2));
         console.log('Test run metadata saved.');
     }
 

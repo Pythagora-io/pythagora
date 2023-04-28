@@ -48,7 +48,7 @@ function updateReviewFile(testsToExecute, reviewData) {
     fs.writeFileSync(reviewFilePath, JSON.stringify(oldReviewData.concat(reviewData), getCircularReplacer(), 2));
 }
 
-(async () => {
+async function runPythagoraTests(testId) {
     let error;
     try {
         const startTime = new Date();
@@ -73,4 +73,8 @@ function updateReviewFile(testsToExecute, reviewData) {
     }
 
     if (!global.Pythagora.fullCodeCoverageReport || error) global.Pythagora.exit();
-})();
+}
+
+module.exports = {
+    runPythagoraTests
+}

@@ -159,6 +159,10 @@ function jestAuthFileGenerationLog() {
     console.log(`${green}${bold}Creating auth file for Jest tests...${reset}`);
 }
 
+function loginRouteEnteredLog(endpointPath) {
+    console.log(`You entered: ${green}${bold}${endpointPath}${reset}`);
+}
+
 
 module.exports = {
     logEndpointCaptured,
@@ -174,5 +178,6 @@ module.exports = {
     testExportStartedLog,
     logAndExit,
     testExported,
-    jestAuthFileGenerationLog
+    jestAuthFileGenerationLog,
+    loginRouteEnteredLog
 }

@@ -289,6 +289,10 @@ function insertVariablesInText(text, variables) {
     return text;
 }
 
+function updateMetadata(newMetadata) {
+    fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, JSON.stringify(newMetadata, getCircularReplacer(), 2));
+}
+
 module.exports = {
     cutWithDots,
     compareResponse,
@@ -311,5 +315,6 @@ module.exports = {
     getMetadata,
     delay,
     getAllGeneratedTests,
-    insertVariablesInText
+    insertVariablesInText,
+    updateMetadata
 }

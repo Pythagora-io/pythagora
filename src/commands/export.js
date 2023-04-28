@@ -1,10 +1,30 @@
 const fs = require('fs');
 const path = require('path');
-const { EXPORTED_TESTS_DIR, EXPORTED_TESTS_DATA_DIR} = require('../const/common');
-const {getAllGeneratedTests} = require("../utils/common");
+const { EXPORTED_TESTS_DIR, EXPORTED_TESTS_DATA_DIR, METADATA_FILENAME } = require('../const/common');
+const {getAllGeneratedTests, getCircularReplacer, updateMetadata} = require("../utils/common");
 const {convertOldTestForGPT} = require("../utils/legacy");
 const {getJestTestFromPythagoraData, getJestAuthFunction} = require("../helpers/openai");
-const {testExported, testExportStartedLog} = require("../utils/cmdPrint");
+const {testExported, loginRouteEnteredLog} = require("../utils/cmdPrint");
+const _ = require('lodash');
+const readlineSync = require('readline-sync');
+
+function askForLoginRoute() {
+    let endpointPath = '';
+
+    while (true) {
+        endpointPath = readlineSync.question('Please enter the endpoint path of the login route (eg. /api/auth/login): ');
+        loginRouteEnteredLog(endpointPath);
+
+        let answer = readlineSync.question('Is this correct login endpoint path (Y/N): ');
+
+        if (answer.toLowerCase() === 'y') {
+            console.log(`Endpoint path saved: ${endpointPath}`);
+            return endpointPath;
+        } else {
+            console.log('Endpoint path not confirmed. Please try again.');
+        }
+    }
+}
 
 async function createDefaultFiles() {
     if (!fs.existsSync('jest.config.js')) {
@@ -21,9 +41,12 @@ async function createDefaultFiles() {
 }
 
 async function configureAuthFile() {
-    let pythagoraMetadata = require('../../../../.pythagora/metadata.json');
-    if (!pythagoraMetadata.exportRequirements || !pythagoraMetadata.exportRequirements.loginRoute) {
-        throw new Error(`Please configure the login route in .pythagora/metadata.json`);
+    // TODO make require path better
+    let pythagoraMetadata = require(`../../../../.pythagora/${METADATA_FILENAME}`);
+    if (!_.get(pythagoraMetadata, 'exportRequirements.login.endpointPath')) {
+        let endpointPath = askForLoginRoute();
+        _.set(pythagoraMetadata, 'exportRequirements.login.endpointPath', endpointPath);
+        updateMetadata(pythagoraMetadata);
     }
 
     if (!pythagoraMetadata.exportRequirements.password) {

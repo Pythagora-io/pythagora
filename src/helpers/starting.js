@@ -79,10 +79,28 @@ function getPythagoraVersion(pythagora) {
     findPackageJson(searchPath);
 }
 
+function startPythagora(args, app) {
+    if (!app) return;
+    const Pythagora = require("../Pythagora");
+
+    global.Pythagora = new Pythagora(args);
+    global.Pythagora.setMongoClient(global.pythagoraMongoClient);
+    global.Pythagora.runRedisInterceptor().then(() => {
+        if (args.mode === 'test') {
+            global.Pythagora.runWhenServerReady(() => {
+                require('../RunPythagoraTests.js');
+            });
+        }
+    });
+
+    app.isPythagoraExpressInstance = true;
+}
+
 module.exports = {
     logAndExit,
     deleteTest,
     checkDependencies,
     searchAllModuleFolders,
-    getPythagoraVersion
+    getPythagoraVersion,
+    startPythagora
 }

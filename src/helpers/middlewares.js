@@ -16,8 +16,11 @@ function setUpExpressMiddlewares(app) {
 
     const pythagoraMiddlwares = {
         ignoreMiddleware: (req, res, next) => {
+            let ignoreFiles = ['.svg', '.jpg', '.jpeg', '.png', '.ico'];
+
             if (!global.Pythagora ||
                 !app.isPythagoraExpressInstance ||
+                ignoreFiles.some((substring) => req.url.endsWith(substring)) ||
                 req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
 
             if (global.Pythagora.mode === MODES.capture &&

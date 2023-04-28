@@ -153,7 +153,8 @@ function checkForErrors(method, request) {
 async function clearAllCollections(db) {
     if (db.databaseName !== PYTHAGORA_DB) return;
     const collections = await db.listCollections().toArray();
-    for (const collection of collections) {
+    const regularCollections = collections.filter(collection => !collection.name.startsWith("system.") && !collection.name.startsWith("_"));
+    for (const collection of regularCollections) {
         await db.collection(collection.name).deleteMany({});
     }
 }

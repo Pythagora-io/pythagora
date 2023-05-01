@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const {PYTHAGORA_JEST_DB} = require("pythagora/src/const/mongodb");
+const {PYTHAGORA_JEST_DB} = require("../const/mongodb");
 
 module.exports = function (mongoPath) {
     const originalCollection = require(`${mongoPath}/lib/collection`);

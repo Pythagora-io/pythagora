@@ -31,6 +31,7 @@
     "lodash": "^4.17.21",
     "nyc": "^15.1.0",
     "openai": "^3.2.1",
+    "readline-sync": "^1.4.10",
     "tryrequire": "^3.0.0",
     "uuid": "^9.0.0"
   },

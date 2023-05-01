@@ -17,7 +17,7 @@ try {
                 exports: require('./patches/express.js')
             };
         } catch (e) {
-            // console.log(`Can't patch Express at ${expressPath}`);
+            console.log(`Can't patch Express at ${expressPath}`);
         }
     }
 
@@ -30,7 +30,7 @@ try {
                 exports: require('./patches/mongo-client.js')(mongoPath)
             };
         } catch (e) {
-            // console.log(`Can't patch mongodb at ${mongoPath}`);
+            console.log(`Can't patch mongodb at ${mongoPath}`);
         }
     }
 
@@ -40,7 +40,7 @@ try {
                 exports: require('./patches/jwt.js')(jwtPath)
             };
         } catch (e) {
-            // console.log(`Can't patch JWT at ${jwtPath}`);
+            console.log(`Can't patch JWT at ${jwtPath}`);
         }
     }
 

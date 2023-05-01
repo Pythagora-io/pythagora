@@ -1,7 +1,7 @@
 const { logTestsFinished, logTestsStarting } = require('./utils/cmdPrint.js');
 const { makeTestRequest } = require('./helpers/testing.js');
 const { getCircularReplacer } = require('./utils/common.js')
-const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHAGORA_DELIMITER } = require('./const/common.js');
+const { PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHAGORA_DELIMITER } = require('./const/common.js');
 
 const fs = require('fs');
 const { exec } = require('child_process');
@@ -26,7 +26,7 @@ async function runTests(tests, testsToExecute) {
         let { testResult, reviewJson } = await makeTestRequest(test);
         if (Object.keys(reviewJson).length) {
             reviewJson.id = test.id;
-            reviewJson.filename = file;
+            reviewJson.filename = test.endpoint.replace(/\//g, PYTHAGORA_DELIMITER) + '.json';
         }
 
         if (!testResult) reviewData.push(reviewJson);

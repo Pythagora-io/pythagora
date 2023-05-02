@@ -1,5 +1,3 @@
-let { exportTest } = require('../commands/export');
-
 module.exports = function (httpModule) {
     let args = require('../utils/argumentsCheck.js');
     let { startPythagora } = require ('../helpers/starting.js');

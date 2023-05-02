@@ -24,9 +24,9 @@ Here are the details about the parameters of objects inside `mongoQueries` array
 
 -----------------------------------------------------------------------------------------------------------------------
 
-`preQueryDocs` and `postQueryDocs` are important so that you can test if an update in the database happened correctly so make sure to include in the test a check to see if the database was correctly updated. Also, since Mongo's `ObjectId` is not a valid JSON value, you might see a string like this - "ObjectId(\"642548c3dabd5517e39b5827\")". Keep in mind that this should be converted to `new ObjectId("642548c3dabd5517e39b5827")` and if you need to initiate ObjectId, you can require it from "pythagora/src/utils/common" - like this:
+`preQueryDocs` and `postQueryDocs` are important so that you can test if an update in the database happened correctly so make sure to include in the test a check to see if the database was correctly updated. Also, since Mongo's `ObjectId` is not a valid JSON value, you might see a string like this - "ObjectId(\"642548c3dabd5517e39b5827\")". Keep in mind that this should be converted to `new ObjectId("642548c3dabd5517e39b5827")` and if you need to initiate ObjectId, you can require it from "mongodb" - like this:
 ```javascript
-const { ObjectId } = require("pythagora/src/utils/common");
+const { ObjectId } = require("mongodb");
 let someObjectId = new ObjectId(id);
 ```
 
@@ -61,4 +61,4 @@ Here is the request data in a JSON format:
 {{testData}}
 ```
 
-Please create automated integration tests in Jest.
+Please think step by step and create as many automated integration tests as you can think of in Jest.

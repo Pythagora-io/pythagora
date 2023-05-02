@@ -1,5 +1,6 @@
 let { cutWithDots, compareJson, compareJsonDetailed } = require('./common');
 let pythagoraErrors = require('../const/errors');
+let args = require('../utils/argumentsCheck.js');
 let { PYTHAGORA_DELIMITER } = require('../const/common');
 
 let red = '\x1b[31m',
@@ -146,7 +147,6 @@ function logAndExit(message, type='error') {
 }
 
 function testExported(testId) {
-    let args = require('../utils/argumentsCheck.js');
     console.log(`${green}${bold}Woohoo - you\'ve exported a test to Jest!${reset} You can run it with command:`);
     console.log(`${blue}${bold}npx pythagora --init-command \"${args.init_command.join(' ')}\" --mode jest --test-id ${testId} --no-code-coverage${reset}`)
 }
@@ -164,7 +164,6 @@ function loginRouteEnteredLog(endpointPath) {
 }
 
 function pleaseCaptureLoginTestLog(loginEndpointPath) {
-    let args = require('../utils/argumentsCheck.js');
     console.log(`${red}${bold}To export test to Jest, Pythagora needs a captured test with a successful login to your app!${reset}`);
     console.log(`Login path is: ${green}${bold}${loginEndpointPath}${reset}`);
     console.log('Please run the Pythagora capture command, log into your app and try the export again.');
@@ -178,6 +177,10 @@ function logLoginEndpointCaptured() {
     console.log(`${green}${bold}Login endpoint captured - you can now start exporting tests!${reset}`);
     console.log(`${green}${bold}------------------------------------------------------------${reset}`);
     console.log(`${green}${bold}------------------------------------------------------------${reset}`);
+}
+
+function primeJestLog() {
+    console.error(`Please finish the authentication priming to export tests to Jest. Run ${bold}${green}npx pythagora --init-command "${args.init_command.join(' ')}" --export${reset}`);
 }
 
 
@@ -198,5 +201,6 @@ module.exports = {
     jestAuthFileGenerationLog,
     loginRouteEnteredLog,
     pleaseCaptureLoginTestLog,
-    logLoginEndpointCaptured
+    logLoginEndpointCaptured,
+    primeJestLog
 }

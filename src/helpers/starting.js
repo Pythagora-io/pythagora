@@ -4,6 +4,7 @@ const tryrequire = require('tryrequire');
 const { PYTHAGORA_METADATA_DIR, PYTHAGORA_TESTS_DIR, METADATA_FILENAME, PYTHAGORA_DELIMITER } = require('../const/common.js');
 const { getCircularReplacer } = require('../utils/common.js');
 const { logAndExit } = require('../utils/cmdPrint.js');
+const { exportTest } = require('../commands/export');
 
 
 function deleteTest(id) {

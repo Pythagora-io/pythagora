@@ -100,6 +100,7 @@ async function exportTest(testId) {
 
     fs.writeFileSync(`./${EXPORTED_TESTS_DIR}/${testId}.test.js`, jestTest);
     testExported(testId);
+    process.exit(0);
 }
 
 module.exports = {

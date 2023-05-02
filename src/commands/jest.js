@@ -1,5 +1,5 @@
 const jest = require('jest');
-const {EXPORTED_TESTS_DIR} = require("../const/common");
+const {EXPORTED_TESTS_DIR, EXPORTED_TESTS_DATA_DIR} = require("../const/common");
 let fs = require('fs');
 const pythagoraJestMethods = require("../helpers/jestMethods");
 const {primeJestLog} = require("../utils/cmdPrint");
@@ -23,7 +23,7 @@ function check() {
     }
 }
 
-function run() {
+function run(testId) {
     check();
     // TODO better way to import this
     const userJestSetup = require(`../../../../${EXPORTED_TESTS_DIR}/global-setup`);
@@ -32,7 +32,16 @@ function run() {
         global[method] = global[method] || pythagoraJestMethods[method];
     }
 
-    jest.run().then(() => {
+    if (testId) {
+        let testExists = fs.existsSync(`./${EXPORTED_TESTS_DIR}/${testId}.test.js`);
+        let testDataExists = fs.existsSync(`./${EXPORTED_TESTS_DATA_DIR}/${testId}.json`);
+
+        if (!testExists || !testDataExists) {
+            console.log(`Test with id ${testId} does not exist.`);
+            process.exit(1);
+        }
+    }
+    jest.run(testId).then(() => {
         console.log('Jest tests finished');
         process.exit(0);
     });

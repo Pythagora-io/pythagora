@@ -94,7 +94,7 @@ function startPythagora(args, app) {
         } else if (args.mode === 'jest') {
             global.Pythagora.runWhenServerReady(() => {
                 let { run } = require('../commands/jest');
-                run();
+                run(args.test_id);
             });
         } else if (args.mode === 'test') {
             global.Pythagora.runWhenServerReady(() => {

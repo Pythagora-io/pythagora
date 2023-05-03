@@ -34,17 +34,15 @@ Don't assert or set up every single parameter but only the ones that are importa
 
 If the database was updated, check if the database was updated correctly. When you need to make a query to a Mongo collection, use `global.getMongoCollection(collection)` function which will return the MongoDB collection which you can query how you want. For example, if you want to do a `find` query on a collection "users", you can do `global.getMongoCollection('users').find(query)`.
 
-In the Jest code, add appropriate names for each test.
+If you need to use the Mongo database for anything, add `let mongoQueries = await global.setUpDb(testId);` to the beginning of the `beforeAll` function. You don't need to insert any documents in the database because all needed documents will be inserted in the `setUpDb` function. You can find the `testId` in the JSON request data that I will give you.
 
-If you need to use the Mongo database for anything, add `await global.setUpDb(testId);` to the beginning of the `beforeAll` function. You don't need to insert any documents in the database because all needed documents will be inserted in the `setUpDb` function. You can find the `testId` in the JSON request data that I will give you.
-
-If you need an auth token for the test, you can retrieve it by calling `getAuthToken` function from the file "./auth" and passing the URL of the app (eg. "http://localhost:3000"). Like this:
+If you need an auth token for the test, you can retrieve it by calling `getAuthToken` function from the file "./auth" and passing the URL of the app (eg. "http://localhost:3000") and the user object from the database data. You need to determine the index of the user document from the `mongoQueries` array that will be shown below and pass that index to `getAuthToken` function. Like this:
 ```javascript
 const getAuthToken = require('./auth');
 let authToken;
 beforeAll(async () => {
-    await global.setUpDb(testId);
-    authToken = await getAuthToken();
+    let mongoQueries = await global.setUpDb(testId);
+    authToken = await getAuthToken(<APP_URL>, mongoQueries[<INDEX_OF_USER_DOCUMENT>]);
 });
 ```
 It is in the format `Bearer <TOKEN>`. If you use this code, make sure to add the following `afterAll` function:
@@ -60,5 +58,15 @@ Here is the request data in a JSON format:
 ```json
 {{testData}}
 ```
+Here are a couple of additional points to have in mind:
+When you create names for your tests you make sure that they are very intuitive and in a human-readable form.
 
-Please think step by step and create as many automated integration tests as you can think of in Jest.
+Be very careful when asserting IDs because IDs can be different in the database from the IDs that are captured in the API request data from which you're creating tests. This applies also for asserting dates - in most cases asserting dates is not good because they change a lot and are irrelevant to tests.
+
+When you make an API request, make sure to use `axios` to the URL `http://localhost:3000`.
+
+When setting up an API request, don't define all possible headers but only the important ones.
+
+Do NOT use `mongoQueries` returned from `global.setUpDb(testId)` in any test. You can only use it in `beforeAll` function.
+
+Let's think step by step and create as many automated integration tests as you can think of in Jest.

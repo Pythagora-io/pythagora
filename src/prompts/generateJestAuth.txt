@@ -1,4 +1,4 @@
-I want you to create a function that will authenticate the user (I will call this function getAuthToken) and return the token needed to pass the authentication. With that token, I will make API requests and send it in the HTML headers like this:
+I want you to create a function that will authenticate the user, called `getAuthToken`, and return the token needed to pass the authentication. With that token, I will make API requests and send it in the HTML headers like this:
 ```javascript
 const response = await axios.post(url, reqBody, {
   headers: {
@@ -26,9 +26,9 @@ Here are the details about the parameters of objects inside the array of mongo q
 `db` - the database on which the query is being made
 `collection` - the collection on which the query is being made
 
-`preQueryDocs` and `postQueryDocs` are important so that you can test if an update in the database happened correctly so make sure to include in the test a check to see if the database was correctly updated. Also, since Mongo's `ObjectId` is not a valid JSON value, you might see a string like this - "ObjectId(\"642548c3dabd5517e39b5827\")". Keep in mind that this should be converted to `new ObjectId("642548c3dabd5517e39b5827")` and if you need to initiate ObjectId, you can require it from "pythagora/src/utils/common" - like this:
+`preQueryDocs` and `postQueryDocs` are important so that you can test if an update in the database happened correctly so make sure to include in the test a check to see if the database was correctly updated. Also, since Mongo's `ObjectId` is not a valid JSON value, you might see a string like this - "ObjectId(\"642548c3dabd5517e39b5827\")". Keep in mind that this should be converted to `new ObjectId("642548c3dabd5517e39b5827")` and if you need to initiate ObjectId, you can require it from "mongodb" - like this:
 ```javascript
-const { ObjectId } = require("pythagora/src/utils/common");
+const { ObjectId } = require("mongodb");
 let someObjectId = new ObjectId(id);
 ```
 
@@ -41,28 +41,37 @@ let someObjectId = new ObjectId(id);
 
 Here is a template for the getAuthToken function:
 ```javascript
-async function getAuthToken(appUrl) {
-    const User = global.getMongoCollection(<USER_COLLECTION>);
-    const email = <USER_EMAIL>;
-    const userObj = <USER_OBJECT>;
-    <REPLACE_PASSWORD_HASH_WITH_HARDCODED_ONE>
+const getMongoCollection = global.getMongoCollection;
+async function getAuthToken(appUrl, userDoc) {
+    let response;
+    try {
+        const User = getMongoCollection(<USER_COLLECTION>);
+        <REPLACE_PASSWORD_WITH_HARDCODED_ONE>
 
-    const existingUser = await User.findOne({ email });
-    if (!existingUser) {
-        await User.insertOne(userObj);
+        const existingUser = await User.findOne({ <FIELD_TO_FIND_USER> });
+        if (!existingUser) {
+            await User.insertOne(userObj);
+        }
+
+        response = await axios.post(appUrl + <LOGIN_ENDPOINT_PATH>, <LOGIN_BODY>)
+            .catch(error => {
+                return {data: {token: 'Bearer invalid-token'}};
+            });
+
+        return response.data.token;
+    } catch (err) {
+        response = {data: {token: 'Bearer invalid-token'}};
     }
-
-    const response = await axios.post(appUrl + <LOGIN_ENDPOINT_PATH>, <LOGIN_BODY>)
-        .catch((err) => {
-            console.log("err", err);
-        });
-
-    return response.data.token;
 }
 ```
 
-You need to basically create this exact same function but replace all places with `<SOME_VARIABLE>` and add all the requires at the top but make sure that you don't require any variable that you won't use in the function. Also, `global` is a global variable in node.js which doesn't need to be required.
-For example:
+Input variables are:
+1. appUrl - the URL of the app
+2. userDoc - mongo document of the user that needs to be logged in for a specific test. Each test can require a different user to log in for the test to be successful. getAuthToken function needs to take that document and, before it inserts the document into the database, replace the password field with the password value captured in the data above so that we're always able to log the user in with the same password.
+
+You don't need to require `global` because that is the native NodeJS global variable.
+
+You need to basically create this exact same function but replace all places with `<SOME_VARIABLE>` and add all the requires at the top but make sure that you don't require any variable that you won't use in the function. For example:
 ```javascript
 const somePackage = require('...');
 const someOtherPackage = require('...');

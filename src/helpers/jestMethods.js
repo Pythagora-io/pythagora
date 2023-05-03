@@ -25,7 +25,8 @@ async function setUpDb(testId) {
     let data = require(`../../../../${EXPORTED_TESTS_DATA_DIR}/${testId}.json`);
     await prepareDB(data);
     console.log(`MongoDB prepared for test ${testId}`);
-    return jsonObjToMongo(data.map((d) => d.preQueryDocs).flat());
+    let preparedData = data.map(d => d.preQueryDocs).map(d => (d.length > 0 ? d : [[]])).flat();
+    return jsonObjToMongo(preparedData);
 }
 
 async function cleanUpDb() {

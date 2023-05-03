@@ -5,7 +5,7 @@ const GPT3Tokenizer = require("gpt3-tokenizer");
 const { Configuration, OpenAIApi } = require("openai");
 const {insertVariablesInText} = require("../utils/common");
 const {testExportStartedLog, jestAuthFileGenerationLog} = require("../utils/cmdPrint");
-const MIN_TOKENS_FOR_GPT_RESPONSE = 2048;
+const MIN_TOKENS_FOR_GPT_RESPONSE = 1640;
 let configuration, openai;
 
 async function getOpenAIClient() {
@@ -34,12 +34,19 @@ async function createGPTChatCompletition(messages) {
         process.exit(1);
     }
 
-    let result = await openai.createChatCompletion({
-        model: "gpt-4",
-        n: 1,
-        max_tokens: 4096,
-        messages
-    });
+    let result;
+
+    try {
+        result = await openai.createChatCompletion({
+            model: "gpt-4",
+            n: 1,
+            max_tokens: 4096,
+            messages
+        });
+    } catch (e) {
+        console.error('The request to OpenAI API failed. Might be due to GPT being down or due to the too large message. It\'s best if you try another export.')
+        process.exit(1);
+    }
 
     return result;
 }

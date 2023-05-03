@@ -10,7 +10,11 @@ function convertOldTestForGPT(test) {
     test.testId = test.id;
     delete test.id;
 
-    test.response = JSON.parse(test.responseData);
+    try {
+        test.response = JSON.parse(test.responseData);
+    } catch (e) {
+        test.response = test.responseData;
+    }
     delete test.responseData;
 
     test.mongoQueryNum = test.mongoQueriesCapture;

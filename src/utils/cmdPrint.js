@@ -84,6 +84,12 @@ ${files.map(file => file.replace(new RegExp(PYTHAGORA_DELIMITER, 'g'), '/').repl
 ${reset}`);
 }
 
+let logTestStarting = (testId) => {
+    console.log(`Starting test with Id:${blue+bold}
+${testId}
+${reset}`);
+}
+
 let pythagoraFinishingUp = () => {
     console.log(`\n\n${blue+bold}Pythagora capturing done. Finishing up...${reset}\n`);
 }
@@ -151,6 +157,7 @@ module.exports = {
     logTestFailed,
     logTestPassed,
     logTestsFinished,
+    logTestStarting,
     logTestsStarting,
     logEndpointNotCaptured,
     logCaptureFinished,

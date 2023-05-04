@@ -1,4 +1,4 @@
-const { logTestsFinished, logTestsStarting } = require('./utils/cmdPrint.js');
+const { logTestsFinished, logTestStarting, logTestsStarting } = require('./utils/cmdPrint.js');
 const { makeTestRequest } = require('./helpers/testing.js');
 const { getCircularReplacer } = require('./utils/common.js')
 const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHAGORA_DELIMITER } = require('./const/common.js');
@@ -6,13 +6,15 @@ const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHA
 const fs = require('fs');
 const { exec } = require('child_process');
 
+let Pythagora = global.Pythagora;
+
 function openFullCodeCoverageReport() {
     let fullCodeCoverageReportPath = `./pythagora_tests/code_coverage_report/lcov-report/index.html`;
 
-    if (global.Pythagora.fullCodeCoverageReport && fs.existsSync(fullCodeCoverageReportPath)) {
+    if (Pythagora.fullCodeCoverageReport && fs.existsSync(fullCodeCoverageReportPath)) {
         console.log(`\nYou can find full code coverage report here: \x1b[34m${fullCodeCoverageReportPath}\x1b[0m`);
         exec(`open ${fullCodeCoverageReportPath}`, (err, stdout, stderr) => {
-            global.Pythagora.exit();
+            Pythagora.exit();
         });
     }
 }
@@ -57,11 +59,11 @@ function updateReviewFile(testsToExecute, reviewData) {
     try {
         const startTime = new Date();
         let files = fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
-        let testsToExecute = global.Pythagora.getTestsToExecute();
+        let testsToExecute = Pythagora.getTestsToExecute();
         if (testsToExecute && !testsToExecute.length) throw new Error('There are no tests to execute. Check if you put arguments in Pythagora command correctly.');
 
         files = files.filter(f => f[0] !== '.' && f.indexOf(PYTHAGORA_DELIMITER) === 0);
-        logTestsStarting(files);
+        Pythagora.testId ? logTestStarting(Pythagora.testId) : logTestsStarting(files);
 
         let { results, reviewData } = await runTests(files, testsToExecute);
 
@@ -78,5 +80,5 @@ function updateReviewFile(testsToExecute, reviewData) {
         console.error("Error occured while running Pythagora tests: ", error);
     }
 
-    if (!global.Pythagora.fullCodeCoverageReport || error) global.Pythagora.exit();
+    if (!Pythagora.fullCodeCoverageReport || error) Pythagora.exit();
 })();

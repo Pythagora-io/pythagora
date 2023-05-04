@@ -40,7 +40,7 @@ async function createGPTChatCompletition(messages) {
         result = await openai.createChatCompletion({
             model: "gpt-4",
             n: 1,
-            max_tokens: 4096,
+            max_tokens: Math.min(4096, 8192 - tokensInMessages),
             messages
         });
     } catch (e) {

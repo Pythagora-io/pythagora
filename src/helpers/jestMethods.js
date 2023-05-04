@@ -1,6 +1,7 @@
 const { cleanupDb, jsonObjToMongo } = require("./mongodb");
 const {PYTHAGORA_JEST_DB} = require("../const/mongodb");
 const {EXPORTED_TESTS_DATA_DIR} = require("../const/common");
+const _ = require('lodash');
 
 // TODO can we merge this with the other prepareDB?
 
@@ -25,7 +26,10 @@ async function setUpDb(testId) {
     let data = require(`../../../../${EXPORTED_TESTS_DATA_DIR}/${testId}.json`);
     await prepareDB(data);
     console.log(`MongoDB prepared for test ${testId}`);
-    let preparedData = data.map(d => d.preQueryDocs).map(d => (d.length > 0 ? d : [[]])).flat();
+    let preparedData = _.groupBy(data, 'collection');
+    preparedData = _.mapValues(preparedData, docs => {
+        return docs.map(doc => doc.preQueryDocs).flat();
+    });
     return jsonObjToMongo(preparedData);
 }
 

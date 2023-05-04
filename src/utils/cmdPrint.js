@@ -147,16 +147,19 @@ function logAndExit(message, type='error') {
 }
 
 function testExported(testId) {
+    if (!args.no_stream) console.log(`\n${green}${bold}--------------------------END OF THE TEST--------------------------${reset}`);
     console.log(`${green}${bold}Woohoo - you\'ve exported a test to Jest!${reset} You can run it with command:`);
     console.log(`${blue}${bold}npx pythagora --init-command \"${args.init_command.join(' ')}\" --mode jest --test-id ${testId} --no-code-coverage${reset}`)
 }
 
 function testExportStartedLog() {
-    console.log(`${green}${bold}Exporting test started - waiting on GPT...${reset}`);
+    console.log(`${bold}Exporting test started - waiting on GPT...${reset}`);
+    if (!args.no_stream) console.log(`${green}${bold}--------------------------GPT OUTPUT--------------------------${reset}`);
 }
 
 function jestAuthFileGenerationLog() {
     console.log(`${green}${bold}Creating auth file for Jest tests...${reset}`);
+    if (!args.no_stream) console.log(`${green}${bold}--------------------------GPT OUTPUT--------------------------${reset}`);
 }
 
 function loginRouteEnteredLog(endpointPath) {

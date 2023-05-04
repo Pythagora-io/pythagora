@@ -5,6 +5,8 @@ const GPT3Tokenizer = require("gpt3-tokenizer");
 const { Configuration, OpenAIApi } = require("openai");
 const {insertVariablesInText} = require("../utils/common");
 const {testExportStartedLog, jestAuthFileGenerationLog} = require("../utils/cmdPrint");
+const https = require("https");
+const args = require("../utils/argumentsCheck");
 const MIN_TOKENS_FOR_GPT_RESPONSE = 1640;
 let configuration, openai;
 
@@ -34,27 +36,30 @@ async function createGPTChatCompletition(messages) {
         process.exit(1);
     }
 
-    let result;
+    let gptData = {
+        model: "gpt-4",
+        n: 1,
+        max_tokens: Math.min(4096, 8192 - tokensInMessages),
+        messages
+    };
 
     try {
-        result = await openai.createChatCompletion({
-            model: "gpt-4",
-            n: 1,
-            max_tokens: Math.min(4096, 8192 - tokensInMessages),
-            messages
-        });
+        if (args.no_stream) {
+            let result = await openai.createChatCompletion(gptData);
+            return result.data.choices[0].message.content;
+        } else {
+            return await streamGPTCompletition(gptData);
+        }
     } catch (e) {
         console.error('The request to OpenAI API failed. Might be due to GPT being down or due to the too large message. It\'s best if you try another export.')
         process.exit(1);
     }
-
-    return result;
 }
 
 async function getJestTestFromPythagoraData(reqData) {
     testExportStartedLog();
     await getOpenAIClient();
-    const completion = await createGPTChatCompletition([
+    return await createGPTChatCompletition([
         {"role": "system", "content": "You are a QA engineer and your main goal is to find ways to break the application you're testing. You are proficient in writing automated integration tests for Node.js API servers.\n" +
                 "When you respond, you don't say anything except the code - no formatting, no explanation - only code.\n" },
         {
@@ -62,8 +67,6 @@ async function getJestTestFromPythagoraData(reqData) {
             "content": getPromptFromFile('generateJestTest.txt', { testData: reqData }),
         },
     ]);
-
-    return completion.data.choices[0].message.content;
 }
 
 async function getJestAuthFunction(loginMongoQueriesArray, loginRequestBody, loginEndpointPath) {
@@ -90,6 +93,63 @@ async function getJestAuthFunction(loginMongoQueriesArray, loginRequestBody, log
     ]);
 
     return completion.data.choices[0].message.content;
+}
+
+async function streamGPTCompletition(data) {
+    let gptResponse = '';
+
+    data.stream = true;
+
+    return new Promise((resolve, reject) => {
+        const req = https.request({
+            hostname: 'api.openai.com',
+            port: 443,
+            path: '/v1/chat/completions',
+            method: 'POST',
+            headers:{
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY
+            }
+        }, function(res){
+            res.on('data', (chunk) => {
+                try {
+                    let receivedMessages = extractGPTMessageFromStreamData(chunk.toString());
+                    receivedMessages.forEach(rm => {
+                        let content = _.get(rm, 'choices.0.delta.content');
+                        if (content) {
+                            gptResponse += content;
+                            process.stdout.write(content);
+                        }
+                    });
+
+                } catch (e) {}
+            });
+            res.on('end', () => {
+                resolve(gptResponse);
+            });
+        });
+
+        req.on('error', (e) => {
+            console.error("problem with request:"+e.message);
+            reject(e);
+        });
+
+        req.write(JSON.stringify(data));
+
+        req.end();
+    });
+}
+
+function extractGPTMessageFromStreamData(input) {
+    const regex = /data: (.*?)\n/g;
+    const substrings = [];
+    let match;
+
+    while ((match = regex.exec(input)) !== null) {
+        substrings.push(match[1]);
+    }
+
+    return substrings.map(s => JSON.parse(s));
 }
 
 module.exports = {

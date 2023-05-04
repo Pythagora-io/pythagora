@@ -328,6 +328,14 @@ function updateMetadata(newMetadata) {
     fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, JSON.stringify(newMetadata, getCircularReplacer(), 2));
 }
 
+function comparePaths(path1, path2) {
+    // Remove any leading or trailing slashes from both paths
+    path1 = path1.replace(/^\/+|\/+$/g, '');
+    path2 = path2.replace(/^\/+|\/+$/g, '');
+
+    return path1 === path2;
+}
+
 module.exports = {
     cutWithDots,
     compareResponse,
@@ -353,5 +361,6 @@ module.exports = {
     getFreePortInRange,
     getAllGeneratedTests,
     insertVariablesInText,
-    updateMetadata
+    updateMetadata,
+    comparePaths
 }

@@ -54,7 +54,7 @@ async function configureAuthFile(generatedTests) {
     }
 
     if (!loginRequestBody || !loginMongoQueries) {
-        let loginTest = generatedTests.find(t => t.endpoint === loginPath);
+        let loginTest = generatedTests.find(t => t.endpoint === loginPath && t.method !== 'OPTIONS');
         if (loginTest) {
             _.set(pythagoraMetadata, 'exportRequirements.login.mongoQueriesArray', loginTest.intermediateData.filter(d => d.type === 'mongodb'));
             _.set(pythagoraMetadata, 'exportRequirements.login.requestBody', loginTest.body);

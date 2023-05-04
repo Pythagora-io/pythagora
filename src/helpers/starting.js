@@ -71,8 +71,9 @@ function getPythagoraVersion(pythagora) {
                     fs.readFileSync(filePath, "utf-8")
                 ).dependencies;
 
-                if(dependencies.pythagora) pythagora.version = dependencies.pythagora;
-                if(dependencies['@pythagora.io/pythagora-dev']) pythagora.devVersion = dependencies['@pythagora.io/pythagora-dev'];
+                if (!dependencies) return;
+                if (dependencies.pythagora) pythagora.version = dependencies.pythagora;
+                if (dependencies['@pythagora.io/pythagora-dev']) pythagora.devVersion = dependencies['@pythagora.io/pythagora-dev'];
             }
         });
     };

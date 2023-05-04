@@ -1,5 +1,5 @@
 const MODES = require("../const/modes.json");
-const { getCircularReplacer, compareResponse, compareJson } = require("../utils/common.js");
+const { getCircularReplacer, compareResponse, compareJson, updateMetadata, comparePaths } = require("../utils/common.js");
 const pythagoraErrors = require("../const/errors");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
 const { prepareDB } = require("./mongodb.js");
@@ -11,7 +11,6 @@ const _ = require("lodash");
 let  { executionAsyncId } = require('node:async_hooks');
 const fs = require('fs');
 const {logLoginEndpointCaptured} = require("../utils/cmdPrint");
-const {updateMetadata} = require("../utils/common");
 
 
 function setUpExpressMiddlewares(app) {
@@ -123,7 +122,10 @@ async function apiCaptureInterceptor(req, res, next, pythagora) {
         }
         if (pythagora.loggingEnabled) saveCaptureToFile(pythagora.requests[req.id], pythagora);
         logEndpointCaptured(req.originalUrl, req.method, req.body, req.query, responseBody);
-        if (_.get(pythagora.metadata, 'exportRequirements.login.endpointPath') &&
+        let loginEndpointPath = _.get(pythagora.metadata, 'exportRequirements.login.endpointPath')
+        if (loginEndpointPath &&
+            comparePaths(loginEndpointPath, req.path) &&
+            req.method !== 'OPTIONS' &&
             !_.get(pythagora.metadata, 'exportRequirements.login.requestBody')) {
             logLoginEndpointCaptured();
             _.set(

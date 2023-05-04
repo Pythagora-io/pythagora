@@ -103,6 +103,13 @@ npx pythagora --delete-all-failed
 ```
 <br>
 
+If you want to delete only one test using testId you can use
+<b>--delete testId</b> like this:
+   ```bash
+   npx pythagora --delete testId
+   ```
+<br>
+
 <h1 id="options">📖 Other Options</h1>
 
 These are available options for Pythagora command:
@@ -116,12 +123,6 @@ These are available options for Pythagora command:
 <b>--test-id</b> (runs test by Id)
    ```bash
    npx pythagora --init-command "my start command" --mode test --test-id testId
-   ```
-<br>
-
-<b>--delete testId</b> (deletes test with testId)
-   ```bash
-   npx pythagora --init-command "my start command" --delete testId
    ```
 <br>
 

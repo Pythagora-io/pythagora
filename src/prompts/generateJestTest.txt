@@ -36,7 +36,11 @@ If the database was updated, check if the database was updated correctly. When y
 
 If you need to use the Mongo database for anything, add `let mongoQueries = await global.setUpDb(testId);` to the beginning of the `beforeAll` function. You don't need to insert any documents in the database because all needed documents will be inserted in the `setUpDb` function. You can find the `testId` in the JSON request data that I will give you.
 
-If you need an auth token for the test, you can retrieve it by calling `getAuthToken` function from the file "./auth" and passing the URL of the app (eg. "http://localhost:3000") and the user object from the database data. You need to determine the index of the user document from the `mongoQueries` array that will be shown below and pass that index to `getAuthToken` function. Like this:
+If you need an auth token for the test, there are few steps you have to follow. Let's break them down step by step:
+1. you can retrieve auth token by calling `getAuthToken` function from the file "./auth"
+2. you have to pass the <APP_URL>, which is url of the app (eg. "http://localhost:3000") as first argument to `getAuthToken` function
+3. you have to pass the user object from the database data as the second argument to `getAuthToken` function. You need to determine the index of the user document from the `mongoQueries` array that will be shown below and pass mongoQueries[<INDEX_OF_USER_DOCUMENT>] to `getAuthToken` function, eg. "getAuthToken('http://localhost:3000', mongoQueries[1])".
+Here is template how to get auth token:
 ```javascript
 const getAuthToken = require('./auth');
 let authToken;

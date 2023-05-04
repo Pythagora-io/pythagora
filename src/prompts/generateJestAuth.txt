@@ -8,7 +8,11 @@ const response = await axios.post(url, reqBody, {
 });
 ```
 
-getAuthToken function needs to insert the user in the database, make an API request to the login route, get the authentication token from the response, and return it.
+getAuthToken function needs to do multiple things. Let's break it down step by step:
+1. insert the user in the database
+2. make an API request to the login route
+3. get the authentication token from the response
+4. return authentication token
 
 The data from which you need to create getAuthToken is:
 1. Mongo queries made during the execution of the login endpoint

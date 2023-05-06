@@ -61,6 +61,10 @@ do
   then
     node "./node_modules/${pythagora_dir}/src/scripts/deleteAllFailed.js"
     exit 0
+  elif [[ "${args[$i]}" == "--delete" ]]
+  then
+    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/deleteTest.js"
+    exit 0
   elif [[ "${args[$i]}" == "--mode" ]]
   then
     mode="${args[$i+1]}"

@@ -1,31 +1,8 @@
 const path = require('path');
 const fs = require('fs');
 const tryrequire = require('tryrequire');
-const { PYTHAGORA_METADATA_DIR, PYTHAGORA_TESTS_DIR, METADATA_FILENAME, PYTHAGORA_DELIMITER } = require('../const/common.js');
-const { getCircularReplacer } = require('../utils/common.js');
-const { logAndExit } = require('../utils/cmdPrint.js');
 const { exportTest } = require('../commands/export');
 
-
-function deleteTest(id) {
-    try {
-        if (typeof id !== 'string') logAndExit(`When using --delete flag with Pythagora you have to give test ID (of test you want to delete).`);
-        let files = fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
-
-        files = files.filter(f => f[0] !== '.');
-        for (let file of files) {
-            if (file.indexOf(PYTHAGORA_DELIMITER) !== 0) continue;
-            let tests = JSON.parse(fs.readFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`));
-            let newTests = tests.filter((t) => t.id !== id);
-
-            if (tests.length !== newTests.length) fs.writeFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`, JSON.stringify(newTests, getCircularReplacer(), 2));
-        }
-
-        logAndExit(`Successfully deleted test with id: ${id}!`, 'log');
-    } catch (e) {
-        logAndExit(e);
-    }
-}
 
 function checkDependencies() {
     let mongodb = tryrequire('mongodb');
@@ -108,8 +85,6 @@ function startPythagora(args, app) {
 }
 
 module.exports = {
-    logAndExit,
-    deleteTest,
     checkDependencies,
     searchAllModuleFolders,
     getPythagoraVersion,

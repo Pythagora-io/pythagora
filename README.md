@@ -76,6 +76,8 @@ Here are some demo videos that can help you get started.
 Here are examples of open sourced repositories which we forked and created tests with Pythagora so you can easily see it in action. 
 
 [![MERN E-commerce](https://img.shields.io/badge/MERN%20E--commerce-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--mern--ecommerce-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-mern-ecommerce)
+[![Reddish](https://img.shields.io/badge/Reddish-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--reddish-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-reddish)
+[![Trellis](https://img.shields.io/badge/Trellis-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--trellis-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-trellis)
 
 
 <br><br>
@@ -101,6 +103,13 @@ npx pythagora --delete-all-failed
 ```
 <br>
 
+If you want to delete only one test using testId you can use
+<b>--delete testId</b> like this:
+   ```bash
+   npx pythagora --delete testId
+   ```
+<br>
+
 <h1 id="options">📖 Other Options</h1>
 
 These are available options for Pythagora command:
@@ -114,12 +123,6 @@ These are available options for Pythagora command:
 <b>--test-id</b> (runs test by Id)
    ```bash
    npx pythagora --init-command "my start command" --mode test --test-id testId
-   ```
-<br>
-
-<b>--delete testId</b> (deletes test with testId)
-   ```bash
-   npx pythagora --init-command "my start command" --delete testId
    ```
 <br>
 

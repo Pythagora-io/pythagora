@@ -16,11 +16,26 @@ const changes = JSON.parse(data);
 let processedIndexes = [];
 
 const changesActions = {
-    A: 'accept',
-    D: 'delete',
-    S: 'skip',
-    R: 'getRunCmd',
-    Q: 'quit'
+    A: {
+        fn: 'acceptChange',
+        msg: 'accept changes'
+    },
+    D: {
+        fn: 'deleteChange',
+        msg: 'delete test'
+    },
+    S: {
+        fn: 'skipChange',
+        msg: 'skip test'
+    },
+    R: {
+        fn: 'getRunCmd',
+        msg: 'get command to run this test'
+    },
+    Q: {
+        fn: 'quitReview',
+        msg: 'quit review'
+    }
 };
 const ignoreKeys = ['id', 'filename', 'errors'];
 
@@ -30,7 +45,7 @@ function saveReviewJson(i, oldJson) {
     fs.writeFileSync(reviewFilePath, JSON.stringify(reviewJson, null, 2));
 }
 
-function acceptChanges(change, index, reviewJson) {
+function acceptChange(change, index, reviewJson) {
     let filePath = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
     let file = fs.readFileSync(filePath);
     let json = JSON.parse(file);
@@ -50,7 +65,7 @@ function acceptChanges(change, index, reviewJson) {
     console.log('Test updated successfully!');
 }
 
-function deleteChanges(change, index, reviewJson) {
+function deleteChange(change, index, reviewJson) {
     let filePath = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
     let file = fs.readFileSync(filePath);
     let json = JSON.parse(file);
@@ -62,17 +77,17 @@ function deleteChanges(change, index, reviewJson) {
     console.log('Test deleted successfully!');
 }
 
-function skipChanges(change) {
+function skipChange(change) {
     console.log(`Skipped reviewing change for test with id: ${change.id}`);
 }
 
-function getRunCmdChanges(change) {
+function getRunCmd(change) {
     console.log(`You can run this test with command:`);
     console.log(`\x1b[34m\x1b[1mnpx pythagora --init-command "${metadata.initCommand}" --mode test --test-id ${change.id}\x1b[0m`);
     process.exit(0);
 }
 
-function quitChanges(change) {
+function quitReview(change) {
     console.log(`Exiting review...`);
     process.exit(0);
 }
@@ -141,12 +156,12 @@ function generatePrompt() {
 
     Object.keys(changesActions).forEach(function(key, index) {
         let len = Object.keys(changesActions).length;
-        prompt += index + 2 === len ? `${changesActions[key]}(${key}) ` :
-            index + 1 === len ? `or ${changesActions[key]}(${key}) ` :
-                `${changesActions[key]}(${key}), ` ;
+        prompt += index + 2 === len ? `${changesActions[key].msg}(${key}) ` :
+            index + 1 === len ? `or ${changesActions[key].msg}(${key}) ` :
+                `${changesActions[key].msg}(${key}), ` ;
     });
 
-    prompt += 'changes: ';
+    prompt += ': ';
 
     return prompt;
 }
@@ -189,9 +204,9 @@ const displayChangesAndPrompt = (index, arr, displayChange = true) => {
         // Close the readline interface
         rl.close();
 
-        // Call the appropriate function based on the user's input: acceptChanges(), deleteChanges(), skipChanges()
+        // Call the appropriate function based on the user's input: acceptChange(), deleteChange(), skipChange(),...
         if (changesActions[answer]) {
-            let functionName = `${changesActions[answer]}Changes`;
+            let functionName = `${changesActions[answer].fn}`;
             eval(functionName)(change, index, arr);
             // Call the function again for the next element after waiting for user input
             setTimeout(() => {

@@ -7,7 +7,7 @@ const {insertVariablesInText} = require("../utils/common");
 const {testExportStartedLog, jestAuthFileGenerationLog} = require("../utils/cmdPrint");
 const https = require("https");
 const args = require("../utils/argumentsCheck");
-const MIN_TOKENS_FOR_GPT_RESPONSE = 1640;
+const {MIN_TOKENS_FOR_GPT_RESPONSE, MAX_GPT_MODEL_TOKENS} = require("../const/common");
 let configuration, openai;
 
 async function getOpenAIClient() {
@@ -31,7 +31,7 @@ function getTokensInMessages(messages) {
 
 async function createGPTChatCompletition(messages) {
     let tokensInMessages = getTokensInMessages(messages);
-    if (tokensInMessages + MIN_TOKENS_FOR_GPT_RESPONSE > 8192) {
+    if (tokensInMessages + MIN_TOKENS_FOR_GPT_RESPONSE > MAX_GPT_MODEL_TOKENS) {
         console.error(`Too many tokens in messages: ${tokensInMessages}. Please try a different test.`);
         process.exit(1);
     }
@@ -39,7 +39,7 @@ async function createGPTChatCompletition(messages) {
     let gptData = {
         model: "gpt-4",
         n: 1,
-        max_tokens: Math.min(4096, 8192 - tokensInMessages),
+        max_tokens: Math.min(4096, MAX_GPT_MODEL_TOKENS - tokensInMessages),
         messages
     };
 

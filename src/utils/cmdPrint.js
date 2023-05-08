@@ -217,5 +217,6 @@ module.exports = {
     pleaseCaptureLoginTestLog,
     logLoginEndpointCaptured,
     primeJestLog,
-    testEligibleForExportLog
+    testEligibleForExportLog,
+    logChange
 }

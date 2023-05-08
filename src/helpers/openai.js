@@ -154,5 +154,7 @@ function extractGPTMessageFromStreamData(input) {
 
 module.exports = {
     getJestTestFromPythagoraData,
-    getJestAuthFunction
+    getJestAuthFunction,
+    getTokensInMessages,
+    getPromptFromFile
 }

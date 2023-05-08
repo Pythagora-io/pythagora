@@ -162,6 +162,10 @@ function jestAuthFileGenerationLog() {
     if (!args.no_stream) console.log(`${green}${bold}--------------------------GPT OUTPUT--------------------------${reset}`);
 }
 
+function testEligibleForExportLog(endpoint, testId, eligible) {
+    console.log(`${bold + (eligible ? (green + '✅') : (red + '❌'))} ${endpoint} - ${testId}${reset}`);
+}
+
 function loginRouteEnteredLog(endpointPath) {
     console.log(`You entered: ${green}${bold}${endpointPath}${reset}`);
 }
@@ -205,5 +209,6 @@ module.exports = {
     loginRouteEnteredLog,
     pleaseCaptureLoginTestLog,
     logLoginEndpointCaptured,
-    primeJestLog
+    primeJestLog,
+    testEligibleForExportLog
 }

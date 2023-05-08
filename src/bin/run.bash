@@ -53,6 +53,11 @@ do
   then
     PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/review.js"
     exit 0
+  elif [[ "${args[$i]}" == "--tests-eligible-for-export" ]]
+  then
+    echo "${yellow}${bold}Tests eligible for export:${reset}"
+    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/testsEligibleForExport.js"
+    exit 0
   elif [[ "${args[$i]}" =~ ^--rename[-_]tests$ ]]
   then
     node "./node_modules/${pythagora_dir}/src/scripts/renameTests.js"

@@ -41,7 +41,7 @@ function run(testId) {
             process.exit(1);
         }
     }
-    jest.run(testId).then(() => {
+    jest.run(testId || ['--runInBand']).then(() => {
         console.log('Jest tests finished');
         process.exit(0);
     });

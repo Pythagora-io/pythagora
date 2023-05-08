@@ -160,12 +160,12 @@ function testExported(testId) {
 
 function testExportStartedLog() {
     console.log(`${bold}Exporting test started - waiting on GPT...${reset}`);
-    if (!args.no_stream) console.log(`${green}${bold}--------------------------GPT OUTPUT--------------------------${reset}`);
+    if (!args.no_stream) console.log(`${green}${bold}--------------------------LLM OUTPUT--------------------------${reset}`);
 }
 
 function jestAuthFileGenerationLog() {
     console.log(`${green}${bold}Creating auth file for Jest tests...${reset}`);
-    if (!args.no_stream) console.log(`${green}${bold}--------------------------GPT OUTPUT--------------------------${reset}`);
+    if (!args.no_stream) console.log(`${green}${bold}--------------------------LLM OUTPUT--------------------------${reset}`);
 }
 
 function testEligibleForExportLog(endpoint, testId, eligible) {

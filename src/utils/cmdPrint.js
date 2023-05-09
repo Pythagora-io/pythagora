@@ -197,7 +197,10 @@ function primeJestLog() {
 }
 
 function enterLoginRouteLog() {
-    console.log(`Login endpoint path not found in metadata file. Please run ${bold}${blue}npx pythagora --export-setup${reset}`);
+    console.log(`Login endpoint path not found in metadata file. Please run:
+${bold}${blue}--------------------------------------------------------
+npx pythagora --export-setup
+--------------------------------------------------------${reset}`);
 }
 
 

@@ -45,7 +45,10 @@ let someObjectId = new ObjectId(id);
 
 Here is a template for the getAuthToken function:
 ```javascript
+const axios = require('axios');
+const cookie = require('cookie');
 const getMongoCollection = global.getMongoCollection;
+
 async function getAuthToken(appUrl, userDoc) {
     let response;
     try {
@@ -62,9 +65,11 @@ async function getAuthToken(appUrl, userDoc) {
                 return {data: {token: 'Bearer invalid-token'}};
             });
 
-        return response.data.token;
+        const token = response.data.token || response.headers['authorization'];
+
+        return token ? { 'Authorization': token } : { 'Cookie': 'token=' + cookie.parse(response.headers['set-cookie'][0]).token };
     } catch (err) {
-        response = {data: {token: 'Bearer invalid-token'}};
+        return {};
     }
 }
 ```
@@ -73,7 +78,9 @@ Input variables are:
 1. appUrl - the URL of the app
 2. userDoc - mongo document of the user that needs to be logged in for a specific test. Each test can require a different user to log in for the test to be successful. getAuthToken function needs to take that document and, before it inserts the document into the database, replace the password field with the password value captured in the data above so that we're always able to log the user in with the same password.
 
-You don't need to require `global` because that is the native NodeJS global variable.
+When replacing <LOGIN_BODY> do not hardcode anything but use `userDoc`.
+
+Don't require `global` because that is the native NodeJS global variable.
 
 You need to basically create this exact same function but replace all places with `<SOME_VARIABLE>` and add all the requires at the top but make sure that you don't require any variable that you won't use in the function. For example:
 ```javascript

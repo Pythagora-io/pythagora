@@ -32,6 +32,8 @@ let someObjectId = new ObjectId(id);
 
 Don't assert or set up every single parameter but only the ones that are important (the ones that are usually used in Jest integration tests). Also, never assert full objects but only the values inside an object. For example, don't do `expect(object).toMatchObject(someOtherObject);` but rather do `expect(object.someValue).toBe(someOtherObject.someValue);`.
 
+Don't require `global` because that is the native NodeJS global variable.
+
 If the database was updated, check if the database was updated correctly. When you need to make a query to a Mongo collection, use `global.getMongoCollection(collection)` function which will return the MongoDB collection which you can query how you want. For example, if you want to do a `find` query on a collection "users", you can do `global.getMongoCollection('users').find(query)`.
 
 If you need to use the Mongo database for anything, add `let mongoDocuments = await global.setUpDb(testId);` to the beginning of the `beforeAll` function. You don't need to insert any documents in the database because all needed documents will be inserted in the `setUpDb` function. You can find the `testId` in the JSON request data that I will give you.
@@ -44,14 +46,34 @@ The returned `mongoDocuments` variable is a JSON object that has a collection na
 }
 ```
 
-If you need an auth token for the test, there are few steps you have to follow. Let's break them down step by step:
-1. you can retrieve auth token by calling `getAuthToken` function from the file "./auth" - always wrap it in a try-catch block because it can throw an error
+Test you create should have this structure:
+```javascript
+describe(<DESCRIPTION>, () => {
+    <REQUIRE_CONST>
+    <DEFINITION_OF_GLOBAL_VARIABLES>
+
+    beforeAll(async () => {
+        <BEFORE_ALL_CODE>
+    })
+
+    afterAll(async () => {
+        <AFTER_ALL_CODE>
+    })
+
+    test(<TEST_NAME>, async () => {
+        <TEST_CODE>
+    })
+})
+```
+
+If you need authenticate for the test to pass, there are few steps you have to follow. Let's break them down step by step:
+1. you can retrieve auth token or cookie by calling `getAuthToken` function from the file "./auth" - always wrap it in a try-catch block because it can throw an error
 2. you have to pass the <APP_URL>, which is url of the app (eg. "http://localhost:3000") as first argument to `getAuthToken` function
 3. you have to pass the user object from the database data as the second argument to `getAuthToken` function. You need to determine the collection name and the index of the user document from the `mongoDocuments` array that will be shown below and pass mongoDocuments[<COLLECTION_NAME>][<INDEX_OF_USER_DOCUMENT>] to `getAuthToken` function, eg. "getAuthToken('http://localhost:3000', mongoDocuments['users'][1])".
-Here is template how to get auth token:
+Here is template how to do authentication if needed:
 ```javascript
 const getAuthToken = require('./auth');
-let authToken = 'Bearer ';
+let authToken;
 beforeAll(async () => {
     let mongoDocuments = await global.setUpDb(testId);
     try {
@@ -59,7 +81,14 @@ beforeAll(async () => {
     } catch (err) {}
 });
 ```
-`authToken` is in the format `Bearer <TOKEN>` but when you initialize this variable, always initialize it with `'Bearer '` value. If you use this code, make sure to add the following `afterAll` function:
+If you need to set some headers for test to be successful, set only necessary headers.
+
+Response from `getAuthToken()` is either { "Authorization": authToken } or { "Cookie": cookie }. That means that all you have to do is add `authToken` to headers and you should do that using Object.assign(), like this:
+```javascript
+const response = await axios.get(<URL>, {headers:Object.assign(headers, authToken)})
+```
+
+If you use this code, make sure to add the following `afterAll` function:
 ```javascript
 afterAll(async () => {
     await global.cleanUpDb();

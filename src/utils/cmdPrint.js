@@ -196,6 +196,10 @@ function primeJestLog() {
     console.error(`Please finish the authentication priming to export tests to Jest. Run ${bold}${green}npx pythagora --init-command "${args.init_command.join(' ')}" --export${reset}`);
 }
 
+function enterLoginRouteLog() {
+    console.log(`Login endpoint path not found in metadata file. Please run ${bold}${blue}npx pythagora --export-setup${reset}`);
+}
+
 
 module.exports = {
     logEndpointCaptured,
@@ -218,5 +222,6 @@ module.exports = {
     logLoginEndpointCaptured,
     primeJestLog,
     testEligibleForExportLog,
-    logChange
+    logChange,
+    enterLoginRouteLog
 }

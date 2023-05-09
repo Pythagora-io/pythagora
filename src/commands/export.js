@@ -1,30 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 const { EXPORTED_TESTS_DIR, EXPORTED_TESTS_DATA_DIR, METADATA_FILENAME } = require('../const/common');
-const {getAllGeneratedTests, getCircularReplacer, updateMetadata} = require("../utils/common");
+const {getAllGeneratedTests, updateMetadata} = require("../utils/common");
 const {convertOldTestForGPT} = require("../utils/legacy");
 const {getJestTestFromPythagoraData, getJestAuthFunction} = require("../helpers/openai");
-const {testExported, loginRouteEnteredLog, pleaseCaptureLoginTestLog} = require("../utils/cmdPrint");
+const {testExported, pleaseCaptureLoginTestLog, enterLoginRouteLog} = require("../utils/cmdPrint");
 const _ = require('lodash');
-const readlineSync = require('readline-sync');
-
-function askForLoginRoute() {
-    let endpointPath = '';
-
-    while (true) {
-        endpointPath = readlineSync.question('Please enter the endpoint path of the login route (eg. /api/auth/login): ');
-        loginRouteEnteredLog(endpointPath);
-
-        let answer = readlineSync.question('Is this correct login endpoint path (Y/N): ');
-
-        if (answer.toLowerCase() === 'y') {
-            console.log(`Endpoint path saved: ${endpointPath}`);
-            return endpointPath;
-        } else {
-            console.log('Endpoint path not confirmed. Please try again.');
-        }
-    }
-}
 
 async function createDefaultFiles(generatedTests) {
     if (!fs.existsSync('jest.config.js')) {
@@ -48,9 +29,8 @@ async function configureAuthFile(generatedTests) {
     let loginMongoQueries = _.get(pythagoraMetadata, 'exportRequirements.login.mongoQueriesArray');
 
     if (!loginPath) {
-        loginPath = askForLoginRoute();
-        _.set(pythagoraMetadata, 'exportRequirements.login.endpointPath', loginPath);
-        updateMetadata(pythagoraMetadata);
+        enterLoginRouteLog();
+        process.exit(1);
     }
 
     if (!loginRequestBody || !loginMongoQueries) {

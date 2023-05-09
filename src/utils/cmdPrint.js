@@ -160,12 +160,12 @@ function testExported(testId) {
 
 function testExportStartedLog() {
     console.log(`${bold}Exporting test started - waiting on GPT...${reset}`);
-    if (!args.no_stream) console.log(`${green}${bold}--------------------------GPT OUTPUT--------------------------${reset}`);
+    if (!args.no_stream) console.log(`${green}${bold}--------------------------LLM OUTPUT--------------------------${reset}`);
 }
 
 function jestAuthFileGenerationLog() {
     console.log(`${green}${bold}Creating auth file for Jest tests...${reset}`);
-    if (!args.no_stream) console.log(`${green}${bold}--------------------------GPT OUTPUT--------------------------${reset}`);
+    if (!args.no_stream) console.log(`${green}${bold}--------------------------LLM OUTPUT--------------------------${reset}`);
 }
 
 function testEligibleForExportLog(endpoint, testId, eligible) {
@@ -196,6 +196,13 @@ function primeJestLog() {
     console.error(`Please finish the authentication priming to export tests to Jest. Run ${bold}${green}npx pythagora --init-command "${args.init_command.join(' ')}" --export${reset}`);
 }
 
+function enterLoginRouteLog() {
+    console.log(`Login endpoint path not found in metadata file. Please run:
+${bold}${blue}--------------------------------------------------------
+npx pythagora --export-setup
+--------------------------------------------------------${reset}`);
+}
+
 
 module.exports = {
     logEndpointCaptured,
@@ -217,5 +224,7 @@ module.exports = {
     pleaseCaptureLoginTestLog,
     logLoginEndpointCaptured,
     primeJestLog,
-    testEligibleForExportLog
+    testEligibleForExportLog,
+    logChange,
+    enterLoginRouteLog
 }

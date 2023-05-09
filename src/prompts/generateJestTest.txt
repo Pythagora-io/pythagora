@@ -75,7 +75,7 @@ Here is the request data in a JSON format:
 Here are a couple of additional points to have in mind:
 When you create names for your tests you make sure that they are very intuitive and in a human-readable form.
 
-Be very careful when asserting IDs because IDs can be different in the database from the IDs that are captured in the API request data from which you're creating tests. This applies also for asserting dates - in most cases asserting dates is not good because they change a lot and are irrelevant to tests.
+Be very careful when asserting IDs because IDs can be different in the database from the IDs that are captured in the API request data from which you're creating tests. Also, do not assert dates - this is not good because they change a lot and are irrelevant to tests.
 
 When you make an API request, make sure to use `axios` to the URL `http://localhost:3000`.
 

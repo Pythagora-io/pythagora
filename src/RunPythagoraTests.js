@@ -1,7 +1,7 @@
 const { logTestsFinished, logTestStarting, logTestsStarting } = require('./utils/cmdPrint.js');
 const { makeTestRequest } = require('./helpers/testing.js');
 const { getCircularReplacer } = require('./utils/common.js')
-const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHAGORA_DELIMITER } = require('./const/common.js');
+const { PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHAGORA_DELIMITER, PYTHAGORA_TESTS_DIR } = require('./const/common.js');
 
 const fs = require('fs');
 const { exec } = require('child_process');

@@ -2,7 +2,7 @@
 let { checkDependencies, searchAllModuleFolders } = require('./helpers/starting.js');
 try {
 
-    let findModules = ['express', 'mongodb', 'jsonwebtoken'];
+    let findModules = ['express', 'mongodb', 'jsonwebtoken', 'ws'];
     let mapModules = searchAllModuleFolders(process.cwd(), findModules);
 
     for (let httpModule of ['http', 'https']) {
@@ -41,6 +41,16 @@ try {
             };
         } catch (e) {
             // console.log(`Can't patch JWT at ${jwtPath}`);
+        }
+    }
+
+    for (let wsPath of mapModules.ws) {
+        try {
+            require.cache[require.resolve('ws')] = {
+                exports: require('./patches/ws.js')(wsPath)
+            };
+        } catch (e) {
+            // console.log(`Can't patch WS at ${wsPath}`);
         }
     }
 

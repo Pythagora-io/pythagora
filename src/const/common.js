@@ -1,5 +1,6 @@
 module.exports = {
     PYTHAGORA_TESTS_DIR: 'pythagora_tests',
+    PYTHAGORA_WEBSOCKETS_DIR: 'socket',
     PYTHAGORA_METADATA_DIR: '.pythagora',
     METADATA_FILENAME: 'metadata.json',
     REVIEW_DATA_FILENAME: 'review.json',

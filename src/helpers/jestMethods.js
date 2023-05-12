@@ -8,7 +8,7 @@ const _ = require('lodash');
 async function prepareDB(mongoQueries) {
     let uniqueIds = [];
     for (const data of mongoQueries) {
-        if (data.type !== 'mongodb') continue;
+        if (data.type !== 'mongodb' || !data.preQueryDocs) continue;
         let insertData = [];
         for (let doc of data.preQueryDocs) {
             if (!uniqueIds.includes(doc._id)) {

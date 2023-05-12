@@ -1,7 +1,7 @@
 const _ = require('lodash');
 
 function convertOldTestForGPT(originalTest) {
-    let test = _.clone(originalTest);
+    let test = _.cloneDeep(originalTest);
 
     delete test.url;
     delete test.trace;

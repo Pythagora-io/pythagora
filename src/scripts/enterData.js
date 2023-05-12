@@ -1,8 +1,8 @@
 const {loginRouteEnteredLog} = require("../utils/cmdPrint");
 const {updateMetadata} = require("../utils/common");
-const {METADATA_FILENAME} = require("../const/common");
+const {METADATA_FILENAME, SRC_TO_ROOT} = require("../const/common");
 // TODO make require path better!!
-let pythagoraMetadata = require(`../../../../.pythagora/${METADATA_FILENAME}`);
+let pythagoraMetadata = require(`../${SRC_TO_ROOT}.pythagora/${METADATA_FILENAME}`);
 const readline = require("readline");
 const _ = require("lodash");
 

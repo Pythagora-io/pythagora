@@ -7,6 +7,7 @@ module.exports = {
     PYTHAGORA_DELIMITER: '-_-',
     EXPORTED_TESTS_DIR: 'pythagora_tests/exported_tests',
     EXPORTED_TESTS_DATA_DIR: 'pythagora_tests/exported_tests/data',
+    SRC_TO_ROOT: '../../../',
     MIN_TOKENS_FOR_GPT_RESPONSE: 1640,
     MAX_GPT_MODEL_TOKENS: 8192,
 }

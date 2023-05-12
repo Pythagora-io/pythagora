@@ -154,8 +154,8 @@ function logAndExit(message, type='error') {
 
 function testExported(testId) {
     if (!args.no_stream) console.log(`\n${green}${bold}--------------------------END OF THE TEST--------------------------${reset}`);
-    console.log(`${green}${bold}Woohoo - you\'ve exported a test to Jest!${reset} You can run it with command:`);
-    console.log(`${blue}${bold}npx pythagora --init-command \"${args.init_command.join(' ')}\" --mode jest --test-id ${testId} --no-code-coverage${reset}`)
+    console.log(`${green}${bold}Woohoo - you\'ve exported a test to Jest!${reset}`);
+    // console.log(`${blue}${bold}npx pythagora --init-command \"${args.init_command.join(' ')}\" --mode jest --test-id ${testId} --no-code-coverage${reset}`)
 }
 
 function testExportStartedLog() {

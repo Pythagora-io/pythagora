@@ -75,6 +75,10 @@ do
   then
     PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/deleteTest.js"
     exit 0
+  elif [[ "${args[$i]}" == "--export" ]]
+  then
+    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/commands/export.js"
+    exit 0
   elif [[ "${args[$i]}" == "--mode" ]]
   then
     mode="${args[$i+1]}"

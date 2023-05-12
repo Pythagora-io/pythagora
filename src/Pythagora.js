@@ -2,7 +2,7 @@ const MODES = require('./const/modes.json');
 const RedisInterceptor = require('./helpers/redis.js');
 const { cleanupDb } = require('./helpers/mongodb.js');
 const { makeTestRequest } = require('./helpers/testing.js');
-const { getPythagoraVersion } = require("./helpers/starting.js");
+const { getPythagoraVersion, setUpPythagoraDirs } = require("./helpers/starting.js");
 const { logCaptureFinished, pythagoraFinishingUp } = require('./utils/cmdPrint.js');
 const { getCircularReplacer, getMetadata, getFreePortInRange } = require('./utils/common.js');
 const {
@@ -46,7 +46,7 @@ class Pythagora {
 
         getPythagoraVersion(this);
 
-        this.setUpPythagoraDirs();
+        setUpPythagoraDirs();
         // this.setUpHttpInterceptor();
 
         this.cleanupDone = false;
@@ -130,14 +130,6 @@ class Pythagora {
         this.metadata.initCommand = this.initCommand;
         fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, JSON.stringify(this.metadata, getCircularReplacer(), 2));
         console.log('Test run metadata saved.');
-    }
-
-    setUpPythagoraDirs() {
-        if (!fs.existsSync(`./${PYTHAGORA_TESTS_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
-        if (!fs.existsSync(`./${EXPORTED_TESTS_DIR}`)) fs.mkdirSync(`./${EXPORTED_TESTS_DIR}`);
-        if (!fs.existsSync(`./${EXPORTED_TESTS_DATA_DIR}`)) fs.mkdirSync(`./${EXPORTED_TESTS_DATA_DIR}`);
-        if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_METADATA_DIR}/`);
-        if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`)) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, '{}');
     }
 
     setMongoClient(client) {

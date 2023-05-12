@@ -1,6 +1,6 @@
 const { cleanupDb, jsonObjToMongo } = require("./mongodb");
 const {PYTHAGORA_JEST_DB} = require("../const/mongodb");
-const {EXPORTED_TESTS_DATA_DIR} = require("../const/common");
+const {EXPORTED_TESTS_DATA_DIR, SRC_TO_ROOT} = require("../const/common");
 const _ = require('lodash');
 
 // TODO can we merge this with the other prepareDB?
@@ -23,7 +23,7 @@ async function prepareDB(mongoQueries) {
 async function setUpDb(testId) {
     await cleanupDb(global.Pythagora);
     // TODO organize better by test groups
-    let data = require(`../../../../${EXPORTED_TESTS_DATA_DIR}/${testId}.json`);
+    let data = require(`../${SRC_TO_ROOT}${EXPORTED_TESTS_DATA_DIR}/${testId}.json`);
     await prepareDB(data);
     console.log(`MongoDB prepared for test ${testId}`);
     let preparedData = _.groupBy(data, 'collection');

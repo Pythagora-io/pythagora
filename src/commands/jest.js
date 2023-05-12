@@ -1,5 +1,5 @@
 const jest = require('jest');
-const {EXPORTED_TESTS_DIR, EXPORTED_TESTS_DATA_DIR} = require("../const/common");
+const {EXPORTED_TESTS_DIR, EXPORTED_TESTS_DATA_DIR, SRC_TO_ROOT} = require("../const/common");
 let fs = require('fs');
 const pythagoraJestMethods = require("../helpers/jestMethods");
 const {primeJestLog} = require("../utils/cmdPrint");
@@ -26,7 +26,7 @@ function check() {
 function run(testId) {
     check();
     // TODO better way to import this
-    const userJestSetup = require(`../../../../${EXPORTED_TESTS_DIR}/global-setup`);
+    const userJestSetup = require(`../${SRC_TO_ROOT}${EXPORTED_TESTS_DIR}/global-setup`);
     userJestSetup();
     for (let method of requiredJestSetupMethods) {
         global[method] = global[method] || pythagoraJestMethods[method];

@@ -124,7 +124,7 @@ async function apiCaptureInterceptor(req, res, next, pythagora) {
         logEndpointCaptured(req.originalUrl, req.method, req.body, req.query, responseBody);
         let loginEndpointPath = _.get(pythagora.metadata, 'exportRequirements.login.endpointPath')
         if (loginEndpointPath &&
-            comparePaths(loginEndpointPath, req.path) &&
+            comparePaths(loginEndpointPath, req.originalUrl) &&
             req.method !== 'OPTIONS' &&
             !_.get(pythagora.metadata, 'exportRequirements.login.requestBody')) {
             logLoginEndpointCaptured();

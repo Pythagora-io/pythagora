@@ -1,11 +1,20 @@
 const fs = require('fs');
 const path = require('path');
-const { EXPORTED_TESTS_DIR, EXPORTED_TESTS_DATA_DIR, METADATA_FILENAME } = require('../const/common');
+const {
+    EXPORTED_TESTS_DIR,
+    EXPORTED_TESTS_DATA_DIR,
+    METADATA_FILENAME,
+    SRC_TO_ROOT,
+    MIN_TOKENS_FOR_GPT_RESPONSE,
+    MAX_GPT_MODEL_TOKENS
+} = require('../const/common');
 const {getAllGeneratedTests, updateMetadata} = require("../utils/common");
 const {convertOldTestForGPT} = require("../utils/legacy");
-const {getJestTestFromPythagoraData, getJestAuthFunction} = require("../helpers/openai");
-const {testExported, pleaseCaptureLoginTestLog, enterLoginRouteLog} = require("../utils/cmdPrint");
+const {getJestTestFromPythagoraData, getJestAuthFunction, getTokensInMessages, getPromptFromFile} = require("../helpers/openai");
+const {setUpPythagoraDirs} = require("../helpers/starting");
+const {testExported, pleaseCaptureLoginTestLog, enterLoginRouteLog, testEligibleForExportLog} = require("../utils/cmdPrint");
 const _ = require('lodash');
+const args = require('../utils/getArgs.js');
 
 async function createDefaultFiles(generatedTests) {
     if (!fs.existsSync('jest.config.js')) {
@@ -23,7 +32,7 @@ async function createDefaultFiles(generatedTests) {
 
 async function configureAuthFile(generatedTests) {
     // TODO make require path better
-    let pythagoraMetadata = require(`../../../../.pythagora/${METADATA_FILENAME}`);
+    let pythagoraMetadata = require(`../${SRC_TO_ROOT}.pythagora/${METADATA_FILENAME}`);
     let loginPath = _.get(pythagoraMetadata, 'exportRequirements.login.endpointPath');
     let loginRequestBody = _.get(pythagoraMetadata, 'exportRequirements.login.requestBody');
     let loginMongoQueries = _.get(pythagoraMetadata, 'exportRequirements.login.mongoQueriesArray');
@@ -64,25 +73,48 @@ function cleanupGPTResponse(gptResponse) {
     return gptResponse;
 }
 
-async function exportTest(testId) {
-    let generatedTests = getAllGeneratedTests();
-    await createDefaultFiles(generatedTests);
-
-    let test = generatedTests.find(t => t.id === testId);
-    if (!test) throw new Error(`Test with id ${testId} not found`);
-
+async function exportTest(originalTest) {
     // TODO remove in the future
-    test = convertOldTestForGPT(test);
-    fs.writeFileSync(`./${EXPORTED_TESTS_DATA_DIR}/${testId}.json`, JSON.stringify(test.mongoQueries, null, 2));
+    let test = convertOldTestForGPT(originalTest);
+    fs.writeFileSync(`./${EXPORTED_TESTS_DATA_DIR}/${test.testId}.json`, JSON.stringify(test.mongoQueries, null, 2));
 
     let gptResponse = await getJestTestFromPythagoraData(test);
     let jestTest = cleanupGPTResponse(gptResponse);
 
-    fs.writeFileSync(`./${EXPORTED_TESTS_DIR}/${testId}.test.js`, jestTest);
-    testExported(testId);
-    process.exit(0);
+    fs.writeFileSync(`./${EXPORTED_TESTS_DIR}/${test.testId}.test.js`, jestTest);
+    testExported(test.testId);
 }
 
-module.exports = {
-    exportTest
-};
+(async () => {
+    setUpPythagoraDirs();
+    let generatedTests = getAllGeneratedTests();
+    await createDefaultFiles(generatedTests);
+
+    let testId = args.test_id;
+    if (testId) {
+        let test = generatedTests.find(t => t.id === testId);
+        if (!test) throw new Error(`Test with id ${testId} not found`);
+        await exportTest(test)
+    }
+    else {
+        for (let test of generatedTests) {
+            if (test.method === 'OPTIONS') continue;
+            if (fs.existsSync(`./${EXPORTED_TESTS_DIR}/${test.id}.test.js`)) continue;
+            let testData = convertOldTestForGPT(test);
+            let tokens = getTokensInMessages([
+                {"role": "system", "content": "You are a QA engineer and your main goal is to find ways to break the application you're testing. You are proficient in writing automated integration tests for Node.js API servers.\n" +
+                        "When you respond, you don't say anything except the code - no formatting, no explanation - only code.\n" },
+                {
+                    "role": "user",
+                    "content": getPromptFromFile('generateJestTest.txt', { testData }),
+                },
+            ]);
+
+            let isEligibleForExport = (tokens + MIN_TOKENS_FOR_GPT_RESPONSE < MAX_GPT_MODEL_TOKENS);
+
+            if (isEligibleForExport) await exportTest(test)
+            else testEligibleForExportLog(test.endpoint, test.id, isEligibleForExport);
+        }
+    }
+    process.exit(0);
+})()

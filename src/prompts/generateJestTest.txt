@@ -69,7 +69,44 @@ describe(<DESCRIPTION>, () => {
 If you need authenticate for the test to pass, there are few steps you have to follow. Let's break them down step by step:
 1. you can retrieve auth token or cookie by calling `getAuthToken` function from the file "./auth" - always wrap it in a try-catch block because it can throw an error
 2. you have to pass the <APP_URL>, which is url of the app (eg. "http://localhost:3000") as first argument to `getAuthToken` function
-3. you have to pass the user object from the database data as the second argument to `getAuthToken` function. You need to determine the collection name and the index of the user document from the `mongoDocuments` array that will be shown below and pass mongoDocuments[<COLLECTION_NAME>][<INDEX_OF_USER_DOCUMENT>] to `getAuthToken` function, eg. "getAuthToken('http://localhost:3000', mongoDocuments['users'][1])".
+3. you have to pass the user object from the database data as the second argument to `getAuthToken` function. To do that, you need to determine the collection name and the index of the user document from the `mongoQueries` array provided to you. You have to pass `mongoDocuments[<COLLECTION_NAME>][<INDEX_OF_USER_DOCUMENT>]` to `getAuthToken` function, here is example how: "getAuthToken('http://localhost:3000', mongoDocuments['users'][1])". If you can't determine the collection name or the index of the user document, then `mongoDocuments[<COLLECTION_NAME>][<INDEX_OF_USER_DOCUMENT>]` replace with `undefined`, meaning call `getAuthToken()` like this: `getAuthToken('http://localhost:3000', undefined)`
+
+Here are 2 examples of `mongoDocuments`, to help you with call `getAuthToken` described in step 3.
+example 1:
+```json
+{
+    "boards": [],
+    "members": [
+        {
+            "_id": "1",
+            "username": "exampleUsername",
+            "password": "secret"
+        }
+    ]
+}
+```
+call `getAuthToken` in example 1:
+```javascript
+authToken = getAuthToken('http://localhost:3000', mongoDocuments['members'][0])
+```
+
+example 2:
+```json
+{
+    "stores": [],
+    "streets": [
+        {
+            "_id": "1",
+            "street": "street Name"
+        }
+    ]
+}
+```
+Since we can't find any user we will call `getAuthToken` in example 2 like this:
+```javascript
+authToken = getAuthToken('http://localhost:3000', undefined)
+```
+
 Here is template how to do authentication if needed:
 ```javascript
 const getAuthToken = require('./auth');
@@ -83,7 +120,7 @@ beforeAll(async () => {
 ```
 If you need to set some headers for test to be successful, set only necessary headers.
 
-Response from `getAuthToken()` is either { "Authorization": authToken } or { "Cookie": cookie }. That means that all you have to do is add `authToken` to headers and you should do that using Object.assign(), like this:
+Response from `getAuthToken()` has to be stored in `authToken` variable and shouldn't be modified. This is the only correct way of adding token or cookie to header:
 ```javascript
 const response = await axios.get(<URL>, {headers:Object.assign(headers, authToken)})
 ```

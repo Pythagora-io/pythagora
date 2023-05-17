@@ -33,7 +33,7 @@ class Pythagora {
         this.idSeq = 0;
         this.requests = {};
         this.testingRequests = {};
-        this.loggingEnabled = this.mode === 'capture';
+        this.loggingEnabled = this.mode === MODES.capture;
         //todo move all global vars to tempVars
         this.tempVars = {};
 

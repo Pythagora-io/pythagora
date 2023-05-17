@@ -1,3 +1,4 @@
+const MODES = require('../const/modes.json');
 let net = require('net');
 
 const CHUNK_SIZE = 1024;
@@ -15,7 +16,7 @@ module.exports = class RedisInterceptor {
             this.listenSocket = net.createServer(connection => {
                 connection.on('data', data => {
 
-                    if (this.mode === 'capture') {
+                    if (this.mode === MODES.capture) {
                         this.forwardData(connection, data, true);
                     } else if (this.mode === 'test') {
 

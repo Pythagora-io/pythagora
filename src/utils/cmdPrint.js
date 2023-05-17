@@ -152,9 +152,10 @@ function logAndExit(message, type='error') {
     process.exit(1);
 }
 
-function testExported(testId) {
+function testExported(testName) {
     if (!args.no_stream) console.log(`\n${green}${bold}--------------------------END OF THE TEST--------------------------${reset}`);
     console.log(`${green}${bold}Woohoo - you\'ve exported a test to Jest!${reset}`);
+    console.log(`You can find test in ./pythagora_tests/exported_tests/${testName}`);
     // console.log(`${blue}${bold}npx pythagora --init-command \"${args.init_command.join(' ')}\" --mode jest --test-id ${testId} --no-code-coverage${reset}`)
 }
 

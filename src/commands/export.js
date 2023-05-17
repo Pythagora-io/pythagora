@@ -110,7 +110,7 @@ async function exportTest(originalTest, usedNames) {
     fs.writeFileSync(`./${EXPORTED_TESTS_DATA_DIR}/${testName.replace('.test.js', '.json')}`, JSON.stringify(test.mongoQueries, null, 2));
     fs.writeFileSync(`./${EXPORTED_TESTS_DIR}/${testName}`, jestTest.replace(test.testId, testName));
 
-    testExported(test.testId);
+    testExported(testName);
     return testName;
 }
 
@@ -147,7 +147,7 @@ function saveExportJson(exportsMetadata, test, testName) {
         for (let test of generatedTests) {
             if (test.method === 'OPTIONS') continue;
             if (testExists(exportsMetadata, test.id)) {
-                console.log(`Test with id ${testId} already generated, you can find it here: ${`./${EXPORTED_TESTS_DIR}/${exportsMetadata[testId].testName}`}.`);
+                console.log(`Test with id ${test.id} already generated, you can find it here: ${`./${EXPORTED_TESTS_DIR}/${exportsMetadata[test.id].testName}`}.`);
                 continue;
             }
 

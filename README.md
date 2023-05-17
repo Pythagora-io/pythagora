@@ -42,7 +42,9 @@ Pythagora records all requests to endpoints of your app with the response and ev
    <b>NOTES: </b>
    - to stop the capture, you can exit the process like you usually do (Eg. `Ctrl + C`)
    - on Windows make sure to run all commands using `Git Bash` and not `Power Shell` or anything similiar
-      <br>
+
+<br>
+<br>
 <h1 id="executingtests">▶️ Running tests</h1>
 When running tests, it doesn’t matter what database is your Node.js connected to or what is the state of that database. Actually, that database is never touched or used —> instead, Pythagora creates a special, ephemeral pythagoraDb database, which it uses to restore the data before each test is executed, which was present at the time when the test was recorded. Because of this, tests can be run on any machine or environment.
 
@@ -55,6 +57,20 @@ So, after you captured all requests you want, you just need to change the mode p
    ```   
 
 <br><br>
+<h1 id="exportjest">🗄️ Export tests to Jest</h1>
+If you want to export recorded Pythagora tests to Jest tests so you can more easily read and edit them you can do so by running this command:
+
+```bash
+npx pythagora --export
+```
+If you don't have recorded login endpoint it will ask you to run:
+
+```bash
+npx pythagora --export-setup
+```
+after which you just have to run capture command again and go to endpoint login. Once that is done you are ready to export your tests to Jest.
+<br>
+<br>
 <h1 id="demo">🎞 Demo</h1>
 
 Here are some demo videos that can help you get started.
@@ -191,10 +207,42 @@ That's it! You are ready to go and all your API requests with authentication sho
 
 <br><br>
 <h1 id="testdata">🗺️️ Where can I see the tests?</h1>
-Each captured test is saved in <strong><i>pythagora_tests</i></strong> directory at the root of your repository.
+Each captured test is saved in <strong><i>"pythagora_tests"</i></strong> directory at the root of your repository.
+<br><br>
+<details><summary style="background-color: grey; padding: 10px; border: none; border-radius: 4px; cursor: pointer;">Click here to see "pythagora_tests" folder structure explanation:</summary>
+
+<ul>
+  <li>pythagora_tests
+    <ul>
+      <li>exported_tests <span style="color: green;">// folder containing all exported Jest tests</span>
+        <ul>
+          <li>data <span style="color: green;">// folder containing Jest test data</span>
+            <ul>
+              <li>JestTest1.json <span style="color: green;">// this is data that is populated in DB for JestTest1.test.js</span></li>
+              <li>JestTest2.json <span style="color: green;">// this is data that is populated in DB for JestTest2.test.js</span></li>
+              <li>...</li>
+            </ul>
+          </li>
+          <li>auth.js <span style="color: green;">// here is authentication function that is used in all Jest tests</span></li>
+          <li>global-setup.js</li>
+          <li>JestTest1.test.js <span style="color: green;">// this is an exported Jest test</span></li>
+          <li>JestTest2.test.js</li>
+          <li>...</li>
+        </ul>
+      </li>
+      <li>pythagoraTest1.json <span style="color: green;">// this is a Pythagora test</span></li>
+      <li>pythagoraTest2.json</li>
+      <li>...</li>
+    </ul>
+  </li>
+</ul>
+</details>
+<br><br>
 Each JSON file in this repository represents one endpoint that was captured and each endpoint can have many captured tests.
 If you open these files, you will see an array in which each object represents a single test. All data that's needed to run a test
 is stored in this object. Here is an example of a test object.
+<br><br>
+<details><summary style="background-color: grey; padding: 10px; border: none; border-radius: 4px; cursor: pointer;">Click here to see example of one recorded Pythagora test:</summary>
 
 ```json
 {
@@ -258,11 +306,8 @@ is stored in this object. Here is an example of a test object.
    "createdAt": "2023-02-22T14:57:52.362Z" // date when the test was captured
 }
 ```
-<b>NOTE:</b> If you used Pythagora version < 0.0.39 tests were stored in files with delimiter "|" and since we added Windows support that is changed to "-_-".
-To update all your tests to work with new version of Pythagora run:
-```
-npx pythagora --rename-tests
-```
+
+</details>
 
 <br><br>
 <h1 id="support">🤔️ FAQ</h1>

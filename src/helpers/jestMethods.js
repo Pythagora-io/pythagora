@@ -20,12 +20,12 @@ async function prepareDB(mongoQueries) {
     }
 }
 
-async function setUpDb(testId) {
+async function setUpDb(testName) {
     await cleanupDb(global.Pythagora);
     // TODO organize better by test groups
-    let data = require(`../${SRC_TO_ROOT}${EXPORTED_TESTS_DATA_DIR}/${testId}.json`);
+    let data = require(`../${SRC_TO_ROOT}${EXPORTED_TESTS_DATA_DIR}/${testName.replace('.test.js', '.json')}`);
     await prepareDB(data);
-    console.log(`MongoDB prepared for test ${testId}`);
+    console.log(`MongoDB prepared for test ${testName}`);
     let preparedData = _.groupBy(data, 'collection');
     preparedData = _.mapValues(preparedData, docs => {
         return docs.map(doc => doc.preQueryDocs).flat();

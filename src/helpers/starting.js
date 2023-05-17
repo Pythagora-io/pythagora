@@ -6,7 +6,8 @@ const {
     EXPORTED_TESTS_DIR,
     EXPORTED_TESTS_DATA_DIR,
     PYTHAGORA_METADATA_DIR,
-    METADATA_FILENAME
+    METADATA_FILENAME,
+    EXPORT_METADATA_FILENAME
 } = require("../const/common");
 
 
@@ -92,6 +93,7 @@ function setUpPythagoraDirs() {
     if (!fs.existsSync(`./${EXPORTED_TESTS_DATA_DIR}`)) fs.mkdirSync(`./${EXPORTED_TESTS_DATA_DIR}`);
     if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_METADATA_DIR}/`);
     if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`)) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, '{}');
+    if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/${EXPORT_METADATA_FILENAME}`)) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${EXPORT_METADATA_FILENAME}`, '{}');
 }
 
 module.exports = {

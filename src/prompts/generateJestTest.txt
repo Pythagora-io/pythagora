@@ -24,7 +24,7 @@ Here are the details about the parameters of objects inside `mongoQueries` array
 
 -----------------------------------------------------------------------------------------------------------------------
 
-`preQueryDocs` and `postQueryDocs` are important so that you can test if an update in the database happened correctly so make sure to include in the test a check to see if the database was correctly updated. Also, since Mongo's `ObjectId` is not a valid JSON value, you might see a string like this - "ObjectId(\"642548c3dabd5517e39b5827\")". Keep in mind that this should be converted to `new ObjectId("642548c3dabd5517e39b5827")` and if you need to initiate ObjectId, you can require it from "mongodb" - like this:
+`preQueryDocs` and `postQueryDocs` are important so that you can test if an update in the database happened correctly so make sure to include in the test a check to see if the database was correctly updated. Also, since Mongo's `ObjectId` is not a valid JSON value, sometimes you might see a string like this - "ObjectId(\"642548c3dabd5517e39b5827\")". Keep in mind that this should be converted to `new ObjectId("642548c3dabd5517e39b5827")` and if you need to initiate ObjectId, you can require it from "mongodb" - like this:
 ```javascript
 const { ObjectId } = require("mongodb");
 let someObjectId = new ObjectId(id);
@@ -36,7 +36,7 @@ Don't require `global` because that is the native NodeJS global variable.
 
 If the database was updated, check if the database was updated correctly. When you need to make a query to a Mongo collection, use `global.getMongoCollection(collection)` function which will return the MongoDB collection which you can query how you want. For example, if you want to do a `find` query on a collection "users", you can do `global.getMongoCollection('users').find(query)`.
 
-If you need to use the Mongo database for anything, add `let mongoDocuments = await global.setUpDb(testId);` to the beginning of the `beforeAll` function. You don't need to insert any documents in the database because all needed documents will be inserted in the `setUpDb` function. You can find the `testId` in the JSON request data that I will give you.
+If you need to use the Mongo database for anything, add `let mongoDocuments = await global.setUpDb(testId);` to the beginning of the `beforeAll` function. You don't need to insert any documents in the database because all needed documents will be inserted in the `setUpDb` function. You can find the `testId` in the JSON request data that I will give you. Response from `await global.setUpDb(testId)` will be mongo document so if you use it you don't have to convert ObjectId as mentioned above.
 The returned `mongoDocuments` variable is a JSON object that has a collection name as a key and an array of all documents in that collection that are present in the database as a value. The format of `mongoDocuments` object is this:
 ```json
 {
@@ -120,7 +120,7 @@ beforeAll(async () => {
 ```
 If you need to set some headers for test to be successful, set only necessary headers.
 
-Response from `getAuthToken()` has to be stored in `authToken` variable and shouldn't be modified. This is the only correct way of adding token or cookie to header:
+If authentication is needed, response from `getAuthToken()` has to be stored in `authToken` variable and shouldn't be modified. In that case, you shouldn't do anything else with `authToken` and you have to add it to headers only like this:
 ```javascript
 const response = await axios.get(<URL>, {headers:Object.assign(headers, authToken)})
 ```

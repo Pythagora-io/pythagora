@@ -29,9 +29,9 @@ function getTokensInMessages(messages) {
     return encodedPrompt.text.length;
 }
 
-async function createGPTChatCompletion(messages) {
+async function createGPTChatCompletion(messages, minTokens = MIN_TOKENS_FOR_GPT_RESPONSE, noStream = args.no_stream) {
     let tokensInMessages = getTokensInMessages(messages);
-    if (tokensInMessages + MIN_TOKENS_FOR_GPT_RESPONSE > MAX_GPT_MODEL_TOKENS) {
+    if (tokensInMessages + minTokens > MAX_GPT_MODEL_TOKENS) {
         console.error(`Too many tokens in messages: ${tokensInMessages}. Please try a different test.`);
         process.exit(1);
     }
@@ -44,7 +44,7 @@ async function createGPTChatCompletion(messages) {
     };
 
     try {
-        if (args.no_stream) {
+        if (noStream) {
             let result = await openai.createChatCompletion(gptData);
             return result.data.choices[0].message.content;
         } else {
@@ -67,6 +67,18 @@ async function getJestTestFromPythagoraData(reqData) {
             "content": getPromptFromFile('generateJestTest.txt', { testData: reqData }),
         },
     ]);
+}
+
+async function getJestTestName(test, usedNames) {
+    await getOpenAIClient();
+    return await createGPTChatCompletion([
+        {"role": "system", "content": "You are a QA engineer and your main goal is to think of good, human readable jest tests file names. You are proficient in writing automated integration tests for Node.js API servers.\n" +
+                "When you respond, you don't say anything except the filename - no formatting, no explanation, no code - only filename.\n" },
+        {
+            "role": "user",
+            "content": getPromptFromFile('generateJestTestName.txt', { test, usedNames }),
+        },
+    ], 200, true);
 }
 
 async function getJestAuthFunction(loginMongoQueriesArray, loginRequestBody, loginEndpointPath) {
@@ -152,6 +164,7 @@ function extractGPTMessageFromStreamData(input) {
 
 module.exports = {
     getJestTestFromPythagoraData,
+    getJestTestName,
     getJestAuthFunction,
     getTokensInMessages,
     getPromptFromFile

@@ -55,14 +55,16 @@ async function getAuthToken(appUrl, userDoc) {
     let response;
     try {
         const User = getMongoCollection(<USER_COLLECTION>);
-        <TAKE_DEFAULT_USER_OBJ_IF_USERDOC_UNDEFINED>
+        <SET_DEFAULT_USER>
+        <REPLACE_USERDOC_PASSWORD_WITH_DEFAULTUSEROBJ_PASSWORD>
+        if (!userDoc) userDoc = defaultUserObj;
 
         const existingUser = await User.findOne({ <FIELD_TO_FIND_USER> });
         if (!existingUser) {
-            await User.insertOne(userObj);
+            await User.insertOne(userDoc);
+        } else {
+            await User.updateOne({email: userDoc.email}, {$set: {<SET_PASSWORD_TO_USERDOC_PASSWORD>}});
         }
-
-        <REPLACE_PASSWORD_WITH_HARDCODED_ONE>
 
         response = await axios.post(appUrl + <LOGIN_ENDPOINT_PATH>, <LOGIN_BODY>)
             .catch(error => {
@@ -71,24 +73,22 @@ async function getAuthToken(appUrl, userDoc) {
 
         const token = response.data.token || response.headers['authorization'];
 
-        return token ? { 'Authorization': 'Bearer ' + token, 'x-auth-token': token } : { 'Cookie': 'token=' + cookie.parse(response.headers['set-cookie'][0]).token }
+        return token ? { 'Authorization': 'Bearer ' + token.replace('Bearer ', ''), 'x-auth-token': token } : { 'Cookie': 'token=' + cookie.parse(response.headers['set-cookie'][0]).token }
     } catch (err) {
         return {};
     }
 }
 ```
+In section <REPLACE_USERDOC_PASSWORD_WITH_DEFAULTUSEROBJ_PASSWORD> you should replace password from userDoc with defaultUser password so that login can always pass. Here is example, that should work in most cases, how to do that. Modify this example only if password is in other object key eg. userDoc.pass
+```javascript
+if (userDoc) userDoc.password = defaultUserObj.password;
+```
+
+<LOGIN_BODY> should always have same password as one I provided you as data that's sent in the request body during the login.
 
 Input variables are:
 1. appUrl - the URL of the app
 2. userDoc - mongo document of the user that needs to be logged in for a specific test. Each test can require a different user to log in for the test to be successful. getAuthToken function needs to take that document and, before it inserts the document into the database, replace the password field with the password value captured in the data above so that we're always able to log the user in with the same password. If `userDoc` is undefined or invalid, you should use default userDoc which was provided above as `Mongo queries made during the execution of the login endpoint` you just have to find which is user document.
-
-Don't modify userObj before this:
-```javascript
-if (!existingUser) {
-    await User.insertOne(userObj);
-}
-```
-Document `userObj` should always be inserted to database with original values, especially any type of password or hash. After you checked for `existingUser` and inserted it to database, then you can modify it if needed.
 
 When replacing <LOGIN_BODY> do not hardcode anything but use `userDoc`.
 

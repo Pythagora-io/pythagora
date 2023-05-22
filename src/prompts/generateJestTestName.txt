@@ -1,5 +1,10 @@
 I will give you whole file that contains one or more Jest tests. I want you to think of good, meaningfull and human readable filename to store that test.
 
+Here is list of file names that are already taken and can't be used again:
+```json
+{{usedNames}}
+```
+
 Filename you create should always end with `.test.js` as extension since this is jest test.
 
 Here is the file:

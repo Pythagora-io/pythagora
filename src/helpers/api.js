@@ -2,6 +2,7 @@ const https = require('https');
 const _ = require('lodash');
 const axios = require('axios');
 const {} = require('../utils/cmdPrint');
+const args = require('../utils/getArgs.js');
 
 function extractGPTMessageFromStreamData(input) {
     const regex = /data: (.*?)\n/g;
@@ -16,6 +17,8 @@ function extractGPTMessageFromStreamData(input) {
 }
 
 function setOptions({protocol, hostname, port, path, method, headers}) {
+    let apiKey = args.openai_api_key || args.pythagora_api_key;
+    if (!apiKey) throw new Error('No API key provided. Please add --openai-api-key or --pythagora-api-key')
     let options = {
         protocol: protocol || 'https',
         hostname: hostname || 'api.pythagora.io',
@@ -24,8 +27,8 @@ function setOptions({protocol, hostname, port, path, method, headers}) {
         method: method || 'POST',
         headers: headers || {
             'Content-Type': 'application/json',
-            'apikey': process.env.OPENAI_API_KEY || process.env.PYTHAGORA_API_KEY,
-            'apikeytype': process.env.OPENAI_API_KEY ? 'openai' : 'pythagora'
+            'apikey': apiKey,
+            'apikeytype': args.openai_api_key ? 'openai' : 'pythagora'
         },
     };
 

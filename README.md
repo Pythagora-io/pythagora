@@ -1,13 +1,14 @@
 <p align=center>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/10895136/228003796-7e3319ad-f0b1-4da9-a2d0-6cf67ccc7a32.png">
-    <img height="200px" alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="https://user-images.githubusercontent.com/10895136/228003796-7e3319ad-f0b1-4da9-a2d0-6cf67ccc7a32.png">
+    <img height="200px" alt="Pythagora Logo" src="https://user-images.githubusercontent.com/10895136/228003796-7e3319ad-f0b1-4da9-a2d0-6cf67ccc7a32.png">
   </picture>
 </p>
 <p align=center>
   Developers spend 20-30% of their time writing tests!
 </p>
 <h3 align="center">✊ Pythagora creates automated tests for you by analysing server activity ✊</h3>
+<h3 align="center"><a href="#exportjest"> 🤖 Generate Jest integration tests with GPT-4 and Pythagora 🤖</a></h3>
 <br>
 <p align="center">🌟 As an open source tool, it would mean the world to us if you starred Pythagora repo 🌟<br>🙏 Thank you 🙏</p>
 <br>
@@ -57,18 +58,66 @@ So, after you captured all requests you want, you just need to change the mode p
    ```   
 
 <br><br>
-<h1 id="exportjest">🗄️ Export tests to Jest</h1>
-If you want to export recorded Pythagora tests to Jest tests so you can more easily read and edit them you can do so by running this command:
+<p align=center>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/Pythagora-io/pythagora/assets/10895136/41f349ec-c6fe-4357-8c92-db09b88d2b8e">
+    <img height="100px" alt="OpenAI logo" src="https://github.com/Pythagora-io/pythagora/assets/10895136/41f349ec-c6fe-4357-8c92-db09b88d2b8e">
+  </picture>
+</p>
+<h1 id="exportjest">🤖 ️Generate Jest tests with Pythagora and GPT-4</h1>
+
+You can export any Pythagora test to Jest with GPT-4. To see how it works, you can watch [the full demo video here](https://youtu.be/YxzvljVyaEA).
+
+## What are Jest integration tests made of
+
+- **Database setup** (before a test is run)
+  - during the export to Jest, Pythagora saves all database documents in the `pythagora_tests/exported_tests/data` folder as a JSON file
+  - in the `beforeEach` function, these documents are restored into the database so that the database is in the same state as it was when the test was recorded
+  - Pythagora has built-in functions to work with the database but in case you want to use your own and completely separate Jest tests from Pythagora, use the `global-setup.js` file in which you can set up your own ways to populate the database, get a collection and clear the database
+- **User authentication** (when the endpoint requires authentication)
+  - the first time you run the export, Pythagora will create `auth.js` file
+  - it is used inside `beforeEach` function to retrieve the authentication token so that API requests (that require authentication) can be executed
+- **Test**
+  - tests check the response from the API and if the database is updated correctly
+
+## How to export Pythagora tests to Jest
+
+1. First, you need to tell Pythagora what is the login endpoint. You can do that by running:
+
+    ```bash
+    npx pythagora --export-setup
+    ```
+   
+2. After that, just run Pythagora capture command and log into the app so the login route gets captured.
+
+    ```bash
+    npx pythagora --init-command "my start command" --mode capture
+    ``` 
+
+3. Exporting to Jest is done with GPT-4 so you either need to have OpenAI API key with GPT-4 access or a Pythagora API key which you can get [here](https://mailchi.mp/f4f4d7270a7a/api-waitlist). Once you have the API key, you're ready to export tests to Jest by running:
+
+    ```bash
+    npx pythagora --export --test-id <TEST_ID> --openai-api-key <YOUR_OPENAI_API_KEY>
+    ```
+   or
+    ```bash
+    npx pythagora --export --test-id <TEST_ID> --pythagora-api-key <YOUR_PYTHAGORA_API_KEY>
+    ```
+   
+4. To run the exported tests, run:
+    
+    ```bash
+    npx pythagora --mode jest
+    ```
+
+Exported tests will be available in the `pythagora_tests/exported_tests` folder.
+
+NOTE: Pythagora uses GPT-4 8k model so some tests that do too many things during the processing might exceed the 8k token limit. To check which tests you can export to Jest, you can run:
 
 ```bash
-npx pythagora --export
+npx pythagora --tests-eligible-for-export
 ```
-If you don't have recorded login endpoint it will ask you to run:
 
-```bash
-npx pythagora --export-setup
-```
-after which you just have to run capture command again and go to endpoint login. Once that is done you are ready to export your tests to Jest.
 <br>
 <br>
 <h1 id="demo">🎞 Demo</h1>
@@ -81,6 +130,8 @@ Here are some demo videos that can help you get started.
 <h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
 <p align=center>
   <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Demo (4 min)</a>
+  <br>
+  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Generate Jest tests with Pythagora and GPT-4 (4 min)</a>
   <br>
   <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
   <br>
@@ -224,7 +275,7 @@ Each captured test is saved in <strong><i>"pythagora_tests"</i></strong> directo
             </ul>
           </li>
           <li>auth.js <span style="color: green;">// here is authentication function that is used in all Jest tests</span></li>
-          <li>global-setup.js</li>
+          <li>global-setup.js<span style="color: green;"> // Jest global setup if you want to use your own functions for running Jest tests</span></li>
           <li>JestTest1.test.js <span style="color: green;">// this is an exported Jest test</span></li>
           <li>JestTest2.test.js</li>
           <li>...</li>

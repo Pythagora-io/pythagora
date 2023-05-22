@@ -6,18 +6,28 @@ const {
     PYTHAGORA_METADATA_DIR,
     METADATA_FILENAME,
     EXPORT_METADATA_FILENAME,
-    SRC_TO_ROOT,
-    MIN_TOKENS_FOR_GPT_RESPONSE,
-    MAX_GPT_MODEL_TOKENS
+    SRC_TO_ROOT
 } = require('../const/common');
 const {getAllGeneratedTests, updateMetadata} = require("../utils/common");
 const {convertOldTestForGPT} = require("../utils/legacy");
-const {getJestTestFromPythagoraData, getJestTestName, getJestAuthFunction, getTokensInMessages, getPromptFromFile} = require("../helpers/openai");
 const {setUpPythagoraDirs} = require("../helpers/starting");
-const {testExported, pleaseCaptureLoginTestLog, enterLoginRouteLog, testEligibleForExportLog} = require("../utils/cmdPrint");
+const {
+    logAndExit,
+    testExported,
+    pleaseCaptureLoginTestLog,
+    enterLoginRouteLog,
+    testEligibleForExportLog,
+    jestAuthFileGenerationLog
+} = require("../utils/cmdPrint");
+const {
+    getJestAuthFunction,
+    getJestTest,
+    getJestTestName,
+    isEligibleForExport,
+    cleanupGPTResponse
+} = require("../helpers/api");
 const _ = require('lodash');
 const args = require('../utils/getArgs.js');
-const {logAndExit} = require("@pythagora.io/pythagora-dev/src/utils/cmdPrint");
 
 async function createDefaultFiles(generatedTests) {
     if (!fs.existsSync('jest.config.js')) {
@@ -68,14 +78,6 @@ function configurePrepareDbFile() {
     // TODO
 }
 
-function cleanupGPTResponse(gptResponse) {
-    if (gptResponse.substring(0, 3) === "```") {
-        gptResponse = gptResponse.substring(gptResponse.indexOf('\n') + 2, gptResponse.lastIndexOf('```'));
-    }
-
-    return gptResponse;
-}
-
 function cleanupDataFolder() {
     const pythagoraTestsFolderPath = `./${EXPORTED_TESTS_DIR}`;
     const dataFolderPath = `./${EXPORTED_TESTS_DATA_DIR}`;
@@ -99,19 +101,16 @@ function cleanupDataFolder() {
     }
 }
 
-async function exportTest(originalTest, usedNames) {
-    // TODO remove in the future
+async function exportTest(originalTest, exportsMetadata) {
     let test = convertOldTestForGPT(originalTest);
-
-    let gptResponse = await getJestTestFromPythagoraData(test);
-    let jestTest = cleanupGPTResponse(gptResponse);
-
-    let testName = await getJestTestName(jestTest, usedNames);
+    let jestTest = await getJestTest(test);
+    let testName = await getJestTestName(jestTest, Object.values(exportsMetadata).map(obj => obj.testName));
     fs.writeFileSync(`./${EXPORTED_TESTS_DATA_DIR}/${testName.replace('.test.js', '.json')}`, JSON.stringify(test.mongoQueries, null, 2));
     fs.writeFileSync(`./${EXPORTED_TESTS_DIR}/${testName}`, jestTest.replace(test.testId, testName));
 
     testExported(testName);
-    return testName;
+    saveExportJson(exportsMetadata, originalTest, testName);
+
 }
 
 function testExists(exportsMetadata, testId) {
@@ -137,36 +136,25 @@ function saveExportJson(exportsMetadata, test, testName) {
     if (testId) {
         if (testExists(exportsMetadata, testId)) logAndExit(`Test with id ${testId} already generated, you can find it here: ${`./${EXPORTED_TESTS_DIR}/${exportsMetadata[testId].testName}`}. If you want to generate it again delete old one first.`);
 
-        let test = generatedTests.find(t => t.id === testId);
-        if (!test) throw new Error(`Test with id ${testId} not found`);
+        let originalTest = generatedTests.find(t => t.id === testId);
+        if (!originalTest) throw new Error(`Test with id ${testId} not found`);
 
-        let testName = await exportTest(test, Object.values(exportsMetadata).map(obj => obj.testName));
-        saveExportJson(exportsMetadata, test, testName);
+        await exportTest(originalTest, exportsMetadata);
     }
     else {
-        for (let test of generatedTests) {
-            if (test.method === 'OPTIONS') continue;
-            if (testExists(exportsMetadata, test.id)) {
-                console.log(`Test with id ${test.id} already generated, you can find it here: ${`./${EXPORTED_TESTS_DIR}/${exportsMetadata[test.id].testName}`}.`);
+        for (let originalTest of generatedTests) {
+            if (originalTest.method === 'OPTIONS') continue;
+            if (testExists(exportsMetadata, originalTest.id)) {
+                console.log(`Test with id ${originalTest.id} already generated, you can find it here: ${`./${EXPORTED_TESTS_DIR}/${exportsMetadata[originalTest.id].testName}`}.`);
                 continue;
             }
 
-            let testData = convertOldTestForGPT(test);
-            let tokens = getTokensInMessages([
-                {"role": "system", "content": "You are a QA engineer and your main goal is to find ways to break the application you're testing. You are proficient in writing automated integration tests for Node.js API servers.\n" +
-                        "When you respond, you don't say anything except the code - no formatting, no explanation - only code.\n" },
-                {
-                    "role": "user",
-                    "content": getPromptFromFile('generateJestTest.txt', { testData }),
-                },
-            ]);
+            let test = convertOldTestForGPT(originalTest);
+            const isEligible = await isEligibleForExport(test);
 
-            let isEligibleForExport = (tokens + MIN_TOKENS_FOR_GPT_RESPONSE < MAX_GPT_MODEL_TOKENS);
-
-            if (isEligibleForExport) {
-                let testName = await exportTest(test, Object.values(exportsMetadata).map(obj => obj.testName));
-                saveExportJson(exportsMetadata, test, testName);
-            } else testEligibleForExportLog(test.endpoint, test.id, isEligibleForExport);
+            if (isEligible) {
+                await exportTest(originalTest, exportsMetadata);
+            } else testEligibleForExportLog(originalTest.endpoint, originalTest.id, isEligible);
         }
     }
 

@@ -1,4 +1,4 @@
-const http = require('http');
+const https = require('https');
 const _ = require('lodash');
 const axios = require('axios');
 const {} = require('../utils/cmdPrint');
@@ -17,14 +17,15 @@ function extractGPTMessageFromStreamData(input) {
 
 function setOptions({protocol, hostname, port, path, method, headers}) {
     let options = {
-        protocol: protocol || 'http',
-        hostname: hostname || 'localhost',
+        protocol: protocol || 'https',
+        hostname: hostname || 'api.pythagora.io',
         port: port || process.env.PORT,
         path: path || '/',
         method: method || 'POST',
         headers: headers || {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY
+            'apikey': process.env.OPENAI_API_KEY || process.env.PYTHAGORA_API_KEY,
+            'apikeytype': process.env.OPENAI_API_KEY ? 'openai' : 'pythagora'
         },
     };
 
@@ -36,10 +37,16 @@ async function makeRequest(data, options) {
     let gptResponse = '';
 
     return new Promise((resolve, reject) => {
-        const req = http.request(_.omit(options, ['protocol']), function(res){
+        const req = https.request(_.omit(options, ['protocol']), function(res){
             res.on('data', (chunk) => {
                 try {
-                    let receivedMessages = extractGPTMessageFromStreamData(chunk.toString());
+                    let stringified = chunk.toString();
+                    try {
+                        let json = JSON.parse(stringified);
+                        if (json.error) gptResponse = json.error;
+                        return;
+                    } catch (e) {}
+                    let receivedMessages = extractGPTMessageFromStreamData(stringified);
                     receivedMessages.forEach(rm => {
                         let content = _.get(rm, 'choices.0.delta.content');
                         if (content) {
@@ -51,6 +58,8 @@ async function makeRequest(data, options) {
                 } catch (e) {}
             });
             res.on('end', async () => {
+                if (res.statusCode >= 400) throw new Error(`Response status code: ${res.statusCode}.`);
+                if (gptResponse.message) throw new Error(`Error: ${gptResponse.message}. Code: ${gptResponse.code}`);
                 gptResponse = cleanupGPTResponse(gptResponse);
                 resolve(gptResponse);
             });

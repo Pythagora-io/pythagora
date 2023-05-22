@@ -105,6 +105,8 @@ async function exportTest(originalTest, exportsMetadata) {
     let test = convertOldTestForGPT(originalTest);
     let jestTest = await getJestTest(test);
     let testName = await getJestTestName(jestTest, Object.values(exportsMetadata).map(obj => obj.testName));
+    if (!jestTest && !testName) return console.error('There was issue with getting GPT response. Make sure you have access to GPT4 with your API key.');
+
     fs.writeFileSync(`./${EXPORTED_TESTS_DATA_DIR}/${testName.replace('.test.js', '.json')}`, JSON.stringify(test.mongoQueries, null, 2));
     fs.writeFileSync(`./${EXPORTED_TESTS_DIR}/${testName}`, jestTest.replace(test.testId, testName));
 

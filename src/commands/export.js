@@ -17,7 +17,7 @@ const {
     pleaseCaptureLoginTestLog,
     enterLoginRouteLog,
     testEligibleForExportLog,
-    jestAuthFileGenerationLog
+    testExportStartedLog
 } = require("../utils/cmdPrint");
 const {
     getJestAuthFunction,
@@ -102,6 +102,7 @@ function cleanupDataFolder() {
 }
 
 async function exportTest(originalTest, exportsMetadata) {
+    testExportStartedLog();
     let test = convertOldTestForGPT(originalTest);
     let jestTest = await getJestTest(test);
     let testName = await getJestTestName(jestTest, Object.values(exportsMetadata).map(obj => obj.testName));

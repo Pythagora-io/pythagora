@@ -182,7 +182,7 @@ function pleaseCaptureLoginTestLog(loginEndpointPath) {
     console.log(`Login path is: ${green}${bold}${loginEndpointPath}${reset}`);
     console.log('Please run the Pythagora capture command, log into your app and try the export again.');
     console.log('To start Pythagora capture, run:');
-    console.log(`${blue}${bold}npx pythagora --init-command \"${args.init_command.join(' ')}\" --mode capture${reset}`);
+    console.log(`${blue}${bold}npx pythagora --init-command \"my start command\" --mode capture${reset}`);
 }
 
 function logLoginEndpointCaptured() {

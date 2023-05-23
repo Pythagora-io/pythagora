@@ -1,7 +1,7 @@
 const https = require('https');
 const _ = require('lodash');
 const axios = require('axios');
-const {} = require('../utils/cmdPrint');
+const { jestAuthFileGenerationLog } = require('../utils/cmdPrint');
 const args = require('../utils/getArgs.js');
 
 function extractGPTMessageFromStreamData(input) {
@@ -38,12 +38,19 @@ function setOptions({protocol, hostname, port, path, method, headers}) {
 
 async function makeRequest(data, options) {
     let gptResponse = '';
+    let end = false;
 
     return new Promise((resolve, reject) => {
         const req = https.request(_.omit(options, ['protocol']), function(res){
             res.on('data', (chunk) => {
                 try {
                     let stringified = chunk.toString();
+                    if (stringified === 'pythagora_end') {
+                        gptResponse = '';
+                        end = true;
+                        return;
+                    }
+                    if (end) return gptResponse = stringified;
                     try {
                         let json = JSON.parse(stringified);
                         if (json.error) gptResponse = json.error;
@@ -60,8 +67,9 @@ async function makeRequest(data, options) {
 
                 } catch (e) {}
             });
-            res.on('end', async () => {
-                if (res.statusCode >= 400) throw new Error(`Response status code: ${res.statusCode}.`);
+            res.on('end', async (a,b,c) => {
+                process.stdout.write('\n');
+                if (res.statusCode >= 400) throw new Error(`Response status code: ${res.statusCode}. Error message: ${gptResponse}`);
                 if (gptResponse.message) throw new Error(`Error: ${gptResponse.message}. Code: ${gptResponse.code}`);
                 gptResponse = cleanupGPTResponse(gptResponse);
                 resolve(gptResponse);
@@ -102,7 +110,7 @@ async function isEligibleForExport(jestTest) {
         let options = setOptions({ path: '/check-if-eligible' });
 
         const response = await axios.post(
-            `${options.protocol}://${options.hostname}:${options.port}${options.path}`,
+            `${options.protocol}://${options.hostname}${options.port ? ':' + options.port : ''}${options.path}`,
             JSON.stringify({ jestTest }),
             { headers: options.headers }
         );

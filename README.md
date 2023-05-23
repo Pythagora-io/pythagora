@@ -66,7 +66,7 @@ So, after you captured all requests you want, you just need to change the mode p
 </p>
 <h1 id="exportjest">🤖 ️Generate Jest tests with Pythagora and GPT-4</h1>
 
-You can export any Pythagora test to Jest with GPT-4. To see how it works, you can watch [the full demo video here](https://youtu.be/YxzvljVyaEA).
+You can export any Pythagora test to Jest with GPT-4. To see how it works, you can watch [the full demo video here](https://www.youtube.com/watch?v=kHbwX4QVoGY).
 
 ## What are Jest integration tests made of
 
@@ -131,7 +131,7 @@ Here are some demo videos that can help you get started.
 <p align=center>
   <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Demo (4 min)</a>
   <br>
-  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Generate Jest tests with Pythagora and GPT-4 (4 min)</a>
+  <a target="_blank" href="https://www.youtube.com/watch?v=kHbwX4QVoGY">Generate Jest tests with Pythagora and GPT-4 (4 min)</a>
   <br>
   <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
   <br>

@@ -1,10 +1,8 @@
 const _ = require('lodash');
-const {PYTHAGORA_JEST_DB} = require("../const/mongodb");
 
 module.exports = function (mongoPath) {
     const originalCollection = require(`${mongoPath}/lib/collection`);
-    const pythagoraErrors = require('../const/errors');
-    const {MONGO_METHODS, PYTHAGORA_DB} = require('../const/mongodb');
+    const {MONGO_METHODS, PYTHAGORA_DB, PYTHAGORA_JEST_DB} = require('../const/mongodb');
     const {
         getCurrentMongoDocs,
         extractArguments,

@@ -2,10 +2,17 @@ const MODES = require('./const/modes.json');
 const RedisInterceptor = require('./helpers/redis.js');
 const { cleanupDb } = require('./helpers/mongodb.js');
 const { makeTestRequest } = require('./helpers/testing.js');
-const { getPythagoraVersion } = require("./helpers/starting.js");
+const { getPythagoraVersion, setUpPythagoraDirs } = require("./helpers/starting.js");
 const { logCaptureFinished, pythagoraFinishingUp } = require('./utils/cmdPrint.js');
 const { getCircularReplacer, getMetadata, getFreePortInRange } = require('./utils/common.js');
-const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, METADATA_FILENAME, PYTHAGORA_DELIMITER } = require('./const/common.js');
+const {
+    PYTHAGORA_TESTS_DIR,
+    PYTHAGORA_METADATA_DIR,
+    METADATA_FILENAME,
+    PYTHAGORA_DELIMITER,
+    EXPORTED_TESTS_DIR,
+    EXPORTED_TESTS_DATA_DIR
+} = require('./const/common.js');
 
 let  { BatchInterceptor } = require('@mswjs/interceptors');
 let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
@@ -39,10 +46,11 @@ class Pythagora {
 
         getPythagoraVersion(this);
 
-        this.setUpPythagoraDirs();
+        setUpPythagoraDirs();
         // this.setUpHttpInterceptor();
 
         this.cleanupDone = false;
+        this.metadata = getMetadata();
 
         process.on('SIGINT', this.exit.bind(this));
         process.on('exit', this.exit.bind(this));
@@ -99,9 +107,8 @@ class Pythagora {
 
     getTestsToExecute() {
         if (this.testId) return [this.testId];
-        let metadata = getMetadata();
-        if (!metadata || !metadata.runs) return undefined;
-        let runs = metadata.runs;
+        if (!this.metadata || !this.metadata.runs) return undefined;
+        let runs = this.metadata.runs;
 
         if (this.rerunAllFailed) return runs[runs.length - 1].failed;
 
@@ -113,23 +120,16 @@ class Pythagora {
         let failed = _.values(this.testingRequests).filter(t => !t.passed).map(t => t.id);
         if (!passed.length && !failed.length) return;
 
-        let metadata = getMetadata();
-        metadata.runs = (metadata.runs || []).concat([{
+        this.metadata.runs = (this.metadata.runs || []).concat([{
             date: new Date(),
             version: this.version,
             passed,
             failed
         }]);
-        metadata.runs = metadata.runs.slice(-10);
-        metadata.initCommand = this.initCommand;
-        fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, JSON.stringify(metadata, getCircularReplacer(), 2));
+        this.metadata.runs = this.metadata.runs.slice(-10);
+        this.metadata.initCommand = this.initCommand;
+        fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, JSON.stringify(this.metadata, getCircularReplacer(), 2));
         console.log('Test run metadata saved.');
-    }
-
-    setUpPythagoraDirs() {
-        if (!fs.existsSync(`./${PYTHAGORA_TESTS_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
-        if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_METADATA_DIR}/`);
-        if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`)) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, '{}');
     }
 
     setMongoClient(client) {

@@ -344,8 +344,10 @@ const MONGO_METHODS = {
 };
 
 const PYTHAGORA_DB = 'pythagoraDb';
+const PYTHAGORA_JEST_DB = 'pythagoraJestDb';
 
 module.exports = {
     MONGO_METHODS,
-    PYTHAGORA_DB
+    PYTHAGORA_DB,
+    PYTHAGORA_JEST_DB
 }

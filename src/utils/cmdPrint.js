@@ -1,5 +1,6 @@
 let { cutWithDots, compareJson, compareJsonDetailed } = require('./common');
 let pythagoraErrors = require('../const/errors');
+let args = require('../utils/argumentsCheck.js');
 let { PYTHAGORA_DELIMITER } = require('../const/common');
 
 let red = '\x1b[31m',
@@ -151,6 +152,58 @@ function logAndExit(message, type='error') {
     process.exit(1);
 }
 
+function testExported(testName) {
+    if (!args.no_stream) console.log(`\n${green}${bold}--------------------------END OF THE TEST--------------------------${reset}`);
+    console.log(`${green}${bold}Woohoo - you\'ve exported a test to Jest!${reset}`);
+    console.log(`You can find test in ./pythagora_tests/exported_tests/${testName}`);
+    // console.log(`${blue}${bold}npx pythagora --init-command \"${args.init_command.join(' ')}\" --mode jest --test-id ${testId} --no-code-coverage${reset}`)
+}
+
+function testExportStartedLog() {
+    console.log(`${bold}Exporting test started - waiting on GPT...${reset}`);
+    if (!args.no_stream) console.log(`${green}${bold}--------------------------LLM OUTPUT--------------------------${reset}`);
+}
+
+function jestAuthFileGenerationLog() {
+    console.log(`${green}${bold}Creating auth file for Jest tests...${reset}`);
+    if (!args.no_stream) console.log(`${green}${bold}--------------------------LLM OUTPUT--------------------------${reset}`);
+}
+
+function testEligibleForExportLog(endpoint, testId, eligible) {
+    console.log(`${bold + (eligible ? (green + '✅') : (red + '❌'))} ${endpoint} - ${testId}${reset}`);
+}
+
+function loginRouteEnteredLog(endpointPath) {
+    console.log(`You entered: ${green}${bold}${endpointPath}${reset}`);
+}
+
+function pleaseCaptureLoginTestLog(loginEndpointPath) {
+    console.log(`${red}${bold}To export test to Jest, Pythagora needs a captured test with a successful login to your app!${reset}`);
+    console.log(`Login path is: ${green}${bold}${loginEndpointPath}${reset}`);
+    console.log('Please run the Pythagora capture command, log into your app and try the export again.');
+    console.log('To start Pythagora capture, run:');
+    console.log(`${blue}${bold}npx pythagora --init-command \"my start command\" --mode capture${reset}`);
+}
+
+function logLoginEndpointCaptured() {
+    console.log(`${green}${bold}------------------------------------------------------------${reset}`);
+    console.log(`${green}${bold}------------------------------------------------------------${reset}`);
+    console.log(`${green}${bold}Login endpoint captured - you can now start exporting tests!${reset}`);
+    console.log(`${green}${bold}------------------------------------------------------------${reset}`);
+    console.log(`${green}${bold}------------------------------------------------------------${reset}`);
+}
+
+function primeJestLog() {
+    console.error(`Please finish the authentication priming to export tests to Jest. Run ${bold}${green}npx pythagora --init-command "${args.init_command.join(' ')}" --export${reset}`);
+}
+
+function enterLoginRouteLog() {
+    console.log(`Login endpoint path not found in metadata file. Please run:
+${bold}${blue}--------------------------------------------------------
+npx pythagora --export-setup
+--------------------------------------------------------${reset}`);
+}
+
 
 module.exports = {
     logEndpointCaptured,
@@ -164,6 +217,15 @@ module.exports = {
     pythagoraFinishingUp,
     logWithStoreId,
     logAppError,
+    testExportStartedLog,
+    logAndExit,
+    testExported,
+    jestAuthFileGenerationLog,
+    loginRouteEnteredLog,
+    pleaseCaptureLoginTestLog,
+    logLoginEndpointCaptured,
+    primeJestLog,
+    testEligibleForExportLog,
     logChange,
-    logAndExit
+    enterLoginRouteLog
 }

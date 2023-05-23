@@ -1,8 +1,14 @@
 const path = require('path');
 const fs = require('fs');
 const tryrequire = require('tryrequire');
-const { PYTHAGORA_METADATA_DIR, PYTHAGORA_TESTS_DIR, METADATA_FILENAME, PYTHAGORA_DELIMITER } = require('../const/common.js');
-const { getCircularReplacer } = require('../utils/common.js');
+const {
+    PYTHAGORA_TESTS_DIR,
+    EXPORTED_TESTS_DIR,
+    EXPORTED_TESTS_DATA_DIR,
+    PYTHAGORA_METADATA_DIR,
+    METADATA_FILENAME,
+    EXPORT_METADATA_FILENAME
+} = require("../const/common");
 
 
 function checkDependencies() {
@@ -49,7 +55,7 @@ function getPythagoraVersion(pythagora) {
                     fs.readFileSync(filePath, "utf-8")
                 ).dependencies;
 
-                if (!dependencies) return
+                if (!dependencies) return;
                 if (dependencies.pythagora) pythagora.version = dependencies.pythagora;
                 if (dependencies['@pythagora.io/pythagora-dev']) pythagora.devVersion = dependencies['@pythagora.io/pythagora-dev'];
             }
@@ -66,7 +72,12 @@ function startPythagora(args, app) {
     global.Pythagora = new Pythagora(args);
     global.Pythagora.setMongoClient(global.pythagoraMongoClient);
     global.Pythagora.runRedisInterceptor().then(() => {
-        if (args.mode === 'test') {
+        if (args.mode === 'jest') {
+            global.Pythagora.runWhenServerReady(() => {
+                let { run } = require('../commands/jest');
+                run(args.test_id);
+            });
+        } else if (args.mode === 'test') {
             global.Pythagora.runWhenServerReady(() => {
                 require('../RunPythagoraTests.js');
             });
@@ -76,9 +87,19 @@ function startPythagora(args, app) {
     app.isPythagoraExpressInstance = true;
 }
 
+function setUpPythagoraDirs() {
+    if (!fs.existsSync(`./${PYTHAGORA_TESTS_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
+    if (!fs.existsSync(`./${EXPORTED_TESTS_DIR}`)) fs.mkdirSync(`./${EXPORTED_TESTS_DIR}`);
+    if (!fs.existsSync(`./${EXPORTED_TESTS_DATA_DIR}`)) fs.mkdirSync(`./${EXPORTED_TESTS_DATA_DIR}`);
+    if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_METADATA_DIR}/`);
+    if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`)) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, '{}');
+    if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/${EXPORT_METADATA_FILENAME}`)) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${EXPORT_METADATA_FILENAME}`, '{}');
+}
+
 module.exports = {
     checkDependencies,
     searchAllModuleFolders,
     getPythagoraVersion,
-    startPythagora
+    startPythagora,
+    setUpPythagoraDirs
 }

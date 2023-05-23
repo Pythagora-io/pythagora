@@ -1,10 +1,11 @@
 const { logTestsFinished, logTestStarting, logTestsStarting } = require('./utils/cmdPrint.js');
 const { makeTestRequest } = require('./helpers/testing.js');
 const { getCircularReplacer } = require('./utils/common.js')
-const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHAGORA_DELIMITER } = require('./const/common.js');
+const { PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHAGORA_DELIMITER, PYTHAGORA_TESTS_DIR } = require('./const/common.js');
 
 const fs = require('fs');
 const { exec } = require('child_process');
+const {getAllGeneratedTests} = require("./utils/common");
 
 let Pythagora = global.Pythagora;
 
@@ -19,24 +20,19 @@ function openFullCodeCoverageReport() {
     }
 }
 
-async function runTests(files, testsToExecute) {
+async function runTests(tests, testsToExecute) {
     let results = [];
     let reviewData = [];
 
-    for (let file of files) {
-        let tests = JSON.parse(fs.readFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`));
-        for (let test of tests) {
-            if (!testsToExecute || testsToExecute.includes(test.id)) {
-                let { testResult, reviewJson } = await makeTestRequest(test);
-                if (Object.keys(reviewJson).length) {
-                    reviewJson.id = test.id;
-                    reviewJson.filename = file;
-                }
-
-                if (!testResult) reviewData.push(reviewJson);
-                results.push(testResult || false);
-            }
+    for (let test of tests) {
+        let { testResult, reviewJson } = await makeTestRequest(test);
+        if (Object.keys(reviewJson).length) {
+            reviewJson.id = test.id;
+            reviewJson.filename = test.endpoint.replace(/\//g, PYTHAGORA_DELIMITER) + '.json';
         }
+
+        if (!testResult) reviewData.push(reviewJson);
+        results.push(testResult || false);
     }
 
     return { results, reviewData };
@@ -58,14 +54,13 @@ function updateReviewFile(testsToExecute, reviewData) {
     let error;
     try {
         const startTime = new Date();
-        let files = fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
+        let pythagoraTests = getAllGeneratedTests();
         let testsToExecute = Pythagora.getTestsToExecute();
         if (testsToExecute && !testsToExecute.length) throw new Error('There are no tests to execute. Check if you put arguments in Pythagora command correctly.');
 
-        files = files.filter(f => f[0] !== '.' && f.indexOf(PYTHAGORA_DELIMITER) === 0);
-        Pythagora.testId ? logTestStarting(Pythagora.testId) : logTestsStarting(files);
-
-        let { results, reviewData } = await runTests(files, testsToExecute);
+        Pythagora.testId ? logTestStarting(Pythagora.testId) : logTestsStarting(fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`));
+        pythagoraTests = pythagoraTests.filter(t => !testsToExecute || testsToExecute.includes(t.id));
+        let { results, reviewData } = await runTests(pythagoraTests);
 
         let passedCount = results.filter(r => r).length,
             failedCount = results.filter(r => !r).length;

@@ -2,8 +2,7 @@ const _ = require('lodash');
 
 module.exports = function (mongoPath) {
     const originalCollection = require(`${mongoPath}/lib/collection`);
-    const pythagoraErrors = require('../const/errors');
-    const {MONGO_METHODS, PYTHAGORA_DB} = require('../const/mongodb');
+    const {MONGO_METHODS, PYTHAGORA_DB, PYTHAGORA_JEST_DB} = require('../const/mongodb');
     const {
         getCurrentMongoDocs,
         extractArguments,
@@ -22,6 +21,10 @@ module.exports = function (mongoPath) {
             if (global.Pythagora.mode === MODES.test) {
                 this.s.db = global.Pythagora.mongoClient.db(PYTHAGORA_DB);
                 this.s.namespace.db = PYTHAGORA_DB;
+            } else if (global.Pythagora.mode === MODES.jest) {
+                this.s.db = global.Pythagora.mongoClient.db(PYTHAGORA_JEST_DB);
+                this.s.namespace.db = PYTHAGORA_JEST_DB;
+                return originalMethod.apply(this, arguments);
             }
 
             let asyncContextId = global.asyncLocalStorage.getStore(),

@@ -1,5 +1,5 @@
 const MODES = require("../const/modes.json");
-const { getCircularReplacer, compareResponse, compareJson } = require("../utils/common.js");
+const { getCircularReplacer, compareResponse, compareJson, updateMetadata, comparePaths } = require("../utils/common.js");
 const pythagoraErrors = require("../const/errors");
 const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
 const { prepareDB } = require("./mongodb.js");
@@ -10,6 +10,7 @@ const {v4} = require("uuid");
 const _ = require("lodash");
 let  { executionAsyncId } = require('node:async_hooks');
 const fs = require('fs');
+const {logLoginEndpointCaptured} = require("../utils/cmdPrint");
 
 
 function setUpExpressMiddlewares(app) {
@@ -86,7 +87,7 @@ function setUpExpressMiddlewares(app) {
         },
 
         setUpInterceptorMiddleware: async (req, res, next) => {
-            if (req.pythagoraIgnore) return next();
+            if (req.pythagoraIgnore || global.Pythagora.mode === 'jest') return next();
             if (!global.Pythagora.ignoreRedis) global.Pythagora.RedisInterceptor.setMode(global.Pythagora.mode);
             if (global.Pythagora.mode === MODES.capture) await apiCaptureInterceptor(req, res, next, global.Pythagora);
             else if (global.Pythagora.mode === MODES.test) await apiTestInterceptor(req, res, next, global.Pythagora);
@@ -121,6 +122,20 @@ async function apiCaptureInterceptor(req, res, next, pythagora) {
         }
         if (pythagora.loggingEnabled) saveCaptureToFile(pythagora.requests[req.id], pythagora);
         logEndpointCaptured(req.originalUrl, req.method, req.body, req.query, responseBody);
+        let loginEndpointPath = _.get(pythagora.metadata, 'exportRequirements.login.endpointPath')
+        if (loginEndpointPath &&
+            comparePaths(loginEndpointPath, req.originalUrl) &&
+            req.method !== 'OPTIONS' &&
+            !_.get(pythagora.metadata, 'exportRequirements.login.requestBody')) {
+            logLoginEndpointCaptured();
+            _.set(
+                pythagora.metadata,
+                'exportRequirements.login.mongoQueriesArray',
+                pythagora.requests[req.id].intermediateData.filter(d => d.type === 'mongodb')
+            );
+            _.set(pythagora.metadata, 'exportRequirements.login.requestBody', pythagora.requests[req.id].body);
+            updateMetadata(pythagora.metadata);
+        }
     }
     const storeRequestData = (statusCode, id, body) => {
         pythagora.requests[id].responseData = !body || statusCode === 204 ? '' :

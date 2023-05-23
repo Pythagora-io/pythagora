@@ -1,7 +1,12 @@
 const _ = require("lodash");
 const fs = require("fs");
 const net = require('net');
-const {PYTHAGORA_METADATA_DIR, METADATA_FILENAME} = require("../const/common");
+const {
+    PYTHAGORA_METADATA_DIR,
+    METADATA_FILENAME,
+    PYTHAGORA_TESTS_DIR,
+    PYTHAGORA_DELIMITER
+} = require("../const/common");
 let mongodb;
 // this is needed so that "mongodb" is not required before mongo patches are applied
 const ObjectId = class {
@@ -294,6 +299,43 @@ async function getFreePortInRange(minPort, maxPort) {
     return listenPort;
 }
 
+function getAllGeneratedTests() {
+    let allTests = [];
+    let files = fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
+
+    files = files.filter(f => f[0] !== '.' && f.indexOf(PYTHAGORA_DELIMITER) === 0);
+
+    for (let file of files) {
+        let tests = JSON.parse(fs.readFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`));
+        allTests = allTests.concat(tests);
+    }
+
+    return allTests;
+}
+
+function insertVariablesInText(text, variables) {
+    let variableNames = Object.keys(variables);
+    for (let variableName of variableNames) {
+        let variableValue = typeof variables[variableName] === 'object' ?
+            JSON.stringify(variables[variableName], null, 2) : variables[variableName];
+        let variableRegex = new RegExp(`{{${variableName}}}`, 'g');
+        text = text.replace(variableRegex, variableValue);
+    }
+    return text;
+}
+
+function updateMetadata(newMetadata) {
+    fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, JSON.stringify(newMetadata, getCircularReplacer(), 2));
+}
+
+function comparePaths(path1, path2) {
+    // Remove any leading or trailing slashes from both paths
+    path1 = path1.replace(/^\/+|\/+$/g, '');
+    path2 = path2.replace(/^\/+|\/+$/g, '');
+
+    return path1 === path2;
+}
+
 module.exports = {
     cutWithDots,
     compareResponse,
@@ -316,5 +358,9 @@ module.exports = {
     getMetadata,
     delay,
     isPortTaken,
-    getFreePortInRange
+    getFreePortInRange,
+    getAllGeneratedTests,
+    insertVariablesInText,
+    updateMetadata,
+    comparePaths
 }

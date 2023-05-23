@@ -1,4 +1,5 @@
 {
   "capture": "capture",
-  "test": "test"
+  "test": "test",
+  "jest": "jest"
 }

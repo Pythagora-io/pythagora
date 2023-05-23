@@ -271,5 +271,6 @@ module.exports = {
     extractArguments,
     checkForErrors,
     createCaptureIntermediateData,
-    extractDataFromMongoRes
+    extractDataFromMongoRes,
+    jsonObjToMongo
 }

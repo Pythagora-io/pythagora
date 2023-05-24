@@ -90,24 +90,24 @@ async function makeRequest(data, options) {
 async function getJestAuthFunction(loginMongoQueriesArray, loginRequestBody, loginEndpointPath) {
     jestAuthFileGenerationLog();
 
-    let options = setOptions({path: '/generate-jest-auth'});
+    let options = setOptions({path: '/api/generate-jest-auth'});
     return await makeRequest(JSON.stringify({loginMongoQueriesArray, loginRequestBody, loginEndpointPath}), options);
 }
 
 
 async function getJestTest(test) {
-    let options = setOptions({path: '/generate-jest-test'});
+    let options = setOptions({path: '/api/generate-jest-test'});
     return await makeRequest(JSON.stringify(test), options);
 }
 
 async function getJestTestName(jestTest, usedNames) {
-    let options = setOptions({path:'/generate-jest-test-name'});
+    let options = setOptions({path:'/api/generate-jest-test-name'});
     return await makeRequest(JSON.stringify({test: jestTest}), options);
 }
 
 async function isEligibleForExport(jestTest) {
     try {
-        let options = setOptions({ path: '/check-if-eligible' });
+        let options = setOptions({ path: '/api/check-if-eligible' });
 
         const response = await axios.post(
             `${options.protocol}://${options.hostname}${options.port ? ':' + options.port : ''}${options.path}`,

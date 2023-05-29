@@ -11,4 +11,6 @@ module.exports = {
     SRC_TO_ROOT: '../../../',
     MIN_TOKENS_FOR_GPT_RESPONSE: 1640,
     MAX_GPT_MODEL_TOKENS: 8192,
+    PYTHAGORA_UNIT_TESTS_VERSION: 1,
+    PYTHAGORA_UNIT_DIR: 'pythagora_tests/unit',
 }

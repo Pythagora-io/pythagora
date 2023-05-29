@@ -87,6 +87,12 @@ async function makeRequest(data, options) {
     });
 }
 
+async function getUnitTests(data) {
+    let options = setOptions({path: '/api/generate-unit-tests'});
+    let resp = await makeRequest(JSON.stringify(data), options);
+    return resp;
+}
+
 async function getJestAuthFunction(loginMongoQueriesArray, loginRequestBody, loginEndpointPath) {
     jestAuthFileGenerationLog();
 
@@ -135,5 +141,6 @@ module.exports = {
     getJestTest,
     getJestTestName,
     isEligibleForExport,
-    cleanupGPTResponse
+    cleanupGPTResponse,
+    getUnitTests
 }

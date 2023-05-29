@@ -24,9 +24,13 @@
     "node": ">=14.x"
   },
   "dependencies": {
+    "@babel/generator": "^7.22.3",
+    "@babel/parser": "^7.22.3",
+    "@babel/traverse": "^7.22.1",
     "@mswjs/interceptors": "^0.19.2",
     "axios": "^1.2.2",
     "body-parser": "^1.20.1",
+    "handlebars": "^4.7.7",
     "jest": "^29.5.0",
     "lodash": "^4.17.21",
     "nyc": "^15.1.0",

@@ -122,7 +122,7 @@ async function processFile(filePath) {
             };
         });
     } catch (e) {
-        console.error(`Error parsing file ${filePath}: ${e}`);
+        writeLine(`Error parsing file ${filePath}: ${e}`);
     }
 }
 
@@ -224,11 +224,6 @@ async function printFunctions(filePath, prefix) {
 
         processAst(ast, (funcName, path) => {
             let functionFromTheList = functionList[filePath + ':' + funcName];
-            console.log(`\n${funcName} - ${filePath}:${path.node.loc.start.line}`);
-            if (functionFromTheList.relatedFunctions.length > 0) {
-                console.log('Related Functions:', functionFromTheList.relatedFunctions.map(f => f.funcName));
-            }
-
             foundFunctions.push({
                 functionName: funcName,
                 functionCode: functionFromTheList.code,
@@ -251,7 +246,7 @@ async function printFunctions(filePath, prefix) {
         }
 
     } catch (e) {
-        console.error(`Error parsing file ${filePath}: ${e}`);
+        writeLine(`Error parsing file ${filePath}: ${e}`);
     }
 }
 

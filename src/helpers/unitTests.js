@@ -215,7 +215,7 @@ function replaceRequirePaths(code, currentPath, testFilePath) {
     });
 }
 
-async function printFunctions(filePath) {
+async function printFunctions(filePath, prefix) {
     try {
         let ast = await getAstFromFilePath(filePath);
         const topRequires = collectTopRequires(ast);
@@ -237,13 +237,16 @@ async function printFunctions(filePath) {
         });
 
         for (const funcData of foundFunctions) {
+            let isLast = foundFunctions.indexOf(funcData) === foundFunctions.length - 1;
+            spinner.start(`${prefix}${isLast ? '└───' : '├───'}${funcData.functionName}`);
+
             let formattedData = await reformatDataForPythagoraAPI(funcData, filePath);
-            // if (funcData.functionName !== 'mongoObjToJson') continue;
             // await getUnitTests(formattedData, (content) => {
             //     scrollableContent.setContent(content);
             //     scrollableContent.setScrollPerc(100);
             //     screen.render();
             // });
+            spinner.stop();
             await delay(100);
         }
 
@@ -260,10 +263,7 @@ async function traverseDirectory(directory, isPrint, prefix = '') {
         const isLast = files.indexOf(file) === files.length - 1;
         if (stat.isDirectory()) {
             if (isPrint) {
-                let line = `${prefix}${isLast ? '└───' : '├───'}${path.basename(absolutePath)}`;
-                leftPanel.pushLine(line);
-                leftPanel.setScrollPerc(100);
-                screen.render(line);
+                writeLine(`${prefix}${isLast ? '└───' : '├───'}${path.basename(absolutePath)}`);
             }
 
             if (path.basename(absolutePath) !== 'node_modules') {
@@ -273,10 +273,9 @@ async function traverseDirectory(directory, isPrint, prefix = '') {
         } else {
             if (path.extname(absolutePath) !== '.js') continue;
             if (isPrint) {
-                let lineWithoutSpinner = `${prefix}${isLast ? '└───' : '├───'}${path.basename(absolutePath)}`;
-                spinner.start(lineWithoutSpinner);
-                await printFunctions(absolutePath, lineWithoutSpinner);
-                spinner.stop();
+                writeLine(`${prefix}${isLast ? '└───' : '├───'}${path.basename(absolutePath)}`);
+                const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
+                await printFunctions(absolutePath, newPrefix);
             } else {
                 await processFile(absolutePath);
             }
@@ -329,6 +328,12 @@ function initScreen() {
     });
 
     spinner = new Spinner(leftPanel, screen);
+}
+
+function writeLine(line) {
+    leftPanel.pushLine(line);
+    leftPanel.setScrollPerc(100);
+    screen.render(line);
 }
 
 initScreen();

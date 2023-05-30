@@ -7,7 +7,7 @@ const {PYTHAGORA_UNIT_DIR} = require("../const/common");
 const babelTraverse = require("@babel/traverse").default;
 const generator = require("@babel/generator").default;
 const blessed = require('blessed');
-const {delay} = require("../utils/common");
+const {delay, checkDirectoryExists} = require("../utils/common");
 const Spinner = require("../utils/Spinner");
 
 const directoryPath = process.argv[2];
@@ -236,18 +236,32 @@ async function printFunctions(filePath, prefix) {
             spinner.start(`${prefix}${isLast ? '└───' : '├───'}${funcData.functionName}`);
 
             let formattedData = await reformatDataForPythagoraAPI(funcData, filePath);
-            await getUnitTests(formattedData, (content) => {
+            let tests = await getUnitTests(formattedData, (content) => {
                 scrollableContent.setContent(content);
                 scrollableContent.setScrollPerc(100);
                 screen.render();
             });
+            await saveTests(filePath, funcData.functionName, tests);
             spinner.stop();
-            await delay(100);
         }
 
     } catch (e) {
         writeLine(`Error parsing file ${filePath}: ${e}`);
     }
+}
+
+async function saveTests(filePath, name, testData) {
+    let dir = path.join(
+        path.resolve(PYTHAGORA_UNIT_DIR),
+        path.dirname(filePath).replace(directoryPath, ''),
+        path.basename(filePath, path.extname(filePath))
+    );
+
+    if (!await checkDirectoryExists(dir)) {
+        await fs.mkdir(dir, { recursive: true });
+    }
+
+    await fs.writeFile(path.join(dir, `/${name}.test.js`), testData);
 }
 
 async function traverseDirectory(directory, isPrint, prefix = '') {

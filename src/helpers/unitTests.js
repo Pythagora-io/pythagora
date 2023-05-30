@@ -6,6 +6,9 @@ const babelParser = require("@babel/parser");
 const {PYTHAGORA_UNIT_DIR} = require("../const/common");
 const babelTraverse = require("@babel/traverse").default;
 const generator = require("@babel/generator").default;
+const blessed = require('blessed');
+const {delay} = require("../utils/common");
+const Spinner = require("../utils/Spinner");
 
 const directoryPath = process.argv[2];
 
@@ -14,7 +17,12 @@ if (!directoryPath) {
     process.exit(1);
 }
 
-let functionList = {};
+let functionList = {},
+    leftPanel,
+    rightPanel,
+    screen,
+    scrollableContent,
+    spinner;
 
 const insideFunctionOrMethod = (nodeTypesStack) =>
     nodeTypesStack.slice(0, -1).some(type => /^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression|ClassMethod)$/.test(type));
@@ -230,8 +238,13 @@ async function printFunctions(filePath) {
 
         for (const funcData of foundFunctions) {
             let formattedData = await reformatDataForPythagoraAPI(funcData, filePath);
-            if (funcData.functionName !== 'mongoObjToJson') continue;
-            await getUnitTests(formattedData);
+            // if (funcData.functionName !== 'mongoObjToJson') continue;
+            // await getUnitTests(formattedData, (content) => {
+            //     scrollableContent.setContent(content);
+            //     scrollableContent.setScrollPerc(100);
+            //     screen.render();
+            // });
+            await delay(100);
         }
 
     } catch (e) {
@@ -239,19 +252,31 @@ async function printFunctions(filePath) {
     }
 }
 
-async function traverseDirectory(directory, isPrint) {
+async function traverseDirectory(directory, isPrint, prefix = '') {
     const files = await fs.readdir(directory);
     for (const file of files) {
         const absolutePath = path.join(directory, file);
         const stat = await fs.stat(absolutePath);
+        const isLast = files.indexOf(file) === files.length - 1;
         if (stat.isDirectory()) {
+            if (isPrint) {
+                let line = `${prefix}${isLast ? '└───' : '├───'}${path.basename(absolutePath)}`;
+                leftPanel.pushLine(line);
+                leftPanel.setScrollPerc(100);
+                screen.render(line);
+            }
+
             if (path.basename(absolutePath) !== 'node_modules') {
-                await traverseDirectory(absolutePath, isPrint);
+                const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
+                await traverseDirectory(absolutePath, isPrint, newPrefix);
             }
         } else {
             if (path.extname(absolutePath) !== '.js') continue;
             if (isPrint) {
-                await printFunctions(absolutePath);
+                let lineWithoutSpinner = `${prefix}${isLast ? '└───' : '├───'}${path.basename(absolutePath)}`;
+                spinner.start(lineWithoutSpinner);
+                await printFunctions(absolutePath, lineWithoutSpinner);
+                spinner.stop();
             } else {
                 await processFile(absolutePath);
             }
@@ -259,6 +284,54 @@ async function traverseDirectory(directory, isPrint) {
     }
 }
 
+function initScreen() {
+    screen = blessed.screen({
+        smartCSR: true,
+        fullUnicode: true,
+    });
+
+    leftPanel = blessed.box({
+        width: '50%',
+        height: '100%',
+        border: { type: 'line' },
+        scrollable: true,
+        alwaysScroll: true,
+        scrollbar: {
+            ch: ' '
+        },
+        keys: true,
+        vi: true
+    });
+
+    rightPanel = blessed.box({
+        width: '50%',
+        height: '100%',
+        left: '50%',
+        border: { type: 'line' }
+    });
+
+    scrollableContent = blessed.box({
+        parent: rightPanel,
+        scrollable: true,
+        alwaysScroll: true,
+        scrollbar: {
+            ch: ' '
+        },
+        keys: true,
+        vi: true
+    });
+
+    screen.append(leftPanel);
+    screen.append(rightPanel);
+    screen.render();
+    screen.key(['C-c'], function () {
+        return process.exit(0);
+    });
+
+    spinner = new Spinner(leftPanel, screen);
+}
+
+initScreen();
 traverseDirectory(directoryPath, false)  // first pass: collect all function names and codes
     .then(() => traverseDirectory(directoryPath, false))  // second pass: collect all related functions
     .then(() => traverseDirectory(directoryPath, true))  // second pass: print functions and their related functions

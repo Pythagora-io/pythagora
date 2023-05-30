@@ -36,7 +36,7 @@ function setOptions({protocol, hostname, port, path, method, headers}) {
     return options
 }
 
-async function makeRequest(data, options) {
+async function makeRequest(data, options, customLogFunction) {
     let gptResponse = '';
     let end = false;
 
@@ -61,7 +61,8 @@ async function makeRequest(data, options) {
                         let content = _.get(rm, 'choices.0.delta.content');
                         if (content) {
                             gptResponse += content;
-                            process.stdout.write(content);
+                            if (customLogFunction) customLogFunction(gptResponse);
+                            else process.stdout.write(content);
                         }
                     });
 
@@ -87,9 +88,9 @@ async function makeRequest(data, options) {
     });
 }
 
-async function getUnitTests(data) {
+async function getUnitTests(data, customLogFunction) {
     let options = setOptions({path: '/api/generate-unit-tests'});
-    let resp = await makeRequest(JSON.stringify(data), options);
+    let resp = await makeRequest(JSON.stringify(data), options, customLogFunction);
     return resp;
 }
 

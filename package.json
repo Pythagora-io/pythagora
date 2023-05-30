@@ -29,6 +29,7 @@
     "@babel/traverse": "^7.22.1",
     "@mswjs/interceptors": "^0.19.2",
     "axios": "^1.2.2",
+    "blessed": "^0.1.81",
     "body-parser": "^1.20.1",
     "handlebars": "^4.7.7",
     "jest": "^29.5.0",

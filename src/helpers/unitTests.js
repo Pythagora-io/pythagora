@@ -236,11 +236,11 @@ async function printFunctions(filePath, prefix) {
             spinner.start(`${prefix}${isLast ? '└───' : '├───'}${funcData.functionName}`);
 
             let formattedData = await reformatDataForPythagoraAPI(funcData, filePath);
-            // await getUnitTests(formattedData, (content) => {
-            //     scrollableContent.setContent(content);
-            //     scrollableContent.setScrollPerc(100);
-            //     screen.render();
-            // });
+            await getUnitTests(formattedData, (content) => {
+                scrollableContent.setContent(content);
+                scrollableContent.setScrollPerc(100);
+                screen.render();
+            });
             spinner.stop();
             await delay(100);
         }

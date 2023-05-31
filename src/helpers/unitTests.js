@@ -9,6 +9,7 @@ const generator = require("@babel/generator").default;
 const blessed = require('blessed');
 const {delay, checkDirectoryExists} = require("../utils/common");
 const Spinner = require("../utils/Spinner");
+const {green, bold, reset} = require('../utils/CmdPrint').colors;
 
 const directoryPath = process.argv[2];
 
@@ -22,7 +23,8 @@ let functionList = {},
     rightPanel,
     screen,
     scrollableContent,
-    spinner;
+    spinner,
+    folderStructureTree = [];
 
 const insideFunctionOrMethod = (nodeTypesStack) =>
     nodeTypesStack.slice(0, -1).some(type => /^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression|ClassMethod)$/.test(type));
@@ -122,7 +124,7 @@ async function processFile(filePath) {
             };
         });
     } catch (e) {
-        writeLine(`Error parsing file ${filePath}: ${e}`);
+        // writeLine(`Error parsing file ${filePath}: ${e}`);
     }
 }
 
@@ -219,6 +221,7 @@ async function printFunctions(filePath, prefix) {
     try {
         let ast = await getAstFromFilePath(filePath);
         const topRequires = collectTopRequires(ast);
+        const fileIndex = folderStructureTree.findIndex(item => item.absolutePath === filePath);
 
         const foundFunctions = [];
 
@@ -231,9 +234,20 @@ async function printFunctions(filePath, prefix) {
             });
         });
 
-        for (const funcData of foundFunctions) {
+        for (const [i, funcData] of foundFunctions.entries()) {
             let isLast = foundFunctions.indexOf(funcData) === foundFunctions.length - 1;
-            spinner.start(`${prefix}${isLast ? '└───' : '├───'}${funcData.functionName}`);
+            let indexToPush = fileIndex + 1 + i;
+            folderStructureTree.splice(
+                indexToPush,
+                0,
+                getFolderTreeItem(
+                    prefix,
+                    isLast,
+                    `${funcData.functionName}.test.js`,
+                    filePath + ':' + funcData.functionName
+                )
+            );
+            spinner.start(folderStructureTree, indexToPush);
 
             let formattedData = await reformatDataForPythagoraAPI(funcData, filePath);
             let tests = await getUnitTests(formattedData, (content) => {
@@ -242,12 +256,24 @@ async function printFunctions(filePath, prefix) {
                 screen.render();
             });
             await saveTests(filePath, funcData.functionName, tests);
-            spinner.stop();
+            await spinner.stop();
+            folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
+        }
+
+        if (foundFunctions.length > 0) {
+            folderStructureTree[fileIndex].line = `${green+bold}${folderStructureTree[fileIndex].line}${reset}`;
         }
 
     } catch (e) {
-        writeLine(`Error parsing file ${filePath}: ${e}`);
+        // writeLine(`Error parsing file ${filePath}: ${e}`);
     }
+}
+
+function getFolderTreeItem(prefix, isLast, name, absolutePath) {
+    return {
+        line: `${prefix}${isLast ? '└───' : '├───'}${name}`,
+        absolutePath
+    };
 }
 
 async function saveTests(filePath, name, testData) {
@@ -271,8 +297,13 @@ async function traverseDirectory(directory, isPrint, prefix = '') {
         const stat = await fs.stat(absolutePath);
         const isLast = files.indexOf(file) === files.length - 1;
         if (stat.isDirectory()) {
-            if (isPrint) {
-                writeLine(`${prefix}${isLast ? '└───' : '├───'}${path.basename(absolutePath)}`);
+            if (!isPrint) {
+                folderStructureTree.push(getFolderTreeItem(
+                    prefix,
+                    isLast,
+                    path.basename(absolutePath),
+                    absolutePath
+                ));
             }
 
             if (path.basename(absolutePath) !== 'node_modules') {
@@ -282,10 +313,15 @@ async function traverseDirectory(directory, isPrint, prefix = '') {
         } else {
             if (path.extname(absolutePath) !== '.js') continue;
             if (isPrint) {
-                writeLine(`${prefix}${isLast ? '└───' : '├───'}${path.basename(absolutePath)}`);
                 const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
                 await printFunctions(absolutePath, newPrefix);
             } else {
+                folderStructureTree.push(getFolderTreeItem(
+                    prefix,
+                    isLast,
+                    path.basename(absolutePath),
+                    absolutePath
+                ));
                 await processFile(absolutePath);
             }
         }
@@ -337,12 +373,6 @@ function initScreen() {
     });
 
     spinner = new Spinner(leftPanel, screen);
-}
-
-function writeLine(line) {
-    leftPanel.pushLine(line);
-    leftPanel.setScrollPerc(100);
-    screen.render(line);
 }
 
 initScreen();

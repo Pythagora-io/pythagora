@@ -1,39 +1,42 @@
 const {delay} = require("./common");
+const {bold, yellow, reset} = require('./CmdPrint').colors;
 
 class Spinner {
     constructor(panel, screen) {
-        this.lineWithoutSpinner = '';
         this.spin = false;
         this.spinnerCharacters = ['-', '\\', '|', '/'];
         this.panel = panel;
         this.screen = screen;
     }
 
-    start(lineWithoutSpinner) {
-        this.lineWithoutSpinner = lineWithoutSpinner;
-        this.spin = true;
-        this.panel.pushLine(this.lineWithoutSpinner);
+    start(tree, index) {
         let spinnerIndex = 0;
+        this.spin = true;
         setTimeout(async () => {
             while (this.spin) {
-                let spinnerChar = this.spinnerCharacters[spinnerIndex % this.spinnerCharacters.length];
                 spinnerIndex++;
-                let newItem = `${this.lineWithoutSpinner} ${spinnerChar}`;
-                this.panel.deleteLine(this.panel.getScrollHeight() - 1);
-                this.panel.pushLine(newItem);
-                this.panel.setScrollPerc(100);
-                this.screen.render();
+                this.rewriteTree(tree, index, spinnerIndex)
                 await delay(100);
             }
         }, 0);
     }
 
-    stop() {
-        this.spin = false;
-        this.panel.deleteLine(this.panel.getScrollHeight() - 1);
-        this.panel.pushLine(this.lineWithoutSpinner);
-        this.panel.setScrollPerc(100);
+    rewriteTree(tree, index, spinnerIndex) {
+        this.panel.setContent('');
+        let spinnerChar = this.spinnerCharacters[spinnerIndex % this.spinnerCharacters.length];
+        for (let i = 0; i < tree.length; i++) {
+            if (i === index) {
+                this.panel.pushLine(`${bold}${yellow}${tree[i].line} ${spinnerChar}${reset}`);
+            } else {
+                this.panel.pushLine(tree[i].line);
+            }
+        }
         this.screen.render();
+    }
+
+    async stop() {
+        this.spin = false;
+        await delay(100);
     }
 }
 

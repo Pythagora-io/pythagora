@@ -227,5 +227,8 @@ module.exports = {
     primeJestLog,
     testEligibleForExportLog,
     logChange,
-    enterLoginRouteLog
+    enterLoginRouteLog,
+    colors: {
+        red, blue, green, yellow, bold, reset
+    }
 }

@@ -100,18 +100,18 @@ async function getJestTest(test) {
     return await makeRequest(JSON.stringify(test), options);
 }
 
-async function getJestTestName(jestTest, usedNames) {
+async function getJestTestName(test, usedNames) {
     let options = setOptions({path:'/api/generate-jest-test-name'});
-    return await makeRequest(JSON.stringify({test: jestTest}), options);
+    return await makeRequest(JSON.stringify({ test }), options);
 }
 
-async function isEligibleForExport(jestTest) {
+async function isEligibleForExport(test) {
     try {
         let options = setOptions({ path: '/api/check-if-eligible' });
 
         const response = await axios.post(
             `${options.protocol}://${options.hostname}${options.port ? ':' + options.port : ''}${options.path}`,
-            JSON.stringify({ jestTest }),
+            JSON.stringify({ test }),
             { headers: options.headers }
         );
 

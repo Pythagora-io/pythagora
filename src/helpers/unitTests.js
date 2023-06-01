@@ -11,13 +11,6 @@ const {delay, checkDirectoryExists} = require("../utils/common");
 const Spinner = require("../utils/Spinner");
 const {green, bold, reset} = require('../utils/CmdPrint').colors;
 
-const directoryPath = process.argv[2];
-
-if (!directoryPath) {
-    console.log('Please provide a directory path');
-    process.exit(1);
-}
-
 let functionList = {},
     leftPanel,
     rightPanel,
@@ -115,14 +108,29 @@ function collectTopRequires(node) {
 
 async function processFile(filePath) {
     try {
+        let exports = [];
+        let functions = [];
         let ast = await getAstFromFilePath(filePath);
-        processAst(ast, (funcName, path) => {
-            functionList[filePath + ':' + funcName] = {
-                code: generator(path.node).code,
-                filePath: filePath,
-                relatedFunctions: getRelatedFunctions(path.node, ast, filePath)
-            };
+        processAst(ast, (funcName, path, type) => {
+            if (type === 'export') {
+                exports.push(funcName);
+            } else {
+                functions.push({
+                    funcName,
+                    path,
+                    relatedFunctions: getRelatedFunctions(path.node, ast, filePath)
+                });
+            }
         });
+        for (let f of functions) {
+            if (exports.includes(f.funcName)) {
+                functionList[filePath + ':' + f.funcName] = {
+                    code: generator(f.path.node).code,
+                    filePath: filePath,
+                    relatedFunctions: f.relatedFunctions
+                };
+            }
+        }
     } catch (e) {
         // writeLine(`Error parsing file ${filePath}: ${e}`);
     }
@@ -147,10 +155,31 @@ async function getAstFromFilePath(filePath) {
 
 function processAst(ast, cb) {
     let nodeTypesStack = [];
+    let exportedFuncNames = new Set();
+
     babelTraverse(ast, {
         enter(path) {
             nodeTypesStack.push(path.node.type);
             if (insideFunctionOrMethod(nodeTypesStack)) return;
+
+            // Handle module.exports
+            if (path.isExpressionStatement()) {
+                const expression = path.node.expression;
+                if (expression && expression.type === 'AssignmentExpression') {
+                    const left = expression.left;
+                    if (left.type === 'MemberExpression' &&
+                        left.object.name === 'module' &&
+                        left.property.name === 'exports') {
+                        if (expression.right.type === 'ObjectExpression') {
+                            expression.right.properties.forEach(prop => {
+                                if (prop.type === 'ObjectProperty') {
+                                    cb(prop.key.name, null, 'export');
+                                }
+                            });
+                        }
+                    }
+                }
+            }
 
             let funcName;
             if (path.isFunctionDeclaration()) {
@@ -161,7 +190,7 @@ function processAst(ast, cb) {
                 } else if (path.parentPath.isAssignmentExpression() || path.parentPath.isObjectProperty()) {
                     funcName = path.parentPath.node.left ? path.parentPath.node.left.name : path.parentPath.node.key.name;
                 }
-            } else if (path.node.type === 'ClassMethod' && path.node.key.name !== 'constructor') { // Add this block to handle class methods
+            } else if (path.node.type === 'ClassMethod' && path.node.key.name !== 'constructor') {
                 funcName = path.node.key.name;
                 if (path.parentPath.node.type === 'ClassDeclaration') {
                     const className = path.parentPath.node.id.name;
@@ -175,10 +204,12 @@ function processAst(ast, cb) {
             if (funcName) cb(funcName, path);
         },
         exit(path) {
-            nodeTypesStack.pop();  // Add this line
+            nodeTypesStack.pop();
         }
     });
 }
+
+
 
 function getRelativePath(filePath, referenceFilePath) {
     let relativePath = path.relative(path.dirname(referenceFilePath), filePath);
@@ -217,7 +248,7 @@ function replaceRequirePaths(code, currentPath, testFilePath) {
     });
 }
 
-async function createTests(filePath, prefix) {
+async function createTests(filePath, directoryPath, prefix) {
     try {
         let ast = await getAstFromFilePath(filePath);
         const topRequires = collectTopRequires(ast);
@@ -276,7 +307,7 @@ function getFolderTreeItem(prefix, isLast, name, absolutePath) {
     };
 }
 
-async function saveTests(filePath, name, testData) {
+async function saveTests(filePath, name, testData, directoryPath) {
     let dir = path.join(
         path.resolve(PYTHAGORA_UNIT_DIR),
         path.dirname(filePath).replace(directoryPath, ''),
@@ -322,7 +353,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
                 await processFile(absolutePath);
             } else {
                 const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-                await createTests(absolutePath, newPrefix);
+                await createTests(absolutePath, directory, newPrefix);
             }
         }
     }
@@ -375,8 +406,21 @@ function initScreen() {
     spinner = new Spinner(leftPanel, screen);
 }
 
-initScreen();
-traverseDirectory(directoryPath, true)  // first pass: collect all function names and codes
-    .then(() => traverseDirectory(directoryPath, true))  // second pass: collect all related functions
-    .then(() => traverseDirectory(directoryPath, false))  // second pass: print functions and their related functions
-    .catch(err => console.error(err));
+async function getFunctionsForExport(directoryPath) {
+    await traverseDirectory(directoryPath, true);
+    await traverseDirectory(directoryPath, true);
+    return functionList;
+}
+
+function generateTestsForDirectory(directoryPath) {
+    initScreen();
+    traverseDirectory(directoryPath, true)  // first pass: collect all function names and codes
+        .then(() => traverseDirectory(directoryPath, true))  // second pass: collect all related functions
+        .then(() => traverseDirectory(directoryPath, false))  // second pass: print functions and their related functions
+        .catch(err => console.error(err));
+}
+
+module.exports = {
+    getFunctionsForExport,
+    generateTestsForDirectory
+}

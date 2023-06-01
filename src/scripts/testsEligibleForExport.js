@@ -5,6 +5,7 @@ const {convertOldTestForGPT} = require("../utils/legacy");
 const {testEligibleForExportLog} = require("../utils/cmdPrint");
 const {isEligibleForExport} = require("../helpers/api");
 const args = require("../utils/argumentsCheck");
+const {getFunctionsForExport} = require("../helpers/unitTests");
 
 
 async function testsEligibleForExport() {
@@ -23,6 +24,23 @@ async function testsEligibleForExport() {
     process.exit(0);
 }
 
+async function unitTestsEligibleForExport() {
+    let tests = await getFunctionsForExport(args.dir);
+    let csvData = 'fileName,functionName,relatedFunctions\n';
+    for (let path in tests) {
+        let funcName = path.substring(path.lastIndexOf(':') + 1);
+        let fileName = path.substring(path.lastIndexOf('/') + 1);
+        let relatedFunctions = tests[path].relatedFunctions.map(rf => rf.funcName).join('\n');
+        csvData += `${fileName},${funcName},${relatedFunctions}\n`;
+    }
+    if (args.save_csv) {
+        fs.writeFileSync(path.join('./pythagora_unit_tests_eligible_for_export.csv'), csvData);
+        console.log('CSV file saved.');
+    }
+    process.exit(0);
+}
+
 (async ()=> {
-    await testsEligibleForExport();
+    if (args.unit_tests) await unitTestsEligibleForExport();
+    else await testsEligibleForExport();
 })()

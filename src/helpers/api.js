@@ -131,7 +131,7 @@ async function isEligibleForExport(jestTest) {
 
 function cleanupGPTResponse(gptResponse) {
     if (gptResponse.substring(0, 3) === "```") {
-        gptResponse = gptResponse.substring(gptResponse.indexOf('\n') + 2, gptResponse.lastIndexOf('```'));
+        gptResponse = gptResponse.substring(gptResponse.indexOf('\n') + 1, gptResponse.lastIndexOf('```'));
     }
 
     return gptResponse;

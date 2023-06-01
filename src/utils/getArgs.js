@@ -1,4 +1,4 @@
-const argsStr = process.env.PYTHAGORA_CONFIG;
+const argsStr = process.env.PYTHAGORA_CONFIG || '';
 
 const argArray = argsStr.split("--");
 let args = {};

@@ -1,8 +1,9 @@
-const https = require('https');
 const _ = require('lodash');
 const axios = require('axios');
 const { jestAuthFileGenerationLog } = require('../utils/cmdPrint');
 const args = require('../utils/getArgs.js');
+const {PYTHAGORA_UNIT_TESTS_VERSION,PYTHAGORA_API_SERVER} = require('../const/common');
+const API_SERVER = args.pythagora_api_server || PYTHAGORA_API_SERVER;
 
 function extractGPTMessageFromStreamData(input) {
     const regex = /data: (.*?)\n/g;
@@ -16,13 +17,14 @@ function extractGPTMessageFromStreamData(input) {
     return substrings.map(s => JSON.parse(s));
 }
 
-function setOptions({protocol, hostname, port, path, method, headers}) {
+function setOptions({path, method, headers}) {
     let apiKey = args.openai_api_key || args.pythagora_api_key;
+    const parsedUrl = new URL(API_SERVER);
     if (!apiKey) throw new Error('No API key provided. Please add --openai-api-key or --pythagora-api-key')
     let options = {
-        protocol: protocol || 'https',
-        hostname: hostname || 'api.pythagora.io',
-        port: port || process.env.PORT,
+        protocol: parsedUrl.protocol.replace(':', ''),
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port,
         path: path || '/',
         method: method || 'POST',
         headers: headers || {
@@ -39,9 +41,10 @@ function setOptions({protocol, hostname, port, path, method, headers}) {
 async function makeRequest(data, options, customLogFunction) {
     let gptResponse = '';
     let end = false;
+    let httpModule = options.protocol === 'http' ? require('http') : require('https');
 
     return new Promise((resolve, reject) => {
-        const req = https.request(_.omit(options, ['protocol']), function(res){
+        const req = httpModule.request(_.omit(options, ['protocol']), function(res){
             res.on('data', (chunk) => {
                 try {
                     let stringified = chunk.toString();

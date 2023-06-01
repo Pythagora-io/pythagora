@@ -13,4 +13,5 @@ module.exports = {
     MAX_GPT_MODEL_TOKENS: 8192,
     PYTHAGORA_UNIT_TESTS_VERSION: 1,
     PYTHAGORA_UNIT_DIR: 'pythagora_tests/unit',
+    PYTHAGORA_API_SERVER: 'https://api.pythagora.io',
 }

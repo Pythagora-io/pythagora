@@ -217,7 +217,7 @@ function replaceRequirePaths(code, currentPath, testFilePath) {
     });
 }
 
-async function printFunctions(filePath, prefix) {
+async function createTests(filePath, prefix) {
     try {
         let ast = await getAstFromFilePath(filePath);
         const topRequires = collectTopRequires(ast);
@@ -290,14 +290,14 @@ async function saveTests(filePath, name, testData) {
     await fs.writeFile(path.join(dir, `/${name}.test.js`), testData);
 }
 
-async function traverseDirectory(directory, isPrint, prefix = '') {
+async function traverseDirectory(directory, onlyCollectFunctionData, prefix = '') {
     const files = await fs.readdir(directory);
     for (const file of files) {
         const absolutePath = path.join(directory, file);
         const stat = await fs.stat(absolutePath);
         const isLast = files.indexOf(file) === files.length - 1;
         if (stat.isDirectory()) {
-            if (!isPrint) {
+            if (onlyCollectFunctionData) {
                 folderStructureTree.push(getFolderTreeItem(
                     prefix,
                     isLast,
@@ -308,14 +308,11 @@ async function traverseDirectory(directory, isPrint, prefix = '') {
 
             if (path.basename(absolutePath) !== 'node_modules') {
                 const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-                await traverseDirectory(absolutePath, isPrint, newPrefix);
+                await traverseDirectory(absolutePath, onlyCollectFunctionData, newPrefix);
             }
         } else {
             if (path.extname(absolutePath) !== '.js') continue;
-            if (isPrint) {
-                const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-                await printFunctions(absolutePath, newPrefix);
-            } else {
+            if (onlyCollectFunctionData) {
                 folderStructureTree.push(getFolderTreeItem(
                     prefix,
                     isLast,
@@ -323,6 +320,9 @@ async function traverseDirectory(directory, isPrint, prefix = '') {
                     absolutePath
                 ));
                 await processFile(absolutePath);
+            } else {
+                const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
+                await createTests(absolutePath, newPrefix);
             }
         }
     }
@@ -376,7 +376,7 @@ function initScreen() {
 }
 
 initScreen();
-traverseDirectory(directoryPath, false)  // first pass: collect all function names and codes
-    .then(() => traverseDirectory(directoryPath, false))  // second pass: collect all related functions
-    .then(() => traverseDirectory(directoryPath, true))  // second pass: print functions and their related functions
+traverseDirectory(directoryPath, true)  // first pass: collect all function names and codes
+    .then(() => traverseDirectory(directoryPath, true))  // second pass: collect all related functions
+    .then(() => traverseDirectory(directoryPath, false))  // second pass: print functions and their related functions
     .catch(err => console.error(err));

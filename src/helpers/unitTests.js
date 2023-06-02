@@ -7,7 +7,7 @@ const {PYTHAGORA_UNIT_DIR} = require("../const/common");
 const babelTraverse = require("@babel/traverse").default;
 const generator = require("@babel/generator").default;
 const blessed = require('blessed');
-const {delay, checkDirectoryExists} = require("../utils/common");
+const {checkDirectoryExists} = require("../utils/common");
 const Spinner = require("../utils/Spinner");
 const {green, bold, reset} = require('../utils/CmdPrint').colors;
 
@@ -422,7 +422,7 @@ function generateTestsForDirectory(directoryPath) {
     initScreen();
     traverseDirectory(directoryPath, true)  // first pass: collect all function names and codes
         .then(() => traverseDirectory(directoryPath, true))  // second pass: collect all related functions
-        .then(() => traverseDirectory(directoryPath, false))  // second pass: print functions and their related functions
+        .then(() => traverseDirectory(directoryPath, false))  // third pass: print functions and their related functions
         .catch(err => console.error(err));
 }
 

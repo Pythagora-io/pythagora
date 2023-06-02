@@ -17,6 +17,7 @@ let functionList = {},
     screen,
     scrollableContent,
     spinner,
+    directoryPath = '',
     folderStructureTree = [];
 
 const insideFunctionOrMethod = (nodeTypesStack) =>
@@ -251,7 +252,7 @@ function replaceRequirePaths(code, currentPath, testFilePath) {
     });
 }
 
-async function createTests(filePath, directoryPath, prefix) {
+async function createTests(filePath, prefix) {
     try {
         let ast = await getAstFromFilePath(filePath);
         const topRequires = collectTopRequires(ast);
@@ -359,7 +360,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
                 await processFile(absolutePath);
             } else {
                 const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-                await createTests(absolutePath, directory, newPrefix);
+                await createTests(absolutePath, newPrefix);
             }
         }
     }
@@ -412,13 +413,15 @@ function initScreen() {
     spinner = new Spinner(leftPanel, screen);
 }
 
-async function getFunctionsForExport(directoryPath) {
+async function getFunctionsForExport(dirPath) {
+    directoryPath = dirPath;
     await traverseDirectory(directoryPath, true);
     await traverseDirectory(directoryPath, true);
     return functionList;
 }
 
-function generateTestsForDirectory(directoryPath) {
+function generateTestsForDirectory(dirPath) {
+    directoryPath = dirPath;
     initScreen();
     traverseDirectory(directoryPath, true)  // first pass: collect all function names and codes
         .then(() => traverseDirectory(directoryPath, true))  // second pass: collect all related functions

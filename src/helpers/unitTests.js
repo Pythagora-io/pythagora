@@ -17,7 +17,8 @@ let functionList = {},
     screen,
     scrollableContent,
     spinner,
-    directoryPath = '',
+    rootPath = '',
+    queriedPath = '',
     folderStructureTree = [];
 
 const insideFunctionOrMethod = (nodeTypesStack) =>
@@ -323,13 +324,13 @@ function getFolderTreeItem(prefix, isLast, name, absolutePath) {
 function getTestFilePath(filePath) {
     return path.join(
         path.resolve(PYTHAGORA_UNIT_DIR),
-        path.dirname(filePath).replace(directoryPath, ''),
+        path.dirname(filePath).replace(rootPath, ''),
         path.basename(filePath, path.extname(filePath))
     );
 }
 
 async function saveTests(filePath, name, testData) {
-    let dir = getTestFilePath(filePath, directoryPath);
+    let dir = getTestFilePath(filePath, rootPath);
 
     if (!await checkDirectoryExists(dir)) {
         await fs.mkdir(dir, { recursive: true });
@@ -339,13 +340,17 @@ async function saveTests(filePath, name, testData) {
 }
 
 async function traverseDirectory(directory, onlyCollectFunctionData, prefix = '') {
+    if (await checkPathType(directory) === 'file' && !onlyCollectFunctionData) {
+        if (path.extname(directory) !== '.js') throw new Error('File is not a javascript file');
+        return await createTests(directory, prefix);
+    }
     const files = await fs.readdir(directory);
     for (const file of files) {
         const absolutePath = path.join(directory, file);
         const stat = await fs.stat(absolutePath);
         const isLast = files.indexOf(file) === files.length - 1;
         if (stat.isDirectory()) {
-            if (onlyCollectFunctionData) {
+            if (onlyCollectFunctionData && isPathInside(path.dirname(queriedPath), absolutePath)) {
                 folderStructureTree.push(getFolderTreeItem(
                     prefix,
                     isLast,
@@ -361,12 +366,14 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
         } else {
             if (path.extname(absolutePath) !== '.js') continue;
             if (onlyCollectFunctionData) {
-                folderStructureTree.push(getFolderTreeItem(
-                    prefix,
-                    isLast,
-                    path.basename(absolutePath),
-                    absolutePath
-                ));
+                if (isPathInside(path.dirname(queriedPath), absolutePath)) {
+                    folderStructureTree.push(getFolderTreeItem(
+                        prefix,
+                        isLast,
+                        path.basename(absolutePath),
+                        absolutePath
+                    ));
+                }
                 await processFile(absolutePath);
             } else {
                 const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
@@ -424,18 +431,29 @@ function initScreen() {
 }
 
 async function getFunctionsForExport(dirPath) {
-    directoryPath = dirPath;
-    await traverseDirectory(directoryPath, true);
-    await traverseDirectory(directoryPath, true);
+    rootPath = dirPath;
+    await traverseDirectory(rootPath, true);
+    await traverseDirectory(rootPath, true);
     return functionList;
 }
 
+async function checkPathType(path) {
+    let stats = await fs.stat(path);
+    return stats.isFile() ? 'file' : 'directory';
+}
+
+function isPathInside(basePath, targetPath) {
+    const relativePath = path.relative(basePath, targetPath);
+    return !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+}
+
 function generateTestsForDirectory(dirPath) {
-    directoryPath = dirPath;
+    queriedPath = path.resolve(dirPath);
+    rootPath = process.cwd();
     initScreen();
-    traverseDirectory(directoryPath, true)  // first pass: collect all function names and codes
-        .then(() => traverseDirectory(directoryPath, true))  // second pass: collect all related functions
-        .then(() => traverseDirectory(directoryPath, false))  // second pass: print functions and their related functions
+    traverseDirectory(rootPath, true)  // first pass: collect all function names and codes
+        .then(() => traverseDirectory(rootPath, true))  // second pass: collect all related functions
+        .then(() => traverseDirectory(queriedPath, false))  // second pass: print functions and their related functions
         .catch(err => console.error(err));
 }
 

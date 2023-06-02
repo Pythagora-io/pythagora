@@ -218,7 +218,7 @@ function getRelativePath(filePath, referenceFilePath) {
     return relativePath;
 }
 
-async function reformatDataForPythagoraAPI(funcData, filePath) {
+async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
     let relatedCode = _.groupBy(funcData.relatedCode, 'fileName');
     relatedCode = _.map(relatedCode, (value, key)  => ({ fileName: key, functionNames: value.map(item => item.funcName) }));
     let relatedCodeInSameFile = [funcData.functionName];
@@ -229,12 +229,18 @@ async function reformatDataForPythagoraAPI(funcData, filePath) {
         } else {
             let fileName = getRelativePath(file.fileName, filePath);
             let code = await stripUnrelatedFunctions(file.fileName, file.functionNames);
+            let fullPath = filePath.substring(0, filePath.lastIndexOf('/')) + '/' + fileName;
             code = replaceRequirePaths(code, filePath, path.resolve(PYTHAGORA_UNIT_DIR) + '/brija.test.js');
-            funcData.relatedCode.push({fileName, code});
+            funcData.relatedCode.push({
+                fileName,
+                code,
+                pathRelativeToTest: getRelativePath(fullPath, testFilePath + '/brija.test.js')
+            });
         }
     }
     funcData.functionCode = await stripUnrelatedFunctions(filePath, relatedCodeInSameFile);
     funcData.functionCode = replaceRequirePaths(funcData.functionCode, path.dirname(filePath), path.resolve(PYTHAGORA_UNIT_DIR) + '/brija.test.js');
+    funcData.pathRelativeToTest = getRelativePath(filePath, testFilePath + '/brija.test.js');
     return funcData;
 }
 
@@ -287,13 +293,13 @@ async function createTests(filePath, prefix) {
             );
             spinner.start(folderStructureTree, indexToPush);
 
-            let formattedData = await reformatDataForPythagoraAPI(funcData, filePath);
+            let formattedData = await reformatDataForPythagoraAPI(funcData, filePath, getTestFilePath(filePath));
             let tests = await getUnitTests(formattedData, (content) => {
                 scrollableContent.setContent(content);
                 scrollableContent.setScrollPerc(100);
                 screen.render();
             });
-            await saveTests(filePath, funcData.functionName, tests, directoryPath);
+            await saveTests(filePath, funcData.functionName, tests);
             await spinner.stop();
             folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
         }
@@ -314,12 +320,16 @@ function getFolderTreeItem(prefix, isLast, name, absolutePath) {
     };
 }
 
-async function saveTests(filePath, name, testData, directoryPath) {
-    let dir = path.join(
+function getTestFilePath(filePath) {
+    return path.join(
         path.resolve(PYTHAGORA_UNIT_DIR),
         path.dirname(filePath).replace(directoryPath, ''),
         path.basename(filePath, path.extname(filePath))
     );
+}
+
+async function saveTests(filePath, name, testData) {
+    let dir = getTestFilePath(filePath, directoryPath);
 
     if (!await checkDirectoryExists(dir)) {
         await fs.mkdir(dir, { recursive: true });

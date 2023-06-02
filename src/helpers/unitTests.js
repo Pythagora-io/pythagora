@@ -17,6 +17,7 @@ let functionList = {},
     screen,
     scrollableContent,
     spinner,
+    directoryPath = '',
     folderStructureTree = [];
 
 const insideFunctionOrMethod = (nodeTypesStack) =>
@@ -217,7 +218,7 @@ function getRelativePath(filePath, referenceFilePath) {
     return relativePath;
 }
 
-async function reformatDataForPythagoraAPI(funcData, filePath) {
+async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
     let relatedCode = _.groupBy(funcData.relatedCode, 'fileName');
     relatedCode = _.map(relatedCode, (value, key)  => ({ fileName: key, functionNames: value.map(item => item.funcName) }));
     let relatedCodeInSameFile = [funcData.functionName];
@@ -228,12 +229,18 @@ async function reformatDataForPythagoraAPI(funcData, filePath) {
         } else {
             let fileName = getRelativePath(file.fileName, filePath);
             let code = await stripUnrelatedFunctions(file.fileName, file.functionNames);
+            let fullPath = filePath.substring(0, filePath.lastIndexOf('/')) + '/' + fileName;
             code = replaceRequirePaths(code, filePath, path.resolve(PYTHAGORA_UNIT_DIR) + '/brija.test.js');
-            funcData.relatedCode.push({fileName, code});
+            funcData.relatedCode.push({
+                fileName,
+                code,
+                pathRelativeToTest: getRelativePath(fullPath, testFilePath + '/brija.test.js')
+            });
         }
     }
     funcData.functionCode = await stripUnrelatedFunctions(filePath, relatedCodeInSameFile);
     funcData.functionCode = replaceRequirePaths(funcData.functionCode, path.dirname(filePath), path.resolve(PYTHAGORA_UNIT_DIR) + '/brija.test.js');
+    funcData.pathRelativeToTest = getRelativePath(filePath, testFilePath + '/brija.test.js');
     return funcData;
 }
 
@@ -251,7 +258,7 @@ function replaceRequirePaths(code, currentPath, testFilePath) {
     });
 }
 
-async function createTests(filePath, directoryPath, prefix) {
+async function createTests(filePath, prefix) {
     try {
         let ast = await getAstFromFilePath(filePath);
         const topRequires = collectTopRequires(ast);
@@ -286,13 +293,13 @@ async function createTests(filePath, directoryPath, prefix) {
             );
             spinner.start(folderStructureTree, indexToPush);
 
-            let formattedData = await reformatDataForPythagoraAPI(funcData, filePath);
+            let formattedData = await reformatDataForPythagoraAPI(funcData, filePath, getTestFilePath(filePath));
             let tests = await getUnitTests(formattedData, (content) => {
                 scrollableContent.setContent(content);
                 scrollableContent.setScrollPerc(100);
                 screen.render();
             });
-            await saveTests(filePath, funcData.functionName, tests, directoryPath);
+            await saveTests(filePath, funcData.functionName, tests);
             await spinner.stop();
             folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
         }
@@ -313,12 +320,16 @@ function getFolderTreeItem(prefix, isLast, name, absolutePath) {
     };
 }
 
-async function saveTests(filePath, name, testData, directoryPath) {
-    let dir = path.join(
+function getTestFilePath(filePath) {
+    return path.join(
         path.resolve(PYTHAGORA_UNIT_DIR),
         path.dirname(filePath).replace(directoryPath, ''),
         path.basename(filePath, path.extname(filePath))
     );
+}
+
+async function saveTests(filePath, name, testData) {
+    let dir = getTestFilePath(filePath, directoryPath);
 
     if (!await checkDirectoryExists(dir)) {
         await fs.mkdir(dir, { recursive: true });
@@ -359,7 +370,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
                 await processFile(absolutePath);
             } else {
                 const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-                await createTests(absolutePath, directory, newPrefix);
+                await createTests(absolutePath, newPrefix);
             }
         }
     }
@@ -412,13 +423,15 @@ function initScreen() {
     spinner = new Spinner(leftPanel, screen);
 }
 
-async function getFunctionsForExport(directoryPath) {
+async function getFunctionsForExport(dirPath) {
+    directoryPath = dirPath;
     await traverseDirectory(directoryPath, true);
     await traverseDirectory(directoryPath, true);
     return functionList;
 }
 
-function generateTestsForDirectory(directoryPath) {
+function generateTestsForDirectory(dirPath) {
+    directoryPath = dirPath;
     initScreen();
     traverseDirectory(directoryPath, true)  // first pass: collect all function names and codes
         .then(() => traverseDirectory(directoryPath, true))  // second pass: collect all related functions

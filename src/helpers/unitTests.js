@@ -62,10 +62,13 @@ function getRelatedFunctions(node, ast, filePath) {
             }
 
             let requiredPath = requiresFromFile.find(require => require.includes(funcName));
-            if (!requiredPath) return;
-
-            requiredPath = (requiredPath.match(/require\((['"`])(.*?)\1\)/) || [])[2];
-            if (requiredPath && requiredPath.startsWith('./')) requiredPath = path.resolve(filePath.substring(0, filePath.lastIndexOf('/')), requiredPath);
+            if (!requiredPath) {
+                requiredPath = filePath;
+            } else {
+                requiredPath = (requiredPath.match(/require\((['"`])(.*?)\1\)/) || [])[2];
+                if (requiredPath && (requiredPath.startsWith('./') || requiredPath.startsWith('../'))) requiredPath = path.resolve(filePath.substring(0, filePath.lastIndexOf('/')), requiredPath);
+                if (requiredPath.lastIndexOf('.js') + '.js'.length !== requiredPath.length) requiredPath += '.js';
+            }
             let functionFromList = functionList[requiredPath + ':' + funcName];
             if (functionFromList) {
                 relatedFunctions.push({
@@ -117,19 +120,16 @@ async function processFile(filePath) {
             } else {
                 functions.push({
                     funcName,
-                    path,
+                    code: generator(path.node).code,
+                    filePath: filePath,
                     relatedFunctions: getRelatedFunctions(path.node, ast, filePath)
                 });
             }
         });
         for (let f of functions) {
-            if (exports.includes(f.funcName)) {
-                functionList[filePath + ':' + f.funcName] = {
-                    code: generator(f.path.node).code,
-                    filePath: filePath,
-                    relatedFunctions: f.relatedFunctions
-                };
-            }
+            functionList[filePath + ':' + f.funcName] = _.extend(f,{
+                exported: exports.includes(f.funcName)
+            });
         }
     } catch (e) {
         // writeLine(`Error parsing file ${filePath}: ${e}`);
@@ -155,8 +155,6 @@ async function getAstFromFilePath(filePath) {
 
 function processAst(ast, cb) {
     let nodeTypesStack = [];
-    let exportedFuncNames = new Set();
-
     babelTraverse(ast, {
         enter(path) {
             nodeTypesStack.push(path.node.type);
@@ -259,7 +257,7 @@ async function createTests(filePath, directoryPath, prefix) {
         processAst(ast, (funcName, path, type) => {
             if (type === 'export') return;
             let functionFromTheList = functionList[filePath + ':' + funcName];
-            if (functionFromTheList) {
+            if (functionFromTheList && functionFromTheList.exported) {
                 foundFunctions.push({
                     functionName: funcName,
                     functionCode: functionFromTheList.code,

@@ -219,15 +219,20 @@ function getRelativePath(filePath, referenceFilePath) {
 
 async function reformatDataForPythagoraAPI(funcData, filePath) {
     let relatedCode = _.groupBy(funcData.relatedCode, 'fileName');
-    relatedCode = _.map(relatedCode, (value, key) => ({ fileName: key, functionNames: value.map(item => item.funcName) }));
+    relatedCode = _.map(relatedCode, (value, key)  => ({ fileName: key, functionNames: value.map(item => item.funcName) }));
+    let relatedCodeInSameFile = [funcData.functionName];
     funcData.relatedCode = [];
     for (const file of relatedCode) {
-        let fileName = getRelativePath(file.fileName, filePath);
-        let code = await stripUnrelatedFunctions(file.fileName, file.functionNames);
-        code = replaceRequirePaths(code, filePath, path.resolve(PYTHAGORA_UNIT_DIR) + '/brija.test.js');
-        funcData.relatedCode.push({ fileName, code });
+        if (file.fileName === filePath) {
+            relatedCodeInSameFile = relatedCodeInSameFile.concat(file.functionNames);
+        } else {
+            let fileName = getRelativePath(file.fileName, filePath);
+            let code = await stripUnrelatedFunctions(file.fileName, file.functionNames);
+            code = replaceRequirePaths(code, filePath, path.resolve(PYTHAGORA_UNIT_DIR) + '/brija.test.js');
+            funcData.relatedCode.push({fileName, code});
+        }
     }
-    funcData.functionCode = await stripUnrelatedFunctions(filePath, [funcData.functionName]);
+    funcData.functionCode = await stripUnrelatedFunctions(filePath, relatedCodeInSameFile);
     funcData.functionCode = replaceRequirePaths(funcData.functionCode, path.dirname(filePath), path.resolve(PYTHAGORA_UNIT_DIR) + '/brija.test.js');
     return funcData;
 }

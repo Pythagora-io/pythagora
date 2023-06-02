@@ -28,8 +28,8 @@ async function stripUnrelatedFunctions(filePath, targetFuncNames) {
     // Store the node paths of unrelated functions and class methods
     const unrelatedNodes = [];
 
-    processAst(ast, (funcName, path) => {
-        if (!targetFuncNames.includes(funcName)) {
+    processAst(ast, (funcName, path, type) => {
+        if (!targetFuncNames.includes(funcName) && type !== 'export') {
             unrelatedNodes.push(path);
         }
     });
@@ -256,13 +256,16 @@ async function createTests(filePath, directoryPath, prefix) {
 
         const foundFunctions = [];
 
-        processAst(ast, (funcName, path) => {
+        processAst(ast, (funcName, path, type) => {
+            if (type === 'export') return;
             let functionFromTheList = functionList[filePath + ':' + funcName];
-            foundFunctions.push({
-                functionName: funcName,
-                functionCode: functionFromTheList.code,
-                relatedCode: functionFromTheList.relatedFunctions
-            });
+            if (functionFromTheList) {
+                foundFunctions.push({
+                    functionName: funcName,
+                    functionCode: functionFromTheList.code,
+                    relatedCode: functionFromTheList.relatedFunctions
+                });
+            }
         });
 
         for (const [i, funcData] of foundFunctions.entries()) {
@@ -286,7 +289,7 @@ async function createTests(filePath, directoryPath, prefix) {
                 scrollableContent.setScrollPerc(100);
                 screen.render();
             });
-            await saveTests(filePath, funcData.functionName, tests);
+            await saveTests(filePath, funcData.functionName, tests, directoryPath);
             await spinner.stop();
             folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
         }

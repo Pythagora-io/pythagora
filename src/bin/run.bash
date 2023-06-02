@@ -57,7 +57,12 @@ do
   elif [[ "${args[$i]}" == "--tests-eligible-for-export" ]]
   then
     echo "${yellow}${bold}Tests eligible for export:${reset}"
-    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/testsEligibleForExport.js"
+    PYTHAGORA_CONFIG="$@" node "./src/scripts/testsEligibleForExport.js"
+    exit 0
+  elif [[ "${args[$i]}" == "--unit-tests" ]]
+  then
+    echo "${green}${bold}Generating unit tests...${reset}"
+    PYTHAGORA_CONFIG="$@" node "./src/scripts/unit.js"
     exit 0
   elif [[ "${args[$i]}" == "--export-setup" ]]
   then

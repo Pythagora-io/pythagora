@@ -9,7 +9,7 @@ const generator = require("@babel/generator").default;
 const blessed = require('blessed');
 const {delay, checkDirectoryExists} = require("../utils/common");
 const Spinner = require("../utils/Spinner");
-const {green, bold, reset} = require('../utils/CmdPrint').colors;
+const {green, red, bold, reset} = require('../utils/CmdPrint').colors;
 
 let functionList = {},
     leftPanel,
@@ -19,7 +19,9 @@ let functionList = {},
     spinner,
     rootPath = '',
     queriedPath = '',
-    folderStructureTree = [];
+    folderStructureTree = [],
+    testsGenerated = 0
+;
 
 const insideFunctionOrMethod = (nodeTypesStack) =>
     nodeTypesStack.slice(0, -1).some(type => /^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression|ClassMethod)$/.test(type));
@@ -286,11 +288,6 @@ async function createTests(filePath, prefix, funcToTest) {
             }
         });
 
-        if (foundFunctions.length === 0 && funcToTest) {
-            console.log(`No functions named ${funcToTest} found in file: ${filePath}`);
-            process.exit(1);
-        }
-
         for (const [i, funcData] of foundFunctions.entries()) {
             let isLast = foundFunctions.indexOf(funcData) === foundFunctions.length - 1;
             let indexToPush = fileIndex + 1 + i;
@@ -313,6 +310,7 @@ async function createTests(filePath, prefix, funcToTest) {
                 screen.render();
             });
             await saveTests(filePath, funcData.functionName, tests);
+            testsGenerated++;
             await spinner.stop();
             folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
         }
@@ -373,7 +371,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
 
             if (path.basename(absolutePath) !== 'node_modules') {
                 const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-                await traverseDirectory(absolutePath, onlyCollectFunctionData, newPrefix);
+                await traverseDirectory(absolutePath, onlyCollectFunctionData, newPrefix, funcName);
             }
         } else {
             if (path.extname(absolutePath) !== '.js') continue;
@@ -466,6 +464,15 @@ function generateTestsForDirectory(pathToProcess, funcName) {
     traverseDirectory(rootPath, true)  // first pass: collect all function names and codes
         .then(() => traverseDirectory(rootPath, true))  // second pass: collect all related functions
         .then(() => traverseDirectory(queriedPath, false, undefined, funcName))  // second pass: print functions and their related functions
+        .then(() => {
+            screen.destroy();
+            if (testsGenerated === 0) {
+                console.log(`${bold+red}No tests generated${funcName ? ' - can\'t find a function named "' + funcName + '"' : ''}!${reset}`);
+            } else {
+                console.log(`${bold+green}${testsGenerated} unit tests generated!${reset}`);
+            }
+            process.exit(0);
+        })
         .catch(err => console.error(err));
 }
 

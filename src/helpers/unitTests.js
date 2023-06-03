@@ -264,7 +264,7 @@ function replaceRequirePaths(code, currentPath, testFilePath) {
     });
 }
 
-async function createTests(filePath, prefix) {
+async function createTests(filePath, prefix, funcToTest) {
     try {
         let ast = await getAstFromFilePath(filePath);
         const topRequires = collectTopRequires(ast);
@@ -274,6 +274,8 @@ async function createTests(filePath, prefix) {
 
         processAst(ast, (funcName, path, type) => {
             if (type === 'export') return;
+            if (funcToTest && funcName !== funcToTest) return;
+
             let functionFromTheList = functionList[filePath + ':' + funcName];
             if (functionFromTheList && functionFromTheList.exported) {
                 foundFunctions.push({
@@ -283,6 +285,11 @@ async function createTests(filePath, prefix) {
                 });
             }
         });
+
+        if (foundFunctions.length === 0 && funcToTest) {
+            console.log(`No functions named ${funcToTest} found in file: ${filePath}`);
+            process.exit(1);
+        }
 
         for (const [i, funcData] of foundFunctions.entries()) {
             let isLast = foundFunctions.indexOf(funcData) === foundFunctions.length - 1;
@@ -344,10 +351,10 @@ async function saveTests(filePath, name, testData) {
     await fs.writeFile(path.join(dir, `/${name}.test.js`), testData);
 }
 
-async function traverseDirectory(directory, onlyCollectFunctionData, prefix = '') {
+async function traverseDirectory(directory, onlyCollectFunctionData, prefix = '', funcName) {
     if (await checkPathType(directory) === 'file' && !onlyCollectFunctionData) {
         if (path.extname(directory) !== '.js') throw new Error('File is not a javascript file');
-        return await createTests(directory, prefix);
+        return await createTests(directory, prefix, funcName);
     }
     const files = await fs.readdir(directory);
     for (const file of files) {
@@ -382,7 +389,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
                 await processFile(absolutePath);
             } else {
                 const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-                await createTests(absolutePath, newPrefix);
+                await createTests(absolutePath, newPrefix, funcName);
             }
         }
     }
@@ -452,13 +459,13 @@ function isPathInside(basePath, targetPath) {
     return !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
 }
 
-function generateTestsForDirectory(dirPath) {
-    queriedPath = path.resolve(dirPath);
+function generateTestsForDirectory(pathToProcess, funcName) {
+    queriedPath = path.resolve(pathToProcess);
     rootPath = process.cwd();
     initScreen();
     traverseDirectory(rootPath, true)  // first pass: collect all function names and codes
         .then(() => traverseDirectory(rootPath, true))  // second pass: collect all related functions
-        .then(() => traverseDirectory(queriedPath, false))  // second pass: print functions and their related functions
+        .then(() => traverseDirectory(queriedPath, false, undefined, funcName))  // second pass: print functions and their related functions
         .catch(err => console.error(err));
 }
 

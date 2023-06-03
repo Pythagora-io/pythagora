@@ -2,13 +2,9 @@ const fs = require('fs').promises;
 const path = require('path');
 const _ = require('lodash');
 const { getUnitTests } = require('./api');
-const babelParser = require("@babel/parser");
 const {PYTHAGORA_UNIT_DIR} = require("../const/common");
-const babelTraverse = require("@babel/traverse").default;
 const generator = require("@babel/generator").default;
-const blessed = require('blessed');
 const {delay, checkDirectoryExists} = require("../utils/common");
-const Spinner = require("../utils/Spinner");
 const {
     stripUnrelatedFunctions,
     replaceRequirePaths,

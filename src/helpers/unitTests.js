@@ -32,7 +32,12 @@ async function stripUnrelatedFunctions(filePath, targetFuncNames) {
 
     processAst(ast, (funcName, path, type) => {
         if (!targetFuncNames.includes(funcName) && type !== 'export') {
-            unrelatedNodes.push(path);
+            // If the function is being used as a property value, remove the property instead of the function
+            if (path.parentPath.isObjectProperty()) {
+                unrelatedNodes.push(path.parentPath);
+            } else {
+                unrelatedNodes.push(path);
+            }
         }
     });
 

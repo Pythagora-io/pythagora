@@ -9,6 +9,16 @@ const generator = require("@babel/generator").default;
 const blessed = require('blessed');
 const {delay, checkDirectoryExists} = require("../utils/common");
 const Spinner = require("../utils/Spinner");
+const {
+    stripUnrelatedFunctions,
+    replaceRequirePaths,
+    getAstFromFilePath,
+    processAst,
+    getRelatedFunctions,
+    collectTopRequires
+} = require("../utils/code");
+const {getRelativePath, getFolderTreeItem, getTestFilePath, checkPathType, isPathInside} = require("../utils/files");
+const {initScreenForUnitTests} = require("./cmdGUI");
 const {green, red, bold, reset} = require('../utils/CmdPrint').colors;
 
 let functionList = {},
@@ -23,101 +33,6 @@ let functionList = {},
     testsGenerated = 0
 ;
 
-const insideFunctionOrMethod = (nodeTypesStack) =>
-    nodeTypesStack.slice(0, -1).some(type => /^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression|ClassMethod)$/.test(type));
-
-async function stripUnrelatedFunctions(filePath, targetFuncNames) {
-    const ast = await getAstFromFilePath(filePath);
-
-    // Store the node paths of unrelated functions and class methods
-    const unrelatedNodes = [];
-
-    processAst(ast, (funcName, path, type) => {
-        if (!targetFuncNames.includes(funcName) && type !== 'export') {
-            // If the function is being used as a property value, remove the property instead of the function
-            if (path.parentPath.isObjectProperty()) {
-                unrelatedNodes.push(path.parentPath);
-            } else {
-                unrelatedNodes.push(path);
-            }
-        }
-    });
-
-    // Remove unrelated nodes from the AST
-    for (const path of unrelatedNodes) {
-        path.remove();
-    }
-
-    // Generate the stripped code from the modified AST
-    const strippedCode = generator(ast).code;
-
-    return strippedCode;
-}
-
-function getRelatedFunctions(node, ast, filePath) {
-    let relatedFunctions = [];
-    let requiresFromFile = collectTopRequires(ast);
-
-    function processNodeRecursively(node) {
-        if (node.type === 'CallExpression') {
-            let funcName;
-            if (node.callee.type === 'Identifier') {
-                funcName = node.callee.name;
-            } else if (node.callee.type === 'MemberExpression') {
-                funcName = node.callee.property.name;
-                if (node.callee.object.type === 'Identifier') {
-                    funcName = node.callee.object.name + '.' + funcName;
-                }
-            }
-
-            let requiredPath = requiresFromFile.find(require => require.includes(funcName));
-            if (!requiredPath) {
-                requiredPath = filePath;
-            } else {
-                requiredPath = (requiredPath.match(/require\((['"`])(.*?)\1\)/) || [])[2];
-                if (requiredPath && (requiredPath.startsWith('./') || requiredPath.startsWith('../'))) requiredPath = path.resolve(filePath.substring(0, filePath.lastIndexOf('/')), requiredPath);
-                if (requiredPath.lastIndexOf('.js') + '.js'.length !== requiredPath.length) requiredPath += '.js';
-            }
-            let functionFromList = functionList[requiredPath + ':' + funcName];
-            if (functionFromList) {
-                relatedFunctions.push({
-                    fileName: requiredPath,
-                    funcName
-                });
-            }
-        }
-
-        // Traverse child nodes
-        for (const key in node) {
-            const prop = node[key];
-            if (Array.isArray(prop)) {
-                for (const child of prop) {
-                    if (typeof child === 'object' && child !== null) {
-                        processNodeRecursively(child);
-                    }
-                }
-            } else if (typeof prop === 'object' && prop !== null) {
-                processNodeRecursively(prop);
-            }
-        }
-    }
-
-    processNodeRecursively(node);
-    return relatedFunctions;
-}
-
-function collectTopRequires(node) {
-    let requires = [];
-    babelTraverse(node, {
-        VariableDeclaration(path) {
-            if (path.node.declarations[0].init && path.node.declarations[0].init.callee && path.node.declarations[0].init.callee.name === 'require') {
-                requires.push(generator(path.node).code);
-            }
-        }
-    });
-    return requires;
-}
-
 async function processFile(filePath) {
     try {
         let exports = [];
@@ -131,7 +46,7 @@ async function processFile(filePath) {
                     funcName,
                     code: generator(path.node).code,
                     filePath: filePath,
-                    relatedFunctions: getRelatedFunctions(path.node, ast, filePath)
+                    relatedFunctions: getRelatedFunctions(path.node, ast, filePath, functionList)
                 });
             }
         });
@@ -143,87 +58,6 @@ async function processFile(filePath) {
     } catch (e) {
         // writeLine(`Error parsing file ${filePath}: ${e}`);
     }
-}
-
-async function getAstFromFilePath(filePath) {
-    let data = await fs.readFile(filePath, 'utf8');
-    let nodeTypesStack = [];
-    // Remove shebang if it exists
-    if (data.indexOf('#!') === 0) {
-        data = '//' + data;
-    }
-
-    const ast = babelParser.parse(data, {
-        sourceType: "module", // Consider input as ECMAScript module
-        locations: true,
-        plugins: ["jsx", "objectRestSpread"] // Enable JSX and object rest/spread syntax
-    });
-
-    return ast;
-}
-
-function processAst(ast, cb) {
-    let nodeTypesStack = [];
-    babelTraverse(ast, {
-        enter(path) {
-            nodeTypesStack.push(path.node.type);
-            if (insideFunctionOrMethod(nodeTypesStack)) return;
-
-            // Handle module.exports
-            if (path.isExpressionStatement()) {
-                const expression = path.node.expression;
-                if (expression && expression.type === 'AssignmentExpression') {
-                    const left = expression.left;
-                    if (left.type === 'MemberExpression' &&
-                        left.object.name === 'module' &&
-                        left.property.name === 'exports') {
-                        if (expression.right.type === 'ObjectExpression') {
-                            expression.right.properties.forEach(prop => {
-                                if (prop.type === 'ObjectProperty') {
-                                    cb(prop.key.name, null, 'export');
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-
-            let funcName;
-            if (path.isFunctionDeclaration()) {
-                funcName = path.node.id.name;
-            } else if (path.isFunctionExpression() || path.isArrowFunctionExpression()) {
-                if (path.parentPath.isVariableDeclarator()) {
-                    funcName = path.parentPath.node.id.name;
-                } else if (path.parentPath.isAssignmentExpression() || path.parentPath.isObjectProperty()) {
-                    funcName = path.parentPath.node.left ? path.parentPath.node.left.name : path.parentPath.node.key.name;
-                }
-            } else if (path.node.type === 'ClassMethod' && path.node.key.name !== 'constructor') {
-                funcName = path.node.key.name;
-                if (path.parentPath.node.type === 'ClassDeclaration') {
-                    const className = path.parentPath.node.id.name;
-                    funcName = `${className}.${funcName}`;
-                } else if (path.parentPath.node.type === 'ClassExpression') {
-                    const className = path.parentPath.node.id.name || '';
-                    funcName = `${className}.${funcName}`;
-                }
-            }
-
-            if (funcName) cb(funcName, path);
-        },
-        exit(path) {
-            nodeTypesStack.pop();
-        }
-    });
-}
-
-
-
-function getRelativePath(filePath, referenceFilePath) {
-    let relativePath = path.relative(path.dirname(referenceFilePath), filePath);
-    if (!relativePath.startsWith('../') && !relativePath.startsWith('./')) {
-        relativePath = './' + relativePath;
-    }
-    return relativePath;
 }
 
 async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
@@ -250,20 +84,6 @@ async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
     funcData.functionCode = replaceRequirePaths(funcData.functionCode, path.dirname(filePath), path.resolve(PYTHAGORA_UNIT_DIR) + '/brija.test.js');
     funcData.pathRelativeToTest = getRelativePath(filePath, testFilePath + '/brija.test.js');
     return funcData;
-}
-
-function replaceRequirePaths(code, currentPath, testFilePath) {
-    const requirePathRegex = /require\((['"`])(.+?)\1\)/g;
-
-    return code.replace(requirePathRegex, (match, quote, requirePath) => {
-        if (!requirePath.startsWith('./') && !requirePath.startsWith('../')) return match;
-
-        const absoluteRequirePath = path.resolve(currentPath, requirePath);
-
-        const newRequirePath = getRelativePath(absoluteRequirePath, testFilePath);
-
-        return `require(${quote}${newRequirePath}${quote})`;
-    });
 }
 
 async function createTests(filePath, prefix, funcToTest) {
@@ -303,7 +123,7 @@ async function createTests(filePath, prefix, funcToTest) {
             );
             spinner.start(folderStructureTree, indexToPush);
 
-            let formattedData = await reformatDataForPythagoraAPI(funcData, filePath, getTestFilePath(filePath));
+            let formattedData = await reformatDataForPythagoraAPI(funcData, filePath, getTestFilePath(filePath, rootPath));
             let tests = await getUnitTests(formattedData, (content) => {
                 scrollableContent.setContent(content);
                 scrollableContent.setScrollPerc(100);
@@ -322,21 +142,6 @@ async function createTests(filePath, prefix, funcToTest) {
     } catch (e) {
         // writeLine(`Error parsing file ${filePath}: ${e}`);
     }
-}
-
-function getFolderTreeItem(prefix, isLast, name, absolutePath) {
-    return {
-        line: `${prefix}${isLast ? '└───' : '├───'}${name}`,
-        absolutePath
-    };
-}
-
-function getTestFilePath(filePath) {
-    return path.join(
-        path.resolve(PYTHAGORA_UNIT_DIR),
-        path.dirname(filePath).replace(rootPath, ''),
-        path.basename(filePath, path.extname(filePath))
-    );
 }
 
 async function saveTests(filePath, name, testData) {
@@ -393,53 +198,6 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
     }
 }
 
-function initScreen() {
-    screen = blessed.screen({
-        smartCSR: true,
-        fullUnicode: true,
-    });
-
-    leftPanel = blessed.box({
-        width: '50%',
-        height: '100%',
-        border: { type: 'line' },
-        scrollable: true,
-        alwaysScroll: true,
-        scrollbar: {
-            ch: ' '
-        },
-        keys: true,
-        vi: true
-    });
-
-    rightPanel = blessed.box({
-        width: '50%',
-        height: '100%',
-        left: '50%',
-        border: { type: 'line' }
-    });
-
-    scrollableContent = blessed.box({
-        parent: rightPanel,
-        scrollable: true,
-        alwaysScroll: true,
-        scrollbar: {
-            ch: ' '
-        },
-        keys: true,
-        vi: true
-    });
-
-    screen.append(leftPanel);
-    screen.append(rightPanel);
-    screen.render();
-    screen.key(['C-c'], function () {
-        return process.exit(0);
-    });
-
-    spinner = new Spinner(leftPanel, screen);
-}
-
 async function getFunctionsForExport(dirPath) {
     rootPath = dirPath;
     await traverseDirectory(rootPath, true);
@@ -447,20 +205,11 @@ async function getFunctionsForExport(dirPath) {
     return functionList;
 }
 
-async function checkPathType(path) {
-    let stats = await fs.stat(path);
-    return stats.isFile() ? 'file' : 'directory';
-}
-
-function isPathInside(basePath, targetPath) {
-    const relativePath = path.relative(basePath, targetPath);
-    return !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
-}
-
 function generateTestsForDirectory(pathToProcess, funcName) {
     queriedPath = path.resolve(pathToProcess);
     rootPath = process.cwd();
-    initScreen();
+    ({ screen, leftPanel, rightPanel, scrollableContent, spinner } = initScreenForUnitTests());
+
     traverseDirectory(rootPath, true)  // first pass: collect all function names and codes
         .then(() => traverseDirectory(rootPath, true))  // second pass: collect all related functions
         .then(() => traverseDirectory(queriedPath, false, undefined, funcName))  // second pass: print functions and their related functions

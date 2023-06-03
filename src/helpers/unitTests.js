@@ -162,12 +162,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
         const isLast = files.indexOf(file) === files.length - 1;
         if (stat.isDirectory()) {
             if (onlyCollectFunctionData && isPathInside(path.dirname(queriedPath), absolutePath)) {
-                folderStructureTree.push(getFolderTreeItem(
-                    prefix,
-                    isLast,
-                    path.basename(absolutePath),
-                    absolutePath
-                ));
+                folderStructureTree.push(getFolderTreeItem(prefix, isLast, path.basename(absolutePath), absolutePath));
             }
 
             if (path.basename(absolutePath) !== 'node_modules') {
@@ -178,12 +173,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
             if (path.extname(absolutePath) !== '.js') continue;
             if (onlyCollectFunctionData) {
                 if (isPathInside(path.dirname(queriedPath), absolutePath)) {
-                    folderStructureTree.push(getFolderTreeItem(
-                        prefix,
-                        isLast,
-                        path.basename(absolutePath),
-                        absolutePath
-                    ));
+                    folderStructureTree.push(getFolderTreeItem(prefix, isLast, path.basename(absolutePath), absolutePath));
                 }
                 await processFile(absolutePath);
             } else {
@@ -201,24 +191,22 @@ async function getFunctionsForExport(dirPath) {
     return functionList;
 }
 
-function generateTestsForDirectory(pathToProcess, funcName) {
+async function generateTestsForDirectory(pathToProcess, funcName) {
     queriedPath = path.resolve(pathToProcess);
     rootPath = process.cwd();
-    ({ screen, leftPanel, rightPanel, scrollableContent, spinner } = initScreenForUnitTests());
+    ({ screen, spinner } = initScreenForUnitTests());
 
-    traverseDirectory(rootPath, true)  // first pass: collect all function names and codes
-        .then(() => traverseDirectory(rootPath, true))  // second pass: collect all related functions
-        .then(() => traverseDirectory(queriedPath, false, undefined, funcName))  // second pass: print functions and their related functions
-        .then(() => {
-            screen.destroy();
-            if (testsGenerated === 0) {
-                console.log(`${bold+red}No tests generated${funcName ? ' - can\'t find a function named "' + funcName + '"' : ''}!${reset}`);
-            } else {
-                console.log(`${bold+green}${testsGenerated} unit tests generated!${reset}`);
-            }
-            process.exit(0);
-        })
-        .catch(err => console.error(err));
+    await traverseDirectory(rootPath, true);  // first pass: collect all function names and codes
+    await traverseDirectory(rootPath, true);  // second pass: collect all related functions
+    await traverseDirectory(queriedPath, false, undefined, funcName);  // second pass: print functions and their related functions
+
+    screen.destroy();
+    if (testsGenerated === 0) {
+        console.log(`${bold+red}No tests generated${funcName ? ' - can\'t find a function named "' + funcName + '"' : ''}!${reset}`);
+    } else {
+        console.log(`${bold+green}${testsGenerated} unit tests generated!${reset}`);
+    }
+    process.exit(0);
 }
 
 module.exports = {

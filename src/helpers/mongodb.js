@@ -263,14 +263,14 @@ function extractDataFromMongoRes(mongoResult) {
 }
 
 module.exports = {
-    cleanupDb,
-    prepareDB,
-    findAndCheckCapturedData,
-    mongoObjToJson,
-    getCurrentMongoDocs,
-    extractArguments,
     checkForErrors,
+    cleanupDb,
     createCaptureIntermediateData,
+    extractArguments,
     extractDataFromMongoRes,
-    jsonObjToMongo
+    findAndCheckCapturedData,
+    getCurrentMongoDocs,
+    jsonObjToMongo,
+    mongoObjToJson,
+    prepareDB,
 }

@@ -20,25 +20,56 @@ To integrate Pythagora into your Node.js app, you just need to install the pytha
    <br>
    <br>
 
+<h1 id="setup">🏃💨️ Quickstart</h1>
+
+## Generate unit tests
+   ```bash
+   npx pythagora --unit-tests --func <FUNCTION_NAME>
+   ```
+   And that's it - sit back and watch how unit tests are getting generated.
+   <br>
+
+## Generate integration tests
+- First, run your app with Pythagora:
+   ```bash
+   npx pythagora --init-command "your start command"
+   ```
+- Then, just make API requests to your app (e.g. using Postman, cURL or by clicking around in the browser)
+- Finally, to run the integration tests, just run:
+   ```bash
+   npx pythagora --init-command "my start command" --mode test
+   ```
+   <br>
+   <br>
+
 <h1 id="demo">🎞 Demo</h1>
 
 Here are some demo videos that can help you get started.
-<div align="center">
-  <a href="https://youtu.be/YxzvljVyaEA"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
-</div>
-
-<h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
-<p align=center>
-  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Unit Tests Demo (3 min)</a>
-  <br>
-  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Integration Tests Demo (4 min)</a>
-  <br>
-  <a target="_blank" href="https://www.youtube.com/watch?v=kHbwX4QVoGY">Export integration tests to Jest with GPT-4 (4 min)</a>
-  <br>
-  <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
-  <br>
-  <a target="_blank" href="https://youtu.be/opQP8NMCiPw">Dev Workflow With Pythagora (4 min)</a>
-</p>
+<table style="width: 100%;">
+  <tr>
+    <td align="center">
+      <a href="https://youtu.be/YxzvljVyaEA"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
+      <h3>🎞️ ▶️  Videos (unit tests) ▶️ 🎞️</h3>
+      <p>
+        <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Unit Tests Demo (3 min)</a>
+        <br>
+      </p>
+    </td>
+    <td align="center">
+      <a href="https://youtu.be/YxzvljVyaEA" style="padding: 10px;"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo" style="margin: 10px;"></a>
+      <h3>🎞️ ▶️  Videos (integration tests) ▶️ 🎞️</h3>
+      <p>
+        <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Integration Tests Demo (4 min)</a>
+        <br>
+        <a target="_blank" href="https://www.youtube.com/watch?v=kHbwX4QVoGY">Export integration tests to Jest with GPT-4 (4 min)</a>
+        <br>
+        <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
+        <br>
+        <a target="_blank" href="https://youtu.be/opQP8NMCiPw">Dev Workflow With Pythagora (4 min)</a>
+      </p>
+    </td>
+  </tr>
+</table>
 
 <br><br>
 <h1 id="commands">🔎 Examples</h1>
@@ -47,9 +78,9 @@ Here are examples of open sourced repositories which we forked and created tests
 [![MERN E-commerce](https://img.shields.io/badge/MERN%20E--commerce-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--mern--ecommerce-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-mern-ecommerce)
 [![Reddish](https://img.shields.io/badge/Reddish-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--reddish-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-reddish)
 [![Trellis](https://img.shields.io/badge/Trellis-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--trellis-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-trellis)
-
-
 <br><br>
+
+# 🧰 Details, how it works, and command options:
 <details><summary><h1 id="unit-tests">👉 Unit tests 🏠</h1></summary>
 
 ## 🎥 How to generate unit tests
@@ -98,8 +129,6 @@ To run the generated tests, you can simply run `npx jest` or to run tests from a
     ```
 
 </details>
-   <br>
-   <br>
 
 <details><summary><h1 id="integration-tests">👉 Integration tests 🏢</h1></summary>
 <h1 id="capturingtests">🎥 Capturing tests</h1>
@@ -142,11 +171,11 @@ So, after you captured all requests you want, you just need to change the mode p
     <img height="100px" alt="OpenAI logo" src="https://github.com/Pythagora-io/pythagora/assets/10895136/41f349ec-c6fe-4357-8c92-db09b88d2b8e">
   </picture>
 </p>
-<h1 id="exportjest">🤖 ️Generate Jest tests with Pythagora and GPT-4</h1>
+<h1 id="exportjest">🤖 Export Pythagora integration tests to Jest with GPT-4</h1>
 
 You can export any Pythagora test to Jest with GPT-4. To see how it works, you can watch [the full demo video here](https://www.youtube.com/watch?v=kHbwX4QVoGY).
 
-## What are Jest integration tests made of
+## What are integration tests made of
 
 - **Database setup** (before a test is run)
   - during the export to Jest, Pythagora saves all database documents in the `pythagora_tests/exported_tests/data` folder as a JSON file

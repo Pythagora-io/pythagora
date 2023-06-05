@@ -50,9 +50,19 @@ async function processFile(filePath) {
             }
         });
         for (let f of functions) {
+            // TODO refactor since this is being set in code.js and here it's reverted
+            let classParent = exportsFn.find(e => (new RegExp(`${e}\..*`)).test(f.funcName)) ||
+                exportsObj.find(e => (new RegExp(`${e}\..*`)).test(f.funcName));
+
+            let isExportedAsObject = exportsObj.includes(f.funcName) || exportsObj.includes(classParent);
+
+            // if (classParent) f.funcName = f.funcName.replace(classParent + '.', '');
+
             functionList[filePath + ':' + f.funcName] = _.extend(f,{
-                exported: exportsFn.includes(f.funcName) || exportsObj.includes(f.funcName),
-                funcNameRequire: exportsObj.includes(f.funcName) ? `{${f.funcName}}` : f.funcName
+                classParent,
+                exported: exportsFn.includes(f.funcName) || isExportedAsObject || !!classParent,
+                exportedAsObject: isExportedAsObject,
+                funcName: f.funcName
             });
         }
     } catch (e) {
@@ -100,11 +110,14 @@ async function createTests(filePath, prefix, funcToTest) {
 
             let functionFromTheList = functionList[filePath + ':' + funcName];
             if (functionFromTheList && functionFromTheList.exported) {
+                // TODO refactor since this is being set in code.js and here it's reverted
+                if (functionFromTheList.classParent) funcName = funcName.replace(functionFromTheList.classParent + '.', '')
                 foundFunctions.push({
                     functionName: funcName,
-                    functionNameRequire: functionFromTheList.funcNameRequire,
                     functionCode: functionFromTheList.code,
-                    relatedCode: functionFromTheList.relatedFunctions
+                    relatedCode: functionFromTheList.relatedFunctions,
+                    classParent: functionFromTheList.classParent,
+                    exportedAsObject: functionFromTheList.exportedAsObject
                 });
             }
         });

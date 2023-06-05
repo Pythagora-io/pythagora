@@ -204,6 +204,9 @@ function processAst(ast, cb) {
                 } else if (path.parentPath.node.type === 'ClassExpression') {
                     const className = path.parentPath.node.id.name || '';
                     funcName = `${className}.${funcName}`;
+                } else if (path.parentPath.node.type === 'ClassBody') {
+                    const className = path.parentPath.parentPath.node.id.name || '';
+                    funcName = `${className}.${funcName}`;
                 }
             }
 

@@ -60,12 +60,18 @@ function getRelatedFunctions(node, ast, filePath, functionList) {
     function processNodeRecursively(node) {
         if (node.type === 'CallExpression') {
             let funcName;
-            if (node.callee.type === 'Identifier') {
-                funcName = node.callee.name;
-            } else if (node.callee.type === 'MemberExpression') {
-                funcName = node.callee.property.name;
-                if (node.callee.object.type === 'Identifier') {
-                    funcName = node.callee.object.name + '.' + funcName;
+            let callee = node.callee;
+
+            while (callee.type === 'MemberExpression') {
+                callee = callee.object;
+            }
+
+            if (callee.type === 'Identifier') {
+                funcName = callee.name;
+            } else if (callee.type === 'MemberExpression') {
+                funcName = callee.property.name;
+                if (callee.object.type === 'Identifier') {
+                    funcName = callee.object.name + '.' + funcName;
                 }
             }
 
@@ -112,7 +118,7 @@ async function stripUnrelatedFunctions(filePath, targetFuncNames) {
     const unrelatedNodes = [];
 
     processAst(ast, (funcName, path, type) => {
-        if (!targetFuncNames.includes(funcName) && type !== 'export') {
+        if (!targetFuncNames.includes(funcName) && type !== 'exportFn' && type !== 'exportObj') {
             // If the function is being used as a property value, remove the property instead of the function
             if (path.parentPath.isObjectProperty()) {
                 unrelatedNodes.push(path.parentPath);
@@ -148,10 +154,15 @@ function processAst(ast, cb) {
                     if (left.type === 'MemberExpression' &&
                         left.object.name === 'module' &&
                         left.property.name === 'exports') {
-                        if (expression.right.type === 'ObjectExpression') {
+                        // When module.exports is set to a single function
+                        if (expression.right.type === 'Identifier') {
+                            return cb(expression.right.name, null, 'exportFn');
+                        }
+                        // When module.exports is set to an object containing multiple functions
+                        else if (expression.right.type === 'ObjectExpression') {
                             expression.right.properties.forEach(prop => {
                                 if (prop.type === 'ObjectProperty') {
-                                    return cb(prop.key.name, null, 'export');
+                                    return cb(prop.key.name, null, 'exportObj');
                                 }
                             });
                         }

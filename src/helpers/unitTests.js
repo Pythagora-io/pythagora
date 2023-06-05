@@ -31,12 +31,15 @@ let functionList = {},
 
 async function processFile(filePath) {
     try {
-        let exports = [];
+        let exportsFn = [];
+        let exportsObj = [];
         let functions = [];
         let ast = await getAstFromFilePath(filePath);
         processAst(ast, (funcName, path, type) => {
-            if (type === 'export') {
-                exports.push(funcName);
+            if (type === 'exportFn') {
+                exportsFn.push(funcName);
+            } else if (type === 'exportObj') {
+                exportsObj.push(funcName);
             } else {
                 functions.push({
                     funcName,
@@ -48,7 +51,8 @@ async function processFile(filePath) {
         });
         for (let f of functions) {
             functionList[filePath + ':' + f.funcName] = _.extend(f,{
-                exported: exports.includes(f.funcName)
+                exported: exportsFn.includes(f.funcName) || exportsObj.includes(f.funcName),
+                funcNameRequire: exportsObj.includes(f.funcName) ? `{${f.funcName}}` : f.funcName
             });
         }
     } catch (e) {
@@ -91,13 +95,14 @@ async function createTests(filePath, prefix, funcToTest) {
         const foundFunctions = [];
 
         processAst(ast, (funcName, path, type) => {
-            if (type === 'export') return;
+            if (type === 'exportFn' || type === 'exportObj') return;
             if (funcToTest && funcName !== funcToTest) return;
 
             let functionFromTheList = functionList[filePath + ':' + funcName];
             if (functionFromTheList && functionFromTheList.exported) {
                 foundFunctions.push({
                     functionName: funcName,
+                    functionNameRequire: functionFromTheList.funcNameRequire,
                     functionCode: functionFromTheList.code,
                     relatedCode: functionFromTheList.relatedFunctions
                 });

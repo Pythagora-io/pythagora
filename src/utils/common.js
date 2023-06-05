@@ -45,6 +45,7 @@ const isLegacyObjectId = (value) => {
 }
 
 const cutWithDots = (string, cutAtChar = 100) => {
+    if (cutAtChar >= string.length) return string;
     return (string && string.length > cutAtChar) ? string.slice(0, cutAtChar) + '...' : string;
 }
 
@@ -262,7 +263,10 @@ function getMetadata() {
 }
 
 function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve, reject) => {
+        if (ms < 0) throw new Error('Delay must be a positive number');
+        setTimeout(resolve, ms)
+    });
 }
 
 async function isPortTaken(port) {

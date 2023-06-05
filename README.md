@@ -4,12 +4,8 @@
     <img height="200px" alt="Pythagora Logo" src="https://user-images.githubusercontent.com/10895136/228003796-7e3319ad-f0b1-4da9-a2d0-6cf67ccc7a32.png">
   </picture>
 </p>
-<p align=center>
-  Developers spend 20-30% of their time writing tests!
-</p>
-<h3 align="center">✊ Pythagora creates automated tests for you by analysing server activity ✊</h3>
-<h3 align="center"><a href="#exportjest"> 🤖 Generate Jest integration tests with GPT-4 and Pythagora 🤖</a></h3>
-<br>
+<h2 align="center">Pythagora is on a mission to make automated tests<br>✊ fully autonomous ✊</h2>
+<h3 align="center">Currently it can generate <a href="#unit-tests">Unit tests</a> and <a href="#integration-tests">Integration tests</a></h3>
 <p align="center">🌟 As an open source tool, it would mean the world to us if you starred Pythagora repo 🌟<br>🙏 Thank you 🙏</p>
 <br>
 
@@ -20,9 +16,121 @@ To integrate Pythagora into your Node.js app, you just need to install the pytha
    ```bash
    npm install pythagora
    ```
-   And that's it - no config or setup! You are ready to start recording your integration tests!
+   And that's it - no config or setup! You are ready to start generating automated tests for your repo!
    <br>
    <br>
+
+<h1 id="setup">🏃💨️ Quickstart</h1>
+
+## Generate unit tests
+   ```bash
+   npx pythagora --unit-tests --func <FUNCTION_NAME>
+   ```
+   And that's it - sit back and watch how unit tests are getting generated.
+   <br>
+
+## Generate integration tests
+- First, run your app with Pythagora:
+   ```bash
+   npx pythagora --init-command "your start command"
+   ```
+- Then, just make API requests to your app (e.g. using Postman, cURL or by clicking around in the browser)
+- Finally, to run the integration tests, just run:
+   ```bash
+   npx pythagora --init-command "my start command" --mode test
+   ```
+   <br>
+   <br>
+
+<h1 id="demo">🎞 Demo</h1>
+
+Here are some demo videos that can help you get started.
+<table style="width: 100%;">
+  <tr>
+    <td align="center">
+      <a href="https://youtu.be/YxzvljVyaEA"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
+      <h3>🎞️ ▶️  Videos (unit tests) ▶️ 🎞️</h3>
+      <p>
+        <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Unit Tests Demo (3 min)</a>
+        <br>
+      </p>
+    </td>
+    <td align="center">
+      <a href="https://youtu.be/YxzvljVyaEA" style="padding: 10px;"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo" style="margin: 10px;"></a>
+      <h3>🎞️ ▶️  Videos (integration tests) ▶️ 🎞️</h3>
+      <p>
+        <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Integration Tests Demo (4 min)</a>
+        <br>
+        <a target="_blank" href="https://www.youtube.com/watch?v=kHbwX4QVoGY">Export integration tests to Jest with GPT-4 (4 min)</a>
+        <br>
+        <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
+        <br>
+        <a target="_blank" href="https://youtu.be/opQP8NMCiPw">Dev Workflow With Pythagora (4 min)</a>
+      </p>
+    </td>
+  </tr>
+</table>
+
+<br><br>
+<h1 id="commands">🔎 Examples</h1>
+Here are examples of open sourced repositories which we forked and created tests with Pythagora so you can easily see it in action. 
+
+[![MERN E-commerce](https://img.shields.io/badge/MERN%20E--commerce-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--mern--ecommerce-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-mern-ecommerce)
+[![Reddish](https://img.shields.io/badge/Reddish-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--reddish-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-reddish)
+[![Trellis](https://img.shields.io/badge/Trellis-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--trellis-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-trellis)
+<br><br>
+
+# 🧰 Details, how it works, and command options:
+<details><summary><h1 id="unit-tests">👉 Unit tests 🏠</h1></summary>
+
+## 🎥 How to generate unit tests
+To generate unit tests with Pythagora, you just need to run 1 single command from the root directory of your Node.js app.
+
+```bash
+npx pythagora --unit-tests --func <FUNCTION_NAME>
+```
+
+## 🔬How does it work?
+When pythagora generates unit tests, it uses the following approach:
+1. It finds the function you want to test
+2. It finds all the functions that are called from the function you want to test
+   - This is done with AST (Abstract Syntax Tree) parsing
+3. It sends the function you want to test and all the functions that are called from it to the Pythagora server which then generates the unit tests with GPT-4
+   - Pythagora server is open sourced as well [here](https://github.com/Pythagora-io/api)
+   - You can find the prompts we're using [in this folder](https://github.com/Pythagora-io/api/tree/main/prompts) on Pythagora server
+
+## ▶️ How to run the generated unit tests
+To run the generated tests, you can simply run `npx jest` or to run tests from a specific file or a folder, run `npx jest <PATH_TO_FILE_OR_FOLDER>`. Currently, Pythagora supports only generating Jest tests but if you would like it to generate tests in other frameworks, let us know at [hi@pythagora.ai](mailto:hi@pythagora.ai).
+
+
+## 📖 Other options
+- To generate unit tests for **one single function**, run:
+
+    ```bash
+    npx pythagora --unit-tests --func <FUNCTION_NAME>
+    ```
+
+- To generate unit tests for **one single function** in a specific file, run:
+
+    ```bash
+    npx pythagora --unit-tests --func <FUNCTION_NAME> --path ./path/to/file.js
+    ```
+
+- To generate unit tests for **all functions in a file**, run:
+
+    ```bash
+    npx pythagora --unit-tests --path ./path/to/file.js
+    ``` 
+
+- To generate unit tests for **all functions in all files in a folder**, run:
+
+    ```bash
+    npx pythagora --unit-tests --path ./path/to/folder/
+    ```
+
+</details>
+
+<details><summary><h1 id="integration-tests">👉 Integration tests 🏢</h1></summary>
 <h1 id="capturingtests">🎥 Capturing tests</h1>
 
 Pythagora records all requests to endpoints of your app with the response and everything that's happening during the request. Currently, that means all Mongo and Redis queries with responses (in the future 3rd party API requests, disk IO operations, etc.). Then, when you run the tests, Pythagora can simulate the server conditions from the time when the request was captured.
@@ -38,11 +146,10 @@ Pythagora records all requests to endpoints of your app with the response and ev
       npx pythagora --init-command "nest start" --mode capture
       ```
 2. Click around your application or make requests to your API. Pythagora will capture all requests and responses.
-   <br><br>
-   <br><br>
-   <b>NOTES: </b>
-   - to stop the capture, you can exit the process like you usually do (Eg. `Ctrl + C`)
-   - on Windows make sure to run all commands using `Git Bash` and not `Power Shell` or anything similiar
+<br><br>
+<b>NOTES: </b>
+- to stop the capture, you can exit the process like you usually do (Eg. `Ctrl + C`)
+- on Windows make sure to run all commands using `Git Bash` and not `Power Shell` or anything similiar
 
 <br>
 <br>
@@ -64,11 +171,11 @@ So, after you captured all requests you want, you just need to change the mode p
     <img height="100px" alt="OpenAI logo" src="https://github.com/Pythagora-io/pythagora/assets/10895136/41f349ec-c6fe-4357-8c92-db09b88d2b8e">
   </picture>
 </p>
-<h1 id="exportjest">🤖 ️Generate Jest tests with Pythagora and GPT-4</h1>
+<h1 id="exportjest">🤖 Export Pythagora integration tests to Jest with GPT-4</h1>
 
 You can export any Pythagora test to Jest with GPT-4. To see how it works, you can watch [the full demo video here](https://www.youtube.com/watch?v=kHbwX4QVoGY).
 
-## What are Jest integration tests made of
+## What are integration tests made of
 
 - **Database setup** (before a test is run)
   - during the export to Jest, Pythagora saves all database documents in the `pythagora_tests/exported_tests/data` folder as a JSON file
@@ -120,34 +227,7 @@ npx pythagora --tests-eligible-for-export
 
 <br>
 <br>
-<h1 id="demo">🎞 Demo</h1>
 
-Here are some demo videos that can help you get started.
-<div align="center">
-  <a href="https://youtu.be/YxzvljVyaEA"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
-</div>
-
-<h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
-<p align=center>
-  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Demo (4 min)</a>
-  <br>
-  <a target="_blank" href="https://www.youtube.com/watch?v=kHbwX4QVoGY">Generate Jest tests with Pythagora and GPT-4 (4 min)</a>
-  <br>
-  <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
-  <br>
-  <a target="_blank" href="https://youtu.be/opQP8NMCiPw">Dev Workflow With Pythagora (4 min)</a>
-</p>
-
-<br><br>
-<h1 id="commands">🔎 Examples</h1>
-Here are examples of open sourced repositories which we forked and created tests with Pythagora so you can easily see it in action. 
-
-[![MERN E-commerce](https://img.shields.io/badge/MERN%20E--commerce-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--mern--ecommerce-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-mern-ecommerce)
-[![Reddish](https://img.shields.io/badge/Reddish-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--reddish-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-reddish)
-[![Trellis](https://img.shields.io/badge/Trellis-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--trellis-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-trellis)
-
-
-<br><br>
 <h1 id="commands">🔧 Maintenance / update of tests</h1>
 
 Sometimes tests failing is expected behaviour if the code behaviour is updated. In those cases, tests need to be updated. Pythagora provides a git like interface where you can review
@@ -359,17 +439,6 @@ is stored in this object. Here is an example of a test object.
 ```
 
 </details>
-
-<br><br>
-<h1 id="support">🤔️ FAQ</h1>
-
-- **What happens when I make intential change that breaks tests. How can I update Pythagora tests?**
-    - Pythagora tests can easily be updated by running the review command (`npx pythagora --review`). The review process is basically the same as a git review where you'll find each difference between the captured test and the failed one so you can choose if you need to debug this or you want to accept the new change. If you click `a`(as "accept"), the test will automatically update.
-
-- **Automated tests should show me where the bug is - how can I find a bug with Pythagora tests?**
-    - When a test fails, you can easily rerun the test that failed by adding `--test-id <TEST_ID>` to the test command. This way, if you add breakpoints across your code, you'll be able to easily debug the test itself with all the data the test is using. Also, we have plans for adding bug tracking features but at the moment we don't know when will it be ready.
-
-
 <br><br>
 <h1 id="support">⛑️ Support</h1>
 
@@ -385,6 +454,18 @@ For now, we support projects that use:
 |       :---:     |     :---:      |     :---: |       :---:     |     :---:      |     :---: |
 |<img src="https://user-images.githubusercontent.com/10895136/221188154-0d98b059-5cf1-48bd-b96b-400524d3cd55.png" width="50" alt="Logo 1" style="border-radius: 50%;" />|<img src="https://user-images.githubusercontent.com/10895136/221188225-ea8b0c45-fd37-4bf8-861b-8a97802702da.png" width="50" alt="Logo 2" style="border-radius: 50%" />|<img src="https://user-images.githubusercontent.com/10895136/221188433-e9634001-d9cb-40b2-b358-4932398955ef.png" width="50" alt="Logo 3" style="border-radius: 50%" />| <img src="https://user-images.githubusercontent.com/10895136/221188495-aaaa78bc-b31b-47cb-be37-47d55d4ccf0b.png" width="50" alt="Logo 1" style="border-radius: 50%;" />   | <img src="https://user-images.githubusercontent.com/10895136/221188561-24b75f90-01f7-4378-9664-88af12c9f666.png" width="50" alt="Logo 1" style="border-radius: 50%;" />     | <img src="https://user-images.githubusercontent.com/10895136/221188623-508a8238-8bd6-4858-a322-234582a70a87.png" width="50" alt="Logo 1" style="border-radius: 50%;" />   |
 |   ✅   |    ✅    |   ✅    | Upcoming     | Upcoming       |   Upcoming    |
+
+</details>
+
+<br><br>
+<h1 id="support">🤔️ FAQ</h1>
+
+- **What happens when I make intential change that breaks tests. How can I update Pythagora tests?**
+    - Pythagora tests can easily be updated by running the review command (`npx pythagora --review`). The review process is basically the same as a git review where you'll find each difference between the captured test and the failed one so you can choose if you need to debug this or you want to accept the new change. If you click `a`(as "accept"), the test will automatically update.
+
+- **Automated tests should show me where the bug is - how can I find a bug with Pythagora tests?**
+    - When a test fails, you can easily rerun the test that failed by adding `--test-id <TEST_ID>` to the test command. This way, if you add breakpoints across your code, you'll be able to easily debug the test itself with all the data the test is using. Also, we have plans for adding bug tracking features but at the moment we don't know when will it be ready.
+
 
 
 <br>

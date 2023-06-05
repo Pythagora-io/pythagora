@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const axios = require('axios');
 const { jestAuthFileGenerationLog } = require('../utils/cmdPrint');
+const { bold, reset, red, blue } = require('../utils/cmdPrint').colors;
 const args = require('../utils/getArgs.js');
 const {PYTHAGORA_UNIT_TESTS_VERSION,PYTHAGORA_API_SERVER} = require('../const/common');
 const API_SERVER = args.pythagora_api_server || PYTHAGORA_API_SERVER;
@@ -140,11 +141,24 @@ function cleanupGPTResponse(gptResponse) {
     return gptResponse;
 }
 
+function checkForAPIKey() {
+    if (!args.pythagora_api_key && !args.openai_api_key) {
+        console.log(`${bold+red}No API key found!${reset}`);
+        console.log('Please run:')
+        console.log(`${bold+blue}npx pythagora --config --pythagora-api-key <YOUR_PYTHAGORA_API_KEY>${reset}`);
+        console.log('or')
+        console.log(`${bold+blue}npx pythagora --config --openai-api-key <YOUR_OPENAI_API_KEY>${reset}`);
+        console.log(`You can get Pythagora API key here: https://mailchi.mp/f4f4d7270a7a/api-waitlist`);
+        process.exit(0);
+    }
+}
+
 module.exports = {
     getJestAuthFunction,
     getJestTest,
     getJestTestName,
     isEligibleForExport,
     cleanupGPTResponse,
-    getUnitTests
+    getUnitTests,
+    checkForAPIKey
 }

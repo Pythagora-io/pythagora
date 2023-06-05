@@ -1,5 +1,6 @@
 const {PYTHAGORA_METADATA_DIR, CONFIG_FILENAME} = require("../const/common");
-const config = require(`${process.cwd()}/${PYTHAGORA_METADATA_DIR}/${CONFIG_FILENAME}`);
+const tryrequire = require("tryrequire");
+const config = tryrequire(`${process.cwd()}/${PYTHAGORA_METADATA_DIR}/${CONFIG_FILENAME}`);
 const argsStr = process.env.PYTHAGORA_CONFIG || '';
 
 const argArray = argsStr.split("--");

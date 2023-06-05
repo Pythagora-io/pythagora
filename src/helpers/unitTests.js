@@ -1,7 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const _ = require('lodash');
-const { getUnitTests } = require('./api');
+const { getUnitTests, checkForAPIKey} = require('./api');
 const {PYTHAGORA_UNIT_DIR} = require("../const/common");
 const generator = require("@babel/generator").default;
 const {delay, checkDirectoryExists} = require("../utils/common");
@@ -192,6 +192,8 @@ async function getFunctionsForExport(dirPath) {
 }
 
 async function generateTestsForDirectory(pathToProcess, funcName) {
+
+    checkForAPIKey();
     queriedPath = path.resolve(pathToProcess);
     rootPath = process.cwd();
     ({ screen, spinner } = initScreenForUnitTests());

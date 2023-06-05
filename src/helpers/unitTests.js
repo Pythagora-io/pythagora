@@ -15,7 +15,7 @@ const {
 } = require("../utils/code");
 const {getRelativePath, getFolderTreeItem, getTestFilePath, checkPathType, isPathInside} = require("../utils/files");
 const {initScreenForUnitTests} = require("./cmdGUI");
-const {green, red, bold, reset} = require('../utils/CmdPrint').colors;
+const {green, red, blue, bold, reset} = require('../utils/CmdPrint').colors;
 
 let functionList = {},
     leftPanel,
@@ -26,7 +26,7 @@ let functionList = {},
     rootPath = '',
     queriedPath = '',
     folderStructureTree = [],
-    testsGenerated = 0
+    testsGenerated = []
 ;
 
 async function processFile(filePath) {
@@ -125,8 +125,8 @@ async function createTests(filePath, prefix, funcToTest) {
                 scrollableContent.setScrollPerc(100);
                 screen.render();
             });
-            await saveTests(filePath, funcData.functionName, tests);
-            testsGenerated++;
+            let testPath = await saveTests(filePath, funcData.functionName, tests);
+            testsGenerated.push(testPath);
             await spinner.stop();
             folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
         }
@@ -147,7 +147,9 @@ async function saveTests(filePath, name, testData) {
         await fs.mkdir(dir, { recursive: true });
     }
 
-    await fs.writeFile(path.join(dir, `/${name}.test.js`), testData);
+    let testPath = path.join(dir, `/${name}.test.js`);
+    await fs.writeFile(testPath, testData);
+    return testPath;
 }
 
 async function traverseDirectory(directory, onlyCollectFunctionData, prefix = '', funcName) {
@@ -203,10 +205,12 @@ async function generateTestsForDirectory(pathToProcess, funcName) {
     await traverseDirectory(queriedPath, false, undefined, funcName);  // second pass: print functions and their related functions
 
     screen.destroy();
-    if (testsGenerated === 0) {
+    process.stdout.write('\x1B[2J\x1B[0f');
+    if (testsGenerated.length === 0) {
         console.log(`${bold+red}No tests generated${funcName ? ' - can\'t find a function named "' + funcName + '"' : ''}!${reset}`);
     } else {
-        console.log(`${bold+green}${testsGenerated} unit tests generated!${reset}`);
+        console.log(`Tests are saved in the following directories:${testsGenerated.reduce((acc, item) => acc + '\n' + blue + item, '')}`);
+        console.log(`${bold+green}${testsGenerated.length} unit tests generated!${reset}`);
     }
     process.exit(0);
 }

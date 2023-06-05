@@ -2,14 +2,20 @@ const fs = require('fs').promises;
 const path = require('path');
 const _ = require('lodash');
 const { getUnitTests } = require('./api');
-const babelParser = require("@babel/parser");
 const {PYTHAGORA_UNIT_DIR} = require("../const/common");
-const babelTraverse = require("@babel/traverse").default;
 const generator = require("@babel/generator").default;
-const blessed = require('blessed');
-const {checkDirectoryExists} = require("../utils/common");
-const Spinner = require("../utils/Spinner");
-const {green, bold, reset} = require('../utils/CmdPrint').colors;
+const {delay, checkDirectoryExists} = require("../utils/common");
+const {
+    stripUnrelatedFunctions,
+    replaceRequirePaths,
+    getAstFromFilePath,
+    processAst,
+    getRelatedFunctions,
+    collectTopRequires
+} = require("../utils/code");
+const {getRelativePath, getFolderTreeItem, getTestFilePath, checkPathType, isPathInside} = require("../utils/files");
+const {initScreenForUnitTests} = require("./cmdGUI");
+const {green, red, bold, reset} = require('../utils/CmdPrint').colors;
 
 let functionList = {},
     leftPanel,
@@ -17,98 +23,11 @@ let functionList = {},
     screen,
     scrollableContent,
     spinner,
-    directoryPath = '',
-    folderStructureTree = [];
-
-const insideFunctionOrMethod = (nodeTypesStack) =>
-    nodeTypesStack.slice(0, -1).some(type => /^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression|ClassMethod)$/.test(type));
-
-async function stripUnrelatedFunctions(filePath, targetFuncNames) {
-    const ast = await getAstFromFilePath(filePath);
-
-    // Store the node paths of unrelated functions and class methods
-    const unrelatedNodes = [];
-
-    processAst(ast, (funcName, path, type) => {
-        if (!targetFuncNames.includes(funcName) && type !== 'export') {
-            unrelatedNodes.push(path);
-        }
-    });
-
-    // Remove unrelated nodes from the AST
-    for (const path of unrelatedNodes) {
-        path.remove();
-    }
-
-    // Generate the stripped code from the modified AST
-    const strippedCode = generator(ast).code;
-
-    return strippedCode;
-}
-
-function getRelatedFunctions(node, ast, filePath) {
-    let relatedFunctions = [];
-    let requiresFromFile = collectTopRequires(ast);
-
-    function processNodeRecursively(node) {
-        if (node.type === 'CallExpression') {
-            let funcName;
-            if (node.callee.type === 'Identifier') {
-                funcName = node.callee.name;
-            } else if (node.callee.type === 'MemberExpression') {
-                funcName = node.callee.property.name;
-                if (node.callee.object.type === 'Identifier') {
-                    funcName = node.callee.object.name + '.' + funcName;
-                }
-            }
-
-            let requiredPath = requiresFromFile.find(require => require.includes(funcName));
-            if (!requiredPath) {
-                requiredPath = filePath;
-            } else {
-                requiredPath = (requiredPath.match(/require\((['"`])(.*?)\1\)/) || [])[2];
-                if (requiredPath && (requiredPath.startsWith('./') || requiredPath.startsWith('../'))) requiredPath = path.resolve(filePath.substring(0, filePath.lastIndexOf('/')), requiredPath);
-                if (requiredPath.lastIndexOf('.js') + '.js'.length !== requiredPath.length) requiredPath += '.js';
-            }
-            let functionFromList = functionList[requiredPath + ':' + funcName];
-            if (functionFromList) {
-                relatedFunctions.push({
-                    fileName: requiredPath,
-                    funcName
-                });
-            }
-        }
-
-        // Traverse child nodes
-        for (const key in node) {
-            const prop = node[key];
-            if (Array.isArray(prop)) {
-                for (const child of prop) {
-                    if (typeof child === 'object' && child !== null) {
-                        processNodeRecursively(child);
-                    }
-                }
-            } else if (typeof prop === 'object' && prop !== null) {
-                processNodeRecursively(prop);
-            }
-        }
-    }
-
-    processNodeRecursively(node);
-    return relatedFunctions;
-}
-
-function collectTopRequires(node) {
-    let requires = [];
-    babelTraverse(node, {
-        VariableDeclaration(path) {
-            if (path.node.declarations[0].init && path.node.declarations[0].init.callee && path.node.declarations[0].init.callee.name === 'require') {
-                requires.push(generator(path.node).code);
-            }
-        }
-    });
-    return requires;
-}
+    rootPath = '',
+    queriedPath = '',
+    folderStructureTree = [],
+    testsGenerated = 0
+;
 
 async function processFile(filePath) {
     try {
@@ -123,7 +42,7 @@ async function processFile(filePath) {
                     funcName,
                     code: generator(path.node).code,
                     filePath: filePath,
-                    relatedFunctions: getRelatedFunctions(path.node, ast, filePath)
+                    relatedFunctions: getRelatedFunctions(path.node, ast, filePath, functionList)
                 });
             }
         });
@@ -135,87 +54,6 @@ async function processFile(filePath) {
     } catch (e) {
         // writeLine(`Error parsing file ${filePath}: ${e}`);
     }
-}
-
-async function getAstFromFilePath(filePath) {
-    let data = await fs.readFile(filePath, 'utf8');
-    let nodeTypesStack = [];
-    // Remove shebang if it exists
-    if (data.indexOf('#!') === 0) {
-        data = '//' + data;
-    }
-
-    const ast = babelParser.parse(data, {
-        sourceType: "module", // Consider input as ECMAScript module
-        locations: true,
-        plugins: ["jsx", "objectRestSpread"] // Enable JSX and object rest/spread syntax
-    });
-
-    return ast;
-}
-
-function processAst(ast, cb) {
-    let nodeTypesStack = [];
-    babelTraverse(ast, {
-        enter(path) {
-            nodeTypesStack.push(path.node.type);
-            if (insideFunctionOrMethod(nodeTypesStack)) return;
-
-            // Handle module.exports
-            if (path.isExpressionStatement()) {
-                const expression = path.node.expression;
-                if (expression && expression.type === 'AssignmentExpression') {
-                    const left = expression.left;
-                    if (left.type === 'MemberExpression' &&
-                        left.object.name === 'module' &&
-                        left.property.name === 'exports') {
-                        if (expression.right.type === 'ObjectExpression') {
-                            expression.right.properties.forEach(prop => {
-                                if (prop.type === 'ObjectProperty') {
-                                    cb(prop.key.name, null, 'export');
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-
-            let funcName;
-            if (path.isFunctionDeclaration()) {
-                funcName = path.node.id.name;
-            } else if (path.isFunctionExpression() || path.isArrowFunctionExpression()) {
-                if (path.parentPath.isVariableDeclarator()) {
-                    funcName = path.parentPath.node.id.name;
-                } else if (path.parentPath.isAssignmentExpression() || path.parentPath.isObjectProperty()) {
-                    funcName = path.parentPath.node.left ? path.parentPath.node.left.name : path.parentPath.node.key.name;
-                }
-            } else if (path.node.type === 'ClassMethod' && path.node.key.name !== 'constructor') {
-                funcName = path.node.key.name;
-                if (path.parentPath.node.type === 'ClassDeclaration') {
-                    const className = path.parentPath.node.id.name;
-                    funcName = `${className}.${funcName}`;
-                } else if (path.parentPath.node.type === 'ClassExpression') {
-                    const className = path.parentPath.node.id.name || '';
-                    funcName = `${className}.${funcName}`;
-                }
-            }
-
-            if (funcName) cb(funcName, path);
-        },
-        exit(path) {
-            nodeTypesStack.pop();
-        }
-    });
-}
-
-
-
-function getRelativePath(filePath, referenceFilePath) {
-    let relativePath = path.relative(path.dirname(referenceFilePath), filePath);
-    if (!relativePath.startsWith('../') && !relativePath.startsWith('./')) {
-        relativePath = './' + relativePath;
-    }
-    return relativePath;
 }
 
 async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
@@ -244,21 +82,7 @@ async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
     return funcData;
 }
 
-function replaceRequirePaths(code, currentPath, testFilePath) {
-    const requirePathRegex = /require\((['"`])(.+?)\1\)/g;
-
-    return code.replace(requirePathRegex, (match, quote, requirePath) => {
-        if (!requirePath.startsWith('./') && !requirePath.startsWith('../')) return match;
-
-        const absoluteRequirePath = path.resolve(currentPath, requirePath);
-
-        const newRequirePath = getRelativePath(absoluteRequirePath, testFilePath);
-
-        return `require(${quote}${newRequirePath}${quote})`;
-    });
-}
-
-async function createTests(filePath, prefix) {
+async function createTests(filePath, prefix, funcToTest) {
     try {
         let ast = await getAstFromFilePath(filePath);
         const topRequires = collectTopRequires(ast);
@@ -268,6 +92,8 @@ async function createTests(filePath, prefix) {
 
         processAst(ast, (funcName, path, type) => {
             if (type === 'export') return;
+            if (funcToTest && funcName !== funcToTest) return;
+
             let functionFromTheList = functionList[filePath + ':' + funcName];
             if (functionFromTheList && functionFromTheList.exported) {
                 foundFunctions.push({
@@ -293,13 +119,14 @@ async function createTests(filePath, prefix) {
             );
             spinner.start(folderStructureTree, indexToPush);
 
-            let formattedData = await reformatDataForPythagoraAPI(funcData, filePath, getTestFilePath(filePath));
+            let formattedData = await reformatDataForPythagoraAPI(funcData, filePath, getTestFilePath(filePath, rootPath));
             let tests = await getUnitTests(formattedData, (content) => {
                 scrollableContent.setContent(content);
                 scrollableContent.setScrollPerc(100);
                 screen.render();
             });
             await saveTests(filePath, funcData.functionName, tests);
+            testsGenerated++;
             await spinner.stop();
             folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
         }
@@ -313,23 +140,8 @@ async function createTests(filePath, prefix) {
     }
 }
 
-function getFolderTreeItem(prefix, isLast, name, absolutePath) {
-    return {
-        line: `${prefix}${isLast ? '└───' : '├───'}${name}`,
-        absolutePath
-    };
-}
-
-function getTestFilePath(filePath) {
-    return path.join(
-        path.resolve(PYTHAGORA_UNIT_DIR),
-        path.dirname(filePath).replace(directoryPath, ''),
-        path.basename(filePath, path.extname(filePath))
-    );
-}
-
 async function saveTests(filePath, name, testData) {
-    let dir = getTestFilePath(filePath, directoryPath);
+    let dir = getTestFilePath(filePath, rootPath);
 
     if (!await checkDirectoryExists(dir)) {
         await fs.mkdir(dir, { recursive: true });
@@ -338,105 +150,63 @@ async function saveTests(filePath, name, testData) {
     await fs.writeFile(path.join(dir, `/${name}.test.js`), testData);
 }
 
-async function traverseDirectory(directory, onlyCollectFunctionData, prefix = '') {
+async function traverseDirectory(directory, onlyCollectFunctionData, prefix = '', funcName) {
+    if (await checkPathType(directory) === 'file' && !onlyCollectFunctionData) {
+        if (path.extname(directory) !== '.js') throw new Error('File is not a javascript file');
+        return await createTests(directory, prefix, funcName);
+    }
     const files = await fs.readdir(directory);
     for (const file of files) {
         const absolutePath = path.join(directory, file);
         const stat = await fs.stat(absolutePath);
         const isLast = files.indexOf(file) === files.length - 1;
         if (stat.isDirectory()) {
-            if (onlyCollectFunctionData) {
-                folderStructureTree.push(getFolderTreeItem(
-                    prefix,
-                    isLast,
-                    path.basename(absolutePath),
-                    absolutePath
-                ));
+            if (onlyCollectFunctionData && isPathInside(path.dirname(queriedPath), absolutePath)) {
+                folderStructureTree.push(getFolderTreeItem(prefix, isLast, path.basename(absolutePath), absolutePath));
             }
 
             if (path.basename(absolutePath) !== 'node_modules') {
                 const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-                await traverseDirectory(absolutePath, onlyCollectFunctionData, newPrefix);
+                await traverseDirectory(absolutePath, onlyCollectFunctionData, newPrefix, funcName);
             }
         } else {
             if (path.extname(absolutePath) !== '.js') continue;
             if (onlyCollectFunctionData) {
-                folderStructureTree.push(getFolderTreeItem(
-                    prefix,
-                    isLast,
-                    path.basename(absolutePath),
-                    absolutePath
-                ));
+                if (isPathInside(path.dirname(queriedPath), absolutePath)) {
+                    folderStructureTree.push(getFolderTreeItem(prefix, isLast, path.basename(absolutePath), absolutePath));
+                }
                 await processFile(absolutePath);
             } else {
                 const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-                await createTests(absolutePath, newPrefix);
+                await createTests(absolutePath, newPrefix, funcName);
             }
         }
     }
 }
 
-function initScreen() {
-    screen = blessed.screen({
-        smartCSR: true,
-        fullUnicode: true,
-    });
-
-    leftPanel = blessed.box({
-        width: '50%',
-        height: '100%',
-        border: { type: 'line' },
-        scrollable: true,
-        alwaysScroll: true,
-        scrollbar: {
-            ch: ' '
-        },
-        keys: true,
-        vi: true
-    });
-
-    rightPanel = blessed.box({
-        width: '50%',
-        height: '100%',
-        left: '50%',
-        border: { type: 'line' }
-    });
-
-    scrollableContent = blessed.box({
-        parent: rightPanel,
-        scrollable: true,
-        alwaysScroll: true,
-        scrollbar: {
-            ch: ' '
-        },
-        keys: true,
-        vi: true
-    });
-
-    screen.append(leftPanel);
-    screen.append(rightPanel);
-    screen.render();
-    screen.key(['C-c'], function () {
-        return process.exit(0);
-    });
-
-    spinner = new Spinner(leftPanel, screen);
-}
-
 async function getFunctionsForExport(dirPath) {
-    directoryPath = dirPath;
-    await traverseDirectory(directoryPath, true);
-    await traverseDirectory(directoryPath, true);
+    rootPath = dirPath;
+    await traverseDirectory(rootPath, true);
+    await traverseDirectory(rootPath, true);
     return functionList;
 }
 
-function generateTestsForDirectory(dirPath) {
-    directoryPath = dirPath;
-    initScreen();
-    traverseDirectory(directoryPath, true)  // first pass: collect all function names and codes
-        .then(() => traverseDirectory(directoryPath, true))  // second pass: collect all related functions
-        .then(() => traverseDirectory(directoryPath, false))  // third pass: print functions and their related functions
-        .catch(err => console.error(err));
+async function generateTestsForDirectory(pathToProcess, funcName) {
+    queriedPath = path.resolve(pathToProcess);
+    rootPath = process.cwd();
+    ({ screen, spinner } = initScreenForUnitTests());
+
+    await traverseDirectory(rootPath, true);  // first pass: collect all function names and codes
+    await traverseDirectory(rootPath, true);  // second pass: collect all related functions
+    await traverseDirectory(queriedPath, false, undefined, funcName);  // second pass: print functions and their related functions
+
+    screen.destroy();
+    if (testsGenerated === 0) {
+        console.log(`${bold+red}No tests generated${funcName ? ' - can\'t find a function named "' + funcName + '"' : ''}!${reset}`);
+    } else {
+        console.log(`${bold+green}${testsGenerated} unit tests generated!${reset}`);
+    }
+    process.exit(0);
 }
 
 module.exports = {

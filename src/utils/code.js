@@ -151,11 +151,28 @@ function processAst(ast, cb) {
                         if (expression.right.type === 'ObjectExpression') {
                             expression.right.properties.forEach(prop => {
                                 if (prop.type === 'ObjectProperty') {
-                                    cb(prop.key.name, null, 'export');
+                                    return cb(prop.key.name, null, 'export');
                                 }
                             });
                         }
                     }
+                }
+            }
+
+            // Handle ES6 export statements
+            if (path.isExportDefaultDeclaration()) {
+                if (path.node.declaration.type === 'FunctionDeclaration') {
+                    return cb(path.node.declaration.id.name, null, 'export');
+                } else if (path.node.declaration.type === 'Identifier') {
+                    return cb(path.node.declaration.name, null, 'export');
+                }
+            } else if (path.isExportNamedDeclaration()) {
+                if (path.node.declaration.type === 'FunctionDeclaration') {
+                    return cb(path.node.declaration.id.name, null, 'export');
+                } else if (path.node.specifiers.length > 0) {
+                    path.node.specifiers.forEach(spec => {
+                        return cb(spec.exported.name, null, 'export');
+                    });
                 }
             }
 

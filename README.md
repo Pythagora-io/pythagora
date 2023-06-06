@@ -8,17 +8,17 @@
 <h3 align="center">Just run one command and watch the tests being created</h3>
 <br>
 
-To view the docs on how to generate **integration tests**, click [here](./src/docs/integration/README.md). The following details are for generating unit tests.
+The following details are for generating unit tests. To view the docs on how to generate **integration tests**, click [here](./src/docs/integration/README.md).
 
 <br>
 
 # 🏃💨️ Quickstart
 
-To integrate Pythagora into your Node.js app, you just run:
- ```bash
- npm install pythagora
- ```
- And that's it! Now, you can run the following command from the root directory of your repo:
+To integrate Pythagora you just run:
+```bash
+npm install pythagora
+```
+And that's it! Now, you can run the following command from the root directory of your repo:
 
 ```bash
 npx pythagora --unit-tests --func <FUNCTION_NAME>

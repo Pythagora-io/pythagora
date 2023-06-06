@@ -51,6 +51,32 @@ async function getAstFromFilePath(filePath) {
     return ast;
 }
 
+async function getModuleTypeFromFilePath(ast) {
+    let moduleType = 'unknown';
+
+    babelTraverse(ast, {
+        ImportDeclaration(path) {
+            moduleType = 'ES6';
+            path.stop(); // Stop traversal when an ESM statement is found
+        },
+        CallExpression(path) {
+            if (path.node.callee.name === 'require') {
+                moduleType = 'CommonJS';
+                path.stop(); // Stop traversal when a CommonJS statement is found
+            }
+        },
+        AssignmentExpression(path) {
+            if (path.node.left.type === 'MemberExpression' && path.node.left.object.name === 'module' && path.node.left.property.name === 'exports') {
+                moduleType = 'CommonJS';
+                path.stop(); // Stop traversal when a CommonJS statement is found
+            }
+        }
+    });
+
+    return moduleType;
+}
+
+
 function collectTopRequires(node) {
     let requires = [];
     babelTraverse(node, {
@@ -263,5 +289,6 @@ module.exports = {
     insideFunctionOrMethod,
     getRelatedFunctions,
     stripUnrelatedFunctions,
-    processAst
+    processAst,
+    getModuleTypeFromFilePath
 }

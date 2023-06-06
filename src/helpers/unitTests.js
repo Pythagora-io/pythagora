@@ -11,7 +11,7 @@ const {
     getAstFromFilePath,
     processAst,
     getRelatedFunctions,
-    collectTopRequires
+    getModuleTypeFromFilePath
 } = require("../utils/code");
 const {getRelativePath, getFolderTreeItem, getTestFilePath, checkPathType, isPathInside} = require("../utils/files");
 const {initScreenForUnitTests} = require("./cmdGUI");
@@ -35,6 +35,7 @@ async function processFile(filePath) {
         let exportsObj = [];
         let functions = [];
         let ast = await getAstFromFilePath(filePath);
+        let syntaxType = await getModuleTypeFromFilePath(ast);
         processAst(ast, (funcName, path, type) => {
             if (type === 'exportFn') {
                 exportsFn.push(funcName);
@@ -60,6 +61,7 @@ async function processFile(filePath) {
 
             functionList[filePath + ':' + f.funcName] = _.extend(f,{
                 classParent,
+                syntaxType,
                 exported: exportsFn.includes(f.funcName) || isExportedAsObject || !!classParent,
                 exportedAsObject: isExportedAsObject,
                 funcName: f.funcName
@@ -99,7 +101,6 @@ async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
 async function createTests(filePath, prefix, funcToTest) {
     try {
         let ast = await getAstFromFilePath(filePath);
-        const topRequires = collectTopRequires(ast);
         const fileIndex = folderStructureTree.findIndex(item => item.absolutePath === filePath);
 
         const foundFunctions = [];
@@ -117,6 +118,7 @@ async function createTests(filePath, prefix, funcToTest) {
                     functionCode: functionFromTheList.code,
                     relatedCode: functionFromTheList.relatedFunctions,
                     classParent: functionFromTheList.classParent,
+                    isES6Syntax: functionFromTheList.syntaxType === 'ES6',
                     exportedAsObject: functionFromTheList.exportedAsObject
                 });
             }

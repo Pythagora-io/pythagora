@@ -7,16 +7,30 @@ const fs = require("fs").promises;
 
 
 function replaceRequirePaths(code, currentPath, testFilePath) {
-    const requirePathRegex = /require\((['"`])(.+?)\1\)/g;
+    const importRequirePathRegex = /(require\((['"`])(.+?)\2\))|(import\s+.*?\s+from\s+(['"`])(.+?)\5)/g;
 
-    return code.replace(requirePathRegex, (match, quote, requirePath) => {
-        if (!requirePath.startsWith('./') && !requirePath.startsWith('../')) return match;
+    return code.replace(importRequirePathRegex, (match, requireExp, requireQuote, requirePath, importExp, importQuote, importPath) => {
+        let quote, modulePath;
 
-        const absoluteRequirePath = path.resolve(currentPath, requirePath);
+        if (requireExp) {
+            quote = requireQuote;
+            modulePath = requirePath;
+        } else if (importExp) {
+            quote = importQuote;
+            modulePath = importPath;
+        }
+
+        if (!modulePath.startsWith('./') && !modulePath.startsWith('../')) return match;
+
+        const absoluteRequirePath = path.resolve(currentPath, modulePath);
 
         const newRequirePath = getRelativePath(absoluteRequirePath, testFilePath);
 
-        return `require(${quote}${newRequirePath}${quote})`;
+        if (requireExp) {
+            return `require(${quote}${newRequirePath}${quote})`;
+        } else if (importExp) {
+            return `${importExp.split('from')[0].trim()} from ${quote}${newRequirePath}${quote}`;
+        }
     });
 }
 
@@ -44,6 +58,9 @@ function collectTopRequires(node) {
             if (path.node.declarations[0].init && path.node.declarations[0].init.callee && path.node.declarations[0].init.callee.name === 'require') {
                 requires.push(generator(path.node).code);
             }
+        },
+        ImportDeclaration(path) {
+            requires.push(generator(path.node).code);
         }
     });
     return requires;
@@ -51,6 +68,17 @@ function collectTopRequires(node) {
 
 function insideFunctionOrMethod(nodeTypesStack) {
     return nodeTypesStack.slice(0, -1).some(type => /^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression|ClassMethod)$/.test(type));
+}
+
+function getPathFromRequireOrImport(path) {
+    return (path.match(/require\((['"`])(.*?)\1\)|import\s+.*?\s+from\s+(['"`])(.*?)\3/) || [])[2] ||
+        (path.match(/require\((['"`])(.*?)\1\)|import\s+.*?\s+from\s+(['"`])(.*?)\3/) || [])[4];
+}
+
+function getFullPathFromRequireOrImport(importPath, filePath) {
+    if (importPath && (importPath.startsWith('./') || importPath.startsWith('../'))) importPath = path.resolve(filePath.substring(0, filePath.lastIndexOf('/')), importPath);
+    if (importPath.lastIndexOf('.js') + '.js'.length !== importPath.length) importPath += '.js';
+    return importPath;
 }
 
 function getRelatedFunctions(node, ast, filePath, functionList) {
@@ -79,9 +107,8 @@ function getRelatedFunctions(node, ast, filePath, functionList) {
             if (!requiredPath) {
                 requiredPath = filePath;
             } else {
-                requiredPath = (requiredPath.match(/require\((['"`])(.*?)\1\)/) || [])[2];
-                if (requiredPath && (requiredPath.startsWith('./') || requiredPath.startsWith('../'))) requiredPath = path.resolve(filePath.substring(0, filePath.lastIndexOf('/')), requiredPath);
-                if (requiredPath.lastIndexOf('.js') + '.js'.length !== requiredPath.length) requiredPath += '.js';
+                requiredPath = getPathFromRequireOrImport(requiredPath);
+                requiredPath = getFullPathFromRequireOrImport(requiredPath, filePath);
             }
             let functionFromList = functionList[requiredPath + ':' + funcName];
             if (functionFromList) {
@@ -172,17 +199,28 @@ function processAst(ast, cb) {
 
             // Handle ES6 export statements
             if (path.isExportDefaultDeclaration()) {
-                if (path.node.declaration.type === 'FunctionDeclaration') {
-                    return cb(path.node.declaration.id.name, null, 'export');
-                } else if (path.node.declaration.type === 'Identifier') {
-                    return cb(path.node.declaration.name, null, 'export');
+                const declaration = path.node.declaration;
+                if (declaration.type === 'FunctionDeclaration' || declaration.type === 'Identifier') {
+                    return cb(declaration.id ? declaration.id.name : declaration.name, null, 'exportFn');
+                } else if (declaration.type === 'ObjectExpression') {
+                    declaration.properties.forEach(prop => {
+                        if (prop.type === 'ObjectProperty') {
+                            return cb(prop.key.name, null, 'exportObj');
+                        }
+                    });
                 }
             } else if (path.isExportNamedDeclaration()) {
-                if (path.node.declaration.type === 'FunctionDeclaration') {
-                    return cb(path.node.declaration.id.name, null, 'export');
+                if (path.node.declaration) {
+                    if (path.node.declaration.type === 'FunctionDeclaration') {
+                        return cb(path.node.declaration.id.name, null, 'exportFn');
+                    } else if (path.node.declaration.type === 'VariableDeclaration') {
+                        path.node.declaration.declarations.forEach(declaration => {
+                            return cb(declaration.id.name, null, 'exportFn');
+                        });
+                    }
                 } else if (path.node.specifiers.length > 0) {
                     path.node.specifiers.forEach(spec => {
-                        return cb(spec.exported.name, null, 'export');
+                        return cb(spec.exported.name, null, 'exportObj');
                     });
                 }
             }

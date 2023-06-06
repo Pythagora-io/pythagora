@@ -26,7 +26,8 @@ let functionList = {},
     rootPath = '',
     queriedPath = '',
     folderStructureTree = [],
-    testsGenerated = []
+    testsGenerated = [],
+    ignoreFolders = ['node_modules', 'pythagora_tests']
 ;
 
 async function processFile(filePath) {
@@ -183,14 +184,14 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
         const stat = await fs.stat(absolutePath);
         const isLast = files.indexOf(file) === files.length - 1;
         if (stat.isDirectory()) {
+            if (ignoreFolders.includes(path.basename(absolutePath))  || path.basename(absolutePath).charAt(0) === '.') continue;
+
             if (onlyCollectFunctionData && isPathInside(path.dirname(queriedPath), absolutePath)) {
                 folderStructureTree.push(getFolderTreeItem(prefix, isLast, path.basename(absolutePath), absolutePath));
             }
 
-            if (path.basename(absolutePath) !== 'node_modules') {
-                const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-                await traverseDirectory(absolutePath, onlyCollectFunctionData, newPrefix, funcName);
-            }
+            const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
+            await traverseDirectory(absolutePath, onlyCollectFunctionData, newPrefix, funcName);
         } else {
             if (path.extname(absolutePath) !== '.js') continue;
             if (onlyCollectFunctionData) {
@@ -199,7 +200,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
                 }
                 await processFile(absolutePath);
             } else {
-                const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
+                const newPrefix = isLast ? `${prefix}    ` : `    ${prefix}|   `;
                 await createTests(absolutePath, newPrefix, funcName);
             }
         }
@@ -218,7 +219,7 @@ async function generateTestsForDirectory(pathToProcess, funcName) {
     checkForAPIKey();
     queriedPath = path.resolve(pathToProcess);
     rootPath = process.cwd();
-    ({ screen, spinner } = initScreenForUnitTests());
+    ({ screen, spinner, scrollableContent } = initScreenForUnitTests());
 
     await traverseDirectory(rootPath, true);  // first pass: collect all function names and codes
     await traverseDirectory(rootPath, true);  // second pass: collect all related functions

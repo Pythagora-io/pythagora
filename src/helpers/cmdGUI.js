@@ -48,7 +48,7 @@ function initScreenForUnitTests() {
 
     let spinner = new Spinner(leftPanel, screen);
 
-    return {screen, spinner};
+    return {screen, spinner, scrollableContent};
 }
 
 module.exports = {

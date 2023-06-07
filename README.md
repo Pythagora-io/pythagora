@@ -32,14 +32,11 @@ Where `<FUNCTION_NAME>` is the name of the function you want to generate unit te
 
 Here are some demo videos that can help you get started.
 <div align="center">
-  <a href="https://youtu.be/YxzvljVyaEA"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
+  <a href="https://youtu.be/NNd08XgFFw4"><img src="https://github-production-user-asset-6210df.s3.amazonaws.com/10895136/244031887-02f19eb9-dba1-4e62-a670-744c7d3423ae.gif" alt="Pythagora Alpha Demo"></a>
 </div>
 
-<h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
 <p align=center>
-  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Demo (4 min)</a>
-  <br>
-  <a target="_blank" href="https://www.youtube.com/watch?v=kHbwX4QVoGY">Generate Jest tests with Pythagora and GPT-4 (4 min)</a>
+  <a target="_blank" href="https://youtu.be/NNd08XgFFw4">Pythagora Unit Tests Demo (2 min)</a>
 </p>
 
 <br>
@@ -61,7 +58,7 @@ Here are examples of open sourced repositories that we forked and created tests 
   - 🐞 12 bugs found
   - ⏳️ 30 minutes run time
  
-  ![node-fs-extra pythagora tests results](https://github.com/Pythagora-io/pythagora/assets/10895136/2026b9c1-968b-4a13-8614-20a961693657)
+  ![node-fs-extra pythagora tests results](https://github.com/Pythagora-io/api/assets/10895136/2408f424-1fe1-4638-8c1a-97c57f562939)
 
 <br>
 

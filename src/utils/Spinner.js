@@ -31,6 +31,7 @@ class Spinner {
                 this.panel.pushLine(tree[i].line);
             }
         }
+        this.panel.scrollTo(Math.max(index - Math.round(this.panel.height*2/3), 0));
         this.screen.render();
     }
 

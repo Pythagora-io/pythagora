@@ -1,6 +1,6 @@
 {
   "name": "pythagora",
-  "version": "0.0.58",
+  "version": "0.0.60",
   "author": {
     "name": "Zvonimir Sabljic",
     "email": "hi@pythagora.ai"
@@ -38,6 +38,9 @@
     "nyc": "^15.1.0",
     "tryrequire": "^3.0.0",
     "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "mongodb": "^5.6.0"
   },
   "contributors": [
     {

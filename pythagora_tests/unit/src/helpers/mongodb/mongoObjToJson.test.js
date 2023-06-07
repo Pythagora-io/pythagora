@@ -1,5 +1,5 @@
-import {ObjectId} from "mongodb";
-import {mongoObjToJson} from "../../../../../src/helpers/mongodb";
+const {ObjectId} = require("mongodb");
+const {mongoObjToJson} = require("../../../../../src/helpers/mongodb");
 
 describe("mongoObjToJson", () => {
   test('should convert ObjectId to string format', () => {
@@ -20,7 +20,7 @@ describe("mongoObjToJson", () => {
   test('should handle nested objects and arrays', () => {
     const objectId = new ObjectId();
     const date = new Date();
-    const regex = /^test$/i;
+    const regex = new RegExp(/^test$/i);
     const input = {
       _id: objectId,
       dates: [{ time: date }],

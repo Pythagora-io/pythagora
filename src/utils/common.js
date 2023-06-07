@@ -7,6 +7,7 @@ const {
     PYTHAGORA_TESTS_DIR,
     PYTHAGORA_DELIMITER
 } = require("../const/common");
+const path = require('path');
 let mongodb;
 // this is needed so that "mongodb" is not required before mongo patches are applied
 const ObjectId = class {
@@ -93,43 +94,47 @@ function stringToDate(str) {
 function isJSONObject(value) {
     return Object.prototype.toString.call(value) === "[object Object]";
 }
-
 function compareJson(a, b, strict) {
-    // TODO make more complex by running tests right after capture
     if (a === b) return true;
-    else if (typeof a !== typeof b) return false;
-    else if (!a || !b) return false;
-    else if (Array.isArray(a) && Array.isArray(b)) {
+    if (typeof a !== typeof b) return false;
+    if ((!a && a !== 0) || (!b && b !== 0)) return false;
+
+    if (Array.isArray(a) && Array.isArray(b)) {
         if (a.length !== b.length) return false;
-        // TODO optimize because this is O(n^2)
-        return a.reduce((acc, item, index) => acc && !!b.find(b2 => compareJson(item, b2, strict)), true);
-    } else if (typeof a === 'string' && typeof b === 'string') {
+        return a.every((itemA) => b.some((itemB) => compareJson(itemA, itemB, strict))) &&
+            b.every((itemB) => a.some((itemA) => compareJson(itemA, itemB, strict)));
+    }
+
+    if (typeof a === 'string' && typeof b === 'string') {
         return objectIdAsStringRegex.test(a) && objectIdAsStringRegex.test(b) && !strict ? true : a === b;
     }
-    let ignoreKeys = ['stacktrace'];
-    // let ignoreIfKeyContains = ['token'];
-    let aProps = Object.getOwnPropertyNames(a);
-    let bProps = Object.getOwnPropertyNames(b);
-    if (aProps.length !== bProps.length) {
-        return false;
-    }
-    for (let i = 0; i < aProps.length; i++) {
-        let propName = aProps[i];
-        if (
-            a[propName] !== b[propName] &&
-            (!isDate(a[propName]) && !isDate(a[propName])) &&
-            !ignoreKeys.includes(propName) &&
-            !(isObjectId(a[propName]) && isObjectId(b[propName]))// &&
-            // !ignoreIfKeyContains.some(function(v) { return propName.indexOf(v) >= 0; })
-        ) {
+
+    if (typeof a === 'object' && typeof b === 'object') {
+        let ignoreKeys = ['stacktrace'];
+        let aProps = Object.getOwnPropertyNames(a);
+        let bProps = Object.getOwnPropertyNames(b);
+
+        if (aProps.length !== bProps.length) {
+            return false;
+        }
+
+        for (let i = 0; i < aProps.length; i++) {
+            let propName = aProps[i];
+
+            if (ignoreKeys.includes(propName)) continue;
+            if (isObjectId(a[propName]) && isObjectId(b[propName])) continue;
+
+            // Perform deep comparison first
             if (typeof a[propName] === 'object') {
                 if (!compareJson(a[propName], b[propName], strict))
                     return false;
-            } else
-                return false;
+            } else if (a[propName] !== b[propName]) return false;  // If a[propName] and b[propName] are not objects, use !== for comparison
         }
+        return true;
     }
-    return true;
+
+    // If a and b are neither arrays nor objects, use !== for comparison
+    return a !== b ? false : true;
 }
 
 function compareJsonDetailed(a, b, strict) {
@@ -220,17 +225,20 @@ function stringToRegExp(str) {
 const getCircularReplacer = () => {
     const seen = new WeakSet();
     return (key, value) => {
-        value = _.clone(value);
-        if (isLegacyObjectId(value)) value = (new ObjectId(Buffer.from(value.id.data))).toString();
-        else if (value instanceof RegExp) value = `RegExp("${value.toString()}")`;
-        else if (Array.isArray(value) && value.find(v => isLegacyObjectId(v))) {
-            value = value.map(v => isLegacyObjectId(v) ? (new ObjectId(Buffer.from(v.id.data))).toString() : v);
-        } if (typeof value === "object" && value !== null) {
+        if (typeof value === "object" && value !== null) {
             if (seen.has(value)) {
                 return;
             }
             seen.add(value);
         }
+
+        // Handle the specific types after checking for circular references
+        if (isLegacyObjectId(value)) value = (new ObjectId(Buffer.from(value.id.data))).toString();
+        else if (value instanceof RegExp) value = `RegExp("${value.toString()}")`;
+        else if (Array.isArray(value) && value.find(v => isLegacyObjectId(v))) {
+            value = value.map(v => isLegacyObjectId(v) ? (new ObjectId(Buffer.from(v.id.data))).toString() : v);
+        }
+
         return value;
     };
 };
@@ -329,7 +337,12 @@ function insertVariablesInText(text, variables) {
 }
 
 function updateMetadata(newMetadata) {
-    fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, JSON.stringify(newMetadata, getCircularReplacer(), 2));
+    const dirPath = `./${PYTHAGORA_METADATA_DIR}`;
+    const filePath = path.join(dirPath, METADATA_FILENAME);
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+    }
+    fs.writeFileSync(filePath, JSON.stringify(newMetadata, getCircularReplacer(), 2));
 }
 
 function comparePaths(path1, path2) {

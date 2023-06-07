@@ -15,7 +15,8 @@
   "main": "src/Pythagora.js",
   "scripts": {
     "publish-pythagora": "src/bin/publish.bash",
-    "prepublishOnly": "node src/bin/prepublish.js"
+    "prepublishOnly": "node src/bin/prepublish.js",
+    "test": "npx jest ./pythagora_tests/ --coverage"
   },
   "bin": {
     "pythagora": "src/bin/run.js"

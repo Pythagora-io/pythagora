@@ -200,7 +200,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
                 }
                 await processFile(absolutePath);
             } else {
-                const newPrefix = isLast ? `${prefix}    ` : `    ${prefix}|   `;
+                const newPrefix = isLast ? `|   ${prefix}    ` : `|   ${prefix}|   `;
                 await createTests(absolutePath, newPrefix, funcName);
             }
         }

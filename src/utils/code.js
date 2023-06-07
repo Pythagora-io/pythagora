@@ -269,7 +269,8 @@ function processAst(ast, cb) {
                     const className = path.parentPath.node.id.name || '';
                     funcName = `${className}.${funcName}`;
                 } else if (path.parentPath.node.type === 'ClassBody') {
-                    const className = path.parentPath.parentPath.node.id.name || '';
+                    // TODO: Handle classes that are not declared as a variable
+                    const className = path.parentPath.parentPath.node.id ? path.parentPath.parentPath.node.id.name : '';
                     funcName = `${className}.${funcName}`;
                 }
             }

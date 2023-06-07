@@ -50,6 +50,25 @@ do
   if [[ "${args[$i]}" =~ ^--init[-_]command$ ]]
   then
     init_command="${args[$i+1]}"
+  elif [[ "${args[$i]}" == "--config" ]]
+  then
+    # TODO refactor and make it flexible
+    CONFIG_FILE="./.pythagora/config.json"
+    rm "$CONFIG_FILE"
+
+    if [ ! -f "$CONFIG_FILE" ]; then
+        mkdir -p ./.pythagora
+        touch "./$CONFIG_FILE"
+    fi
+
+    API_NAME="${args[$i+1]//--/}"
+    API_NAME="${API_NAME//-/_}"
+    API_KEY="${args[$i+2]}"
+    echo "{" >> $CONFIG_FILE
+    echo "    \"$API_NAME\": \"$API_KEY\"" >> $CONFIG_FILE
+    echo "}" >> $CONFIG_FILE
+    echo "${green}${bold}API key added to config!${reset}"
+    exit 0
   elif [[ "${args[$i]}" == "--review" ]]
   then
     PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/review.js"
@@ -58,6 +77,11 @@ do
   then
     echo "${yellow}${bold}Tests eligible for export:${reset}"
     PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/testsEligibleForExport.js"
+    exit 0
+  elif [[ "${args[$i]}" == "--unit-tests" ]]
+  then
+    echo "${green}${bold}Generating unit tests...${reset}"
+    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/unit.js"
     exit 0
   elif [[ "${args[$i]}" == "--export-setup" ]]
   then

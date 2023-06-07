@@ -98,8 +98,8 @@ function setUpPythagoraDirs() {
 
 module.exports = {
     checkDependencies,
-    searchAllModuleFolders,
     getPythagoraVersion,
+    searchAllModuleFolders,
+    setUpPythagoraDirs,
     startPythagora,
-    setUpPythagoraDirs
 }

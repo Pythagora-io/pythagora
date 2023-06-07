@@ -1,6 +1,6 @@
 {
   "name": "pythagora",
-  "version": "0.0.59",
+  "version": "0.0.60",
   "author": {
     "name": "Zvonimir Sabljic",
     "email": "hi@pythagora.ai"
@@ -15,7 +15,8 @@
   "main": "src/Pythagora.js",
   "scripts": {
     "publish-pythagora": "src/bin/publish.bash",
-    "prepublishOnly": "node src/bin/prepublish.js"
+    "prepublishOnly": "node src/bin/prepublish.js",
+    "test": "npx jest ./pythagora_tests/ --coverage"
   },
   "bin": {
     "pythagora": "src/bin/run.js"
@@ -24,14 +25,22 @@
     "node": ">=14.x"
   },
   "dependencies": {
+    "@babel/generator": "^7.22.3",
+    "@babel/parser": "^7.22.3",
+    "@babel/traverse": "^7.22.1",
     "@mswjs/interceptors": "^0.19.2",
     "axios": "^1.2.2",
+    "blessed": "^0.1.81",
     "body-parser": "^1.20.1",
+    "handlebars": "^4.7.7",
     "jest": "^29.5.0",
     "lodash": "^4.17.21",
     "nyc": "^15.1.0",
     "tryrequire": "^3.0.0",
     "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "mongodb": "^5.6.0"
   },
   "contributors": [
     {

@@ -103,7 +103,7 @@ async function getCurrentMongoDocs(collection, query, options = {}) {
 }
 
 
-function extractArguments(method, arguments) {
+function extractArguments(method, args) {
     let returnObj = {
         otherArgs: {}
     };
@@ -114,7 +114,7 @@ function extractArguments(method, arguments) {
         if (mappedArg) {
 
             if (MONGO_METHODS[method][mappedArg].multi) {
-                let operations = arguments[i];
+                let operations = args[i];
                 returnObj[mappedArg] = operations.map(d => {
                     let op = Object.keys(d)[0];
                     let opNeededArgs = Object.keys(MONGO_METHODS[op]).slice(1);
@@ -132,12 +132,12 @@ function extractArguments(method, arguments) {
                 });
             } else {
                 let ignoreKeys = MONGO_METHODS[method][mappedArg].ignore;
-                let mappsedArgData = arguments[i];
+                let mappsedArgData = args[i];
                 if (ignoreKeys) mappsedArgData = _.omit(mappsedArgData, ignoreKeys);
                 returnObj[mappedArg] = mappsedArgData;
             }
         } else {
-            returnObj.otherArgs[MONGO_METHODS[method].args[i]] = arguments[i];
+            returnObj.otherArgs[MONGO_METHODS[method].args[i]] = args[i];
         }
     }
 
@@ -263,14 +263,14 @@ function extractDataFromMongoRes(mongoResult) {
 }
 
 module.exports = {
-    cleanupDb,
-    prepareDB,
-    findAndCheckCapturedData,
-    mongoObjToJson,
-    getCurrentMongoDocs,
-    extractArguments,
     checkForErrors,
+    cleanupDb,
     createCaptureIntermediateData,
+    extractArguments,
     extractDataFromMongoRes,
-    jsonObjToMongo
+    findAndCheckCapturedData,
+    getCurrentMongoDocs,
+    jsonObjToMongo,
+    mongoObjToJson,
+    prepareDB,
 }

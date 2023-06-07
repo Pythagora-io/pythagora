@@ -45,7 +45,7 @@ function getMongoCollection(collection) {
 }
 
 module.exports = {
-    setUpDb,
     cleanUpDb,
-    getMongoCollection
+    getMongoCollection,
+    setUpDb,
 };

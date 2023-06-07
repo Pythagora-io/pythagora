@@ -206,26 +206,29 @@ npx pythagora --export-setup
 
 
 module.exports = {
+    enterLoginRouteLog,
+    jestAuthFileGenerationLog,
+    logAndExit,
+    logAppError,
+    logCaptureFinished,
+    logChange,
     logEndpointCaptured,
+    logEndpointNotCaptured,
+    loginRouteEnteredLog,
+    logLoginEndpointCaptured,
     logTestFailed,
     logTestPassed,
     logTestsFinished,
-    logTestStarting,
     logTestsStarting,
-    logEndpointNotCaptured,
-    logCaptureFinished,
-    pythagoraFinishingUp,
+    logTestStarting,
     logWithStoreId,
-    logAppError,
-    testExportStartedLog,
-    logAndExit,
-    testExported,
-    jestAuthFileGenerationLog,
-    loginRouteEnteredLog,
     pleaseCaptureLoginTestLog,
-    logLoginEndpointCaptured,
     primeJestLog,
+    pythagoraFinishingUp,
     testEligibleForExportLog,
-    logChange,
-    enterLoginRouteLog
+    testExported,
+    testExportStartedLog,
+    colors: {
+        red, blue, green, yellow, bold, reset
+    }
 }

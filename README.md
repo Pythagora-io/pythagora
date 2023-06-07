@@ -4,401 +4,174 @@
     <img height="200px" alt="Pythagora Logo" src="https://user-images.githubusercontent.com/10895136/228003796-7e3319ad-f0b1-4da9-a2d0-6cf67ccc7a32.png">
   </picture>
 </p>
-<p align=center>
-  Developers spend 20-30% of their time writing tests!
-</p>
-<h3 align="center">✊ Pythagora creates automated tests for you by analysing server activity ✊</h3>
-<h3 align="center"><a href="#exportjest"> 🤖 Generate Jest integration tests with GPT-4 and Pythagora 🤖</a></h3>
-<br>
-<p align="center">🌟 As an open source tool, it would mean the world to us if you starred Pythagora repo 🌟<br>🙏 Thank you 🙏</p>
+<h2 align="center">Pythagora is on a mission to make automated tests<br>🤖 fully autonomous 🤖</h2>
+<h3 align="center">Just run one command and watch the tests being created with GPT-4</h3>
 <br>
 
-<h1 id="setup">⚙️ Installation</h1>
-
-To integrate Pythagora into your Node.js app, you just need to install the pythagora package
-   <br>
-   ```bash
-   npm install pythagora
-   ```
-   And that's it - no config or setup! You are ready to start recording your integration tests!
-   <br>
-   <br>
-<h1 id="capturingtests">🎥 Capturing tests</h1>
-
-Pythagora records all requests to endpoints of your app with the response and everything that's happening during the request. Currently, that means all Mongo and Redis queries with responses (in the future 3rd party API requests, disk IO operations, etc.). Then, when you run the tests, Pythagora can simulate the server conditions from the time when the request was captured.
-
-1. <b>From the root directory</b> run Pythagora in a capture mode first to capture test data and mocks.
-   <br>
-      ```bash
-      npx pythagora --init-command "my start command" --mode capture
-      ```
-   Eg. if you start your Node.js app with `nest start` then the command would be:
-   <br>
-      ```bash
-      npx pythagora --init-command "nest start" --mode capture
-      ```
-2. Click around your application or make requests to your API. Pythagora will capture all requests and responses.
-   <br><br>
-   <br><br>
-   <b>NOTES: </b>
-   - to stop the capture, you can exit the process like you usually do (Eg. `Ctrl + C`)
-   - on Windows make sure to run all commands using `Git Bash` and not `Power Shell` or anything similiar
+The following details are for generating unit tests. To view the docs on how to generate **integration tests**, click [here](./src/docs/integration/README.md).
 
 <br>
-<br>
-<h1 id="executingtests">▶️ Running tests</h1>
-When running tests, it doesn’t matter what database is your Node.js connected to or what is the state of that database. Actually, that database is never touched or used —> instead, Pythagora creates a special, ephemeral pythagoraDb database, which it uses to restore the data before each test is executed, which was present at the time when the test was recorded. Because of this, tests can be run on any machine or environment.
 
-**If a test does an update to the database, Pythagora also checks the database to see if it was updated correctly.**
+# 🏃💨️ Quickstart
 
-So, after you captured all requests you want, you just need to change the mode parameter to `--mode test` in the Pythagora command.
-<br>
-   ```bash
-   npx pythagora --init-command "my start command" --mode test
-   ```   
-
-<br><br>
-<p align=center>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/Pythagora-io/pythagora/assets/10895136/41f349ec-c6fe-4357-8c92-db09b88d2b8e">
-    <img height="100px" alt="OpenAI logo" src="https://github.com/Pythagora-io/pythagora/assets/10895136/41f349ec-c6fe-4357-8c92-db09b88d2b8e">
-  </picture>
-</p>
-<h1 id="exportjest">🤖 ️Generate Jest tests with Pythagora and GPT-4</h1>
-
-You can export any Pythagora test to Jest with GPT-4. To see how it works, you can watch [the full demo video here](https://www.youtube.com/watch?v=kHbwX4QVoGY).
-
-## What are Jest integration tests made of
-
-- **Database setup** (before a test is run)
-  - during the export to Jest, Pythagora saves all database documents in the `pythagora_tests/exported_tests/data` folder as a JSON file
-  - in the `beforeEach` function, these documents are restored into the database so that the database is in the same state as it was when the test was recorded
-  - Pythagora has built-in functions to work with the database but in case you want to use your own and completely separate Jest tests from Pythagora, use the `global-setup.js` file in which you can set up your own ways to populate the database, get a collection and clear the database
-- **User authentication** (when the endpoint requires authentication)
-  - the first time you run the export, Pythagora will create `auth.js` file
-  - it is used inside `beforeEach` function to retrieve the authentication token so that API requests (that require authentication) can be executed
-- **Test**
-  - tests check the response from the API and if the database is updated correctly
-
-## How to export Pythagora tests to Jest
-
-1. First, you need to tell Pythagora what is the login endpoint. You can do that by running:
-
-    ```bash
-    npx pythagora --export-setup
-    ```
-   
-2. After that, just run Pythagora capture command and log into the app so the login route gets captured.
-
-    ```bash
-    npx pythagora --init-command "my start command" --mode capture
-    ``` 
-
-3. Exporting to Jest is done with GPT-4 so you either need to have OpenAI API key with GPT-4 access or a Pythagora API key which you can get [here](https://mailchi.mp/f4f4d7270a7a/api-waitlist). Once you have the API key, you're ready to export tests to Jest by running:
-
-    ```bash
-    npx pythagora --export --test-id <TEST_ID> --openai-api-key <YOUR_OPENAI_API_KEY>
-    ```
-   or
-    ```bash
-    npx pythagora --export --test-id <TEST_ID> --pythagora-api-key <YOUR_PYTHAGORA_API_KEY>
-    ```
-   
-4. To run the exported tests, run:
-    
-    ```bash
-    npx pythagora --mode jest
-    ```
-
-Exported tests will be available in the `pythagora_tests/exported_tests` folder.
-
-NOTE: Pythagora uses GPT-4 8k model so some tests that do too many things during the processing might exceed the 8k token limit. To check which tests you can export to Jest, you can run:
+To integrate Pythagora you just run:
+```bash
+npm i pythagora --save-dev
+```
+And that's it! Now, you can run the following command from the root directory of your repo:
 
 ```bash
-npx pythagora --tests-eligible-for-export
+npx pythagora --unit-tests --func <FUNCTION_NAME>
 ```
 
+Where `<FUNCTION_NAME>` is the name of the function you want to generate unit tests for. Just make sure that your function is exported from a file. You can see other options like generating tests for multiple files or folders [below in the Options section](#-options).
+
 <br>
-<br>
-<h1 id="demo">🎞 Demo</h1>
+
+# 🎞 Demo
 
 Here are some demo videos that can help you get started.
 <div align="center">
-  <a href="https://youtu.be/YxzvljVyaEA"><img src="https://user-images.githubusercontent.com/10895136/217778681-bce3186f-c92d-4861-94cd-ad8bad29a2ff.gif" alt="Pythagora Alpha Demo"></a>
+  <a href="https://youtu.be/NNd08XgFFw4"><img src="https://github-production-user-asset-6210df.s3.amazonaws.com/10895136/244031887-02f19eb9-dba1-4e62-a670-744c7d3423ae.gif" alt="Pythagora Alpha Demo"></a>
 </div>
 
-<h3 align="center">🎞️ ▶️  Video resources ▶️ 🎞️</h3>
 <p align=center>
-  <a target="_blank" href="https://youtu.be/YxzvljVyaEA">Pythagora Demo (4 min)</a>
-  <br>
-  <a target="_blank" href="https://www.youtube.com/watch?v=kHbwX4QVoGY">Generate Jest tests with Pythagora and GPT-4 (4 min)</a>
-  <br>
-  <a target="_blank" href="https://youtu.be/ferEJsqBHqw">Pythagora Tech Deep Dive (16 min)</a>
-  <br>
-  <a target="_blank" href="https://youtu.be/opQP8NMCiPw">Dev Workflow With Pythagora (4 min)</a>
+  <a target="_blank" href="https://youtu.be/NNd08XgFFw4">Pythagora Unit Tests Demo (2 min)</a>
 </p>
 
-<br><br>
-<h1 id="commands">🔎 Examples</h1>
-Here are examples of open sourced repositories which we forked and created tests with Pythagora so you can easily see it in action. 
+<br>
 
-[![MERN E-commerce](https://img.shields.io/badge/MERN%20E--commerce-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--mern--ecommerce-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-mern-ecommerce)
-[![Reddish](https://img.shields.io/badge/Reddish-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--reddish-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-reddish)
-[![Trellis](https://img.shields.io/badge/Trellis-https%3A%2F%2Fgithub.com%2FPythagora--io%2Fpythagora--demo--trellis-green?style=for-the-badge)](https://github.com/Pythagora-io/pythagora-demo-trellis)
+# 🔎 Examples
+
+Here are examples of open sourced repositories that we forked and created tests with Pythagora so you can easily see it in action. 
+
+- [Lodash](https://github.com/Pythagora-io/pythagora-demo-lodash)
+  - 📝 1604 tests generated
+  - 🐞 13 bugs found (3 edge cases and 10 bugs)
+  - ⏳️ 4 hour run time
+
+  ![lodash pythagora tests results](https://github.com/Pythagora-io/pythagora/assets/10895136/c0a2a589-e3ef-4812-9ea2-545307fd1a1d)
 
 
-<br><br>
-<h1 id="commands">🔧 Maintenance / update of tests</h1>
+- [node-fs-extra](https://github.com/Pythagora-io/pythagora-demo-node-fs-extra)
+  - 📝 109 tests generated
+  - 🐞 12 bugs found
+  - ⏳️ 30 minutes run time
+ 
+  ![node-fs-extra pythagora tests results](https://github.com/Pythagora-io/api/assets/10895136/2408f424-1fe1-4638-8c1a-97c57f562939)
 
-Sometimes tests failing is expected behaviour if the code behaviour is updated. In those cases, tests need to be updated. Pythagora provides a git like interface where you can review
-all changes that are breaking the test and easily (A)ccept them if they are expected or (D)elete the test if you think it's invalid. To start the review process, just run the Pythagora command with `--review` flag.
-<br><br>
+<br>
+
+# 🔬 How does it work?
+When Pythagora generates unit tests, it uses the following approach:
+1. Find the function you want to test
+2. Find all the functions that are called from within that function
+  - This is done with AST (Abstract Syntax Tree) parsing
+3. Send the function you want to test and all the related functions to the Pythagora server which then generates the unit tests with GPT-4
+  - the Pythagora server is open sourced as well [here](https://github.com/Pythagora-io/api)
+  - You can find the prompts [in this folder](https://github.com/Pythagora-io/api/tree/main/prompts) on the Pythagora server
+    
+<br>
+
+# 📖 Options
+- To generate unit tests for **one single function**, run:
+
+    ```bash
+    npx pythagora --unit-tests --func <FUNCTION_NAME>
+    ```
+
+- To generate unit tests for **one single function** in a specific file, run:
+
+    ```bash
+    npx pythagora --unit-tests --func <FUNCTION_NAME> --path ./path/to/file.js
+    ```
+
+- To generate unit tests for **all functions in a file**, run:
+
+    ```bash
+    npx pythagora --unit-tests --path ./path/to/file.js
+    ``` 
+
+- To generate unit tests for **all functions in all files in a folder**, run:
+
+    ```bash
+    npx pythagora --unit-tests --path ./path/to/folder/
+    ```
+
+<br>
+
+# ⚙️ Config
+Pythagora uses GPT-4 to generate tests so you either need to have OpenAI API Key or Pythagora API Key. You can get your [Pythagora API Key here](https://mailchi.mp/f4f4d7270a7a/api-waitlist) or [OpenAI API Key here](https://platform.openai.com/account/api-keys). Once you have it, add it to Pythagora with:
 ```bash
-npx pythagora --review
+npx pythagora --config --pythagora-api-key <API_KEY>
 ```
-
-You can watch the [workflow with Pythagora video](https://www.youtube.com/watch?v=opQP8NMCiPw) in which I go deeper into details of the review process.
-<br><br>
-
-<h1 id="commands">❌ Deleting tests</h1>
-
-If you made some bigger changes to the repo and you want to rewrite many tests, you can delete all of them with `--delete-all-failed` flag.
-<br><br>
-
+or
 ```bash
-npx pythagora --delete-all-failed
+npx pythagora --config --openai-api-key <API_KEY>
 ```
 <br>
 
-If you want to delete only one test using testId you can use
-<b>--delete testId</b> like this:
-   ```bash
-   npx pythagora --delete testId
-   ```
-<br>
-
-<h1 id="options">📖 Other Options</h1>
-
-These are available options for Pythagora command:
-<br><br><br>
-<b>--rerun-all-failed</b> (runs again only tests that failed in previous run)
-   ```bash
-   npx pythagora --init-command "my start command" --mode test --rerun-all-failed
-   ```
-<br>
-
-<b>--test-id</b> (runs test by Id)
-   ```bash
-   npx pythagora --init-command "my start command" --mode test --test-id testId
-   ```
-<br>
-
-<b>--pick endpoint1 endpoint2</b> (starts capturing only listed endpoints)
-   ```bash
-   npx pythagora --init-command "my start command" --mode capture --pick /endpoint1 /endpoint2
-   ```
-<br>
-
-<b>--ignore endpoint1 endpoint2</b> (starts capturing but ignores all listed endpoints)
-   ```bash
-   npx pythagora --init-command "my start command" --mode capture --ignore /endpoint1 /endpoint2
-   ```
-
-<br><br>
-<h1 id="codecoveragereport">📝 Code Coverage Report</h1>
-
-Code coverage is a great metric while building automated tests as it shows us which lines of code are covered by the tests. Pythagora uses `nyc` to generate a report about code that was covered with Pythagora tests. By default, Pythagora will show you the basic code coverage report summary when you run tests.
-<br>
-<br>
-
-If you want to generate a more detailed report, you can do so by running Pythagora with `--full-code-coverage-report` flag. Eg.
-   ```bash
-   npx pythagora --init-command "my start command" --mode test --full-code-coverage-report
-   ```
-You can find the code coverage report inside `pythagora_tests` folder in the root of your repository. You can open the HTML view of the report by opening `pythagora_tests/code_coverage_report/lcov-report/index.html`.
-
-<br>
-
-In case you don't want the code coverage to be shown at all while running tests, you can run the tests with `--no-code-coverage` parameter. This is helpful
-during debugging process since the code coverage report can clash with your IDE's debugger.
-
-<br><br>
-<h1 id="authentication"> 🔑 Authentication</h1>
-For authentication we support <a href="https://www.npmjs.com/package/jsonwebtoken" target="_blank">JWT</a>, sessions stored in
-<a href="https://redis.io/" target="_blank">Redis</a> and sessions stored in <a href="https://www.npmjs.com/package/mongodb" target="_blank">MongoDB</a>.
-First 2 cases cases (JWT and sessions stored in Redis) should work just fine without
-any additional implementation but for session that are stored in MongoDB you need to add this one line of code:
-
-```javascript
-if (global.Pythagora) global.Pythagora.authenticationMiddleware = true;
+# ▶️ How to run unit tests
+To run the generated tests, you can simply run
+```bash
+npx jest ./pythagora_tests/
 ```
-just before your authentication middleware. For example, if you are using <a href="https://www.npmjs.com/package/express-session" target="_blank">express-session</a>
-you would have to add our line of code just above your middleware that is managing sessions in your DB, like this:
+or to run tests from a specific file or a folder, run `npx jest <PATH_TO_FILE_OR_FOLDER>`. Currently, Pythagora supports only generating Jest tests but if you would like it to generate tests in other frameworks, let us know at [hi@pythagora.ai](mailto:hi@pythagora.ai).
 
-```javascript
-if (global.Pythagora) global.Pythagora.authenticationMiddleware = true;
+<br>
 
-app.use(session({
-    secret: 'my-secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        maxAge: 60 * 60 * 1000
-    },
-    store: MongoStore.create({
-        mongoUrl: mongourl,
-        mongoOptions: {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        }
-    })
-}));
-```
-That's it! You are ready to go and all your API requests with authentication should PASS!
+# 📌️ Notes
 
-<br><br>
-<h1 id="testdata">🗺️️ Where can I see the tests?</h1>
-Each captured test is saved in <strong><i>"pythagora_tests"</i></strong> directory at the root of your repository.
-<br><br>
-<details><summary style="background-color: grey; padding: 10px; border: none; border-radius: 4px; cursor: pointer;">Click here to see "pythagora_tests" folder structure explanation:</summary>
-
-<ul>
-  <li>pythagora_tests
-    <ul>
-      <li>exported_tests <span style="color: green;">// folder containing all exported Jest tests</span>
-        <ul>
-          <li>data <span style="color: green;">// folder containing Jest test data</span>
-            <ul>
-              <li>JestTest1.json <span style="color: green;">// this is data that is populated in DB for JestTest1.test.js</span></li>
-              <li>JestTest2.json <span style="color: green;">// this is data that is populated in DB for JestTest2.test.js</span></li>
-              <li>...</li>
-            </ul>
-          </li>
-          <li>auth.js <span style="color: green;">// here is authentication function that is used in all Jest tests</span></li>
-          <li>global-setup.js<span style="color: green;"> // Jest global setup if you want to use your own functions for running Jest tests</span></li>
-          <li>JestTest1.test.js <span style="color: green;">// this is an exported Jest test</span></li>
-          <li>JestTest2.test.js</li>
-          <li>...</li>
-        </ul>
-      </li>
-      <li>pythagoraTest1.json <span style="color: green;">// this is a Pythagora test</span></li>
-      <li>pythagoraTest2.json</li>
-      <li>...</li>
-    </ul>
-  </li>
-</ul>
-</details>
-<br><br>
-Each JSON file in this repository represents one endpoint that was captured and each endpoint can have many captured tests.
-If you open these files, you will see an array in which each object represents a single test. All data that's needed to run a test
-is stored in this object. Here is an example of a test object.
-<br><br>
-<details><summary style="background-color: grey; padding: 10px; border: none; border-radius: 4px; cursor: pointer;">Click here to see example of one recorded Pythagora test:</summary>
-
-```json
-{
-   "id": "b47cbee2-4a47-4b2c-80a0-feddae3081b3",
-   "endpoint": "/api/boards/", // endpoint that was called
-   "body": {}, // body payload that was sent with the request
-   "query": {}, // query params that were sent with the request
-   "params": {}, // params that were sent with the request
-   "method": "GET", // HTTP method that was used
-   "headers": { // headers that were sent with the request
-      "x-forwarded-host": "localhost:3000",
+- The best unit tests that Pythagora generates are the ones that are standalone functions (eg. helpers). Basically, the parts of the code that actually can be unit tested. For example, take a look at this [Pythagora file](./src/utils/common.js) - it contains helper functions that are a perfect candidate for unit tests. When we ran `npx pythagora --unit-tests --path ./src/utils/common.js` - it generated 145 tests from which only 17 failed. What is amazing is that only 6 tests failed because they were incorrectly written and the other 11 tests caught bugs in the code itself. You can view these tests [here](./pythagora_tests/unit/src/utils/common/).
+- We don't store any of your code on our servers. However, the code is being sent to GPT and hence OpenAI. Here is their [privacy policy](https://openai.com/policies/privacy-policy).
+- a function you want to generate tests for needs to be exported from the file. For example, if you have a file like this:
+  ```javascript
+  function mongoObjToJson(originalObj) {
       ...
-   },
-   "statusCode": 200, // status code that was returned
-   "responseData": "...", // response data that was received
-   "intermediateData": [ // server activity that was captured during the request
-      {
-         "type": "mongodb", // type of the activity - mongo query in this case
-         "op": "findOneAndUpdate",
-         "db": "ecomm",
-         "collection": "users",
-         "query": { // mongo match query that was executed
-            "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")"
-         },
-         "otherArgs": {
-            "update": { // data that needs to be updated
-               "$set": {
-                  "name": "Steve",
-                  ...
-               }
-            },
-            ...
-         },
-         "options": {
-            "upsert": false,
-            ...
-         },
-         "preQueryRes": [ // data that was present in the database before the query was executed
-            {
-               "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")",
-               "name": "Michael",
-               ...
-            }
-         ],
-         "mongoRes": [ // data that was returned by the query
-            {
-               "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")",
-               "name": "Steve",
-               ...
-            }
-         ],
-         "postQueryRes": [ // data that was present in the database after the query was executed
-            {
-               "_id": "ObjectId(\"63f5e8272c78361761e9fcf1\")",
-               "name": "Steve",
-               ...
-            }
-         ]
-      }
-   ],
-   "createdAt": "2023-02-22T14:57:52.362Z" // date when the test was captured
-}
-```
-
-</details>
-
-<br><br>
-<h1 id="support">🤔️ FAQ</h1>
-
-- **What happens when I make intential change that breaks tests. How can I update Pythagora tests?**
-    - Pythagora tests can easily be updated by running the review command (`npx pythagora --review`). The review process is basically the same as a git review where you'll find each difference between the captured test and the failed one so you can choose if you need to debug this or you want to accept the new change. If you click `a`(as "accept"), the test will automatically update.
-
-- **Automated tests should show me where the bug is - how can I find a bug with Pythagora tests?**
-    - When a test fails, you can easily rerun the test that failed by adding `--test-id <TEST_ID>` to the test command. This way, if you add breakpoints across your code, you'll be able to easily debug the test itself with all the data the test is using. Also, we have plans for adding bug tracking features but at the moment we don't know when will it be ready.
-
-
-<br><br>
-<h1 id="support">⛑️ Support</h1>
-
-For now, we support projects that use:
-- <a href="https://www.npmjs.com/package/express" target="_blank">Express</a> (it can be used explicitly or under the hood, like in <a href="https://www.npmjs.com/package/@apollo/server" target="_blank">Apollo server</a> or <a href="https://nestjs.com/" target="_blank">NestJS</a>)
-- <a href="https://www.npmjs.com/package/mongodb" target="_blank">MongoDB</a> (same as express, it can be used explicitly or under the hood, like with <a href="https://www.npmjs.com/package/mongoose" target="_blank">Mongoose</a>)
-- <a href="https://redis.io/" target="_blank">Redis</a>
-  <br>
-  <br>
-#### Other technologies that Pythagora works with:
-
-| Apollo server | GraphQL | NestJS | Next.js | Nuxt.js | PostgreSQL | 
-|       :---:     |     :---:      |     :---: |       :---:     |     :---:      |     :---: |
-|<img src="https://user-images.githubusercontent.com/10895136/221188154-0d98b059-5cf1-48bd-b96b-400524d3cd55.png" width="50" alt="Logo 1" style="border-radius: 50%;" />|<img src="https://user-images.githubusercontent.com/10895136/221188225-ea8b0c45-fd37-4bf8-861b-8a97802702da.png" width="50" alt="Logo 2" style="border-radius: 50%" />|<img src="https://user-images.githubusercontent.com/10895136/221188433-e9634001-d9cb-40b2-b358-4932398955ef.png" width="50" alt="Logo 3" style="border-radius: 50%" />| <img src="https://user-images.githubusercontent.com/10895136/221188495-aaaa78bc-b31b-47cb-be37-47d55d4ccf0b.png" width="50" alt="Logo 1" style="border-radius: 50%;" />   | <img src="https://user-images.githubusercontent.com/10895136/221188561-24b75f90-01f7-4378-9664-88af12c9f666.png" width="50" alt="Logo 1" style="border-radius: 50%;" />     | <img src="https://user-images.githubusercontent.com/10895136/221188623-508a8238-8bd6-4858-a322-234582a70a87.png" width="50" alt="Logo 1" style="border-radius: 50%;" />   |
-|   ✅   |    ✅    |   ✅    | Upcoming     | Upcoming       |   Upcoming    |
-
+  }
+  
+  module.exports = {
+      mongoObjToJson
+  };
+  ```
+  
+  Then, to generate unit tests for the `mongoObjToJson` function, you can run:
+  ```bash
+  npx pythagora --unit-tests --func mongoObjToJson
+  ```
 
 <br>
-<h1 id="alphaversion">🏁 Alpha version</h1>
+
+# 🤔️ FAQ
+
+- **How accurate are these tests?**
+  - The best unit tests that Pythagora generates are the ones that are standalone functions. Basically, the parts of the code that actually can be unit tested. For example, take a look at this [Pythagora file](./src/utils/common.js) - it contains helper functions that are a perfect candidate for unit tests. When we ran `npx pythagora --unit-tests --path ./src/utils/common.js` - it generated 145 tests from which only 17 failed. What is amazing is that only 6 tests failed because they were incorrectly written and the other 11 tests caught bugs in the code itself. You can view these tests [here](./pythagora_tests/unit/src/utils/common/).
+  - Here are a couple of observations we've made while testing Pythagora:
+    1. It does a great job at testing edge cases. For many repos we created tests for, the tests found bugs right away by testing edge cases.
+    2. It works best for testing standalone helper functions. For example, we tried generating tests for the Lodash repo and it create 1000 tests from which only 40 needed additional review. For other, non standalone functions, we're planning to combine recordings from integration tests to generate proper mocks so that should expand Pythagora's test palette.
+    3. It's definitely not perfect but the tests it created I wanted to keep and commit them. So, I encourage you to try it out and see how it works for you. If you do that, please let us know via [email](mailto:hi@pythagora.ai) or [Discord](https://discord.gg/npC5TAfj6e). We're super excited to hear how it went for you.
+<br><br>
+- **Should I review generated tests?**
+  - Absolutely. As mentioned above, some tests might be incorrectly written so it's best for you to review all tests before committing them. Nevertheless, I think this will save you a lot of time and will help you think about your code in a different way.
+<br><br>
+- **Tests help me think about my code - I don't want to generate them automatically**
+    - That's the best thing about Pythagora - it actually does help you think about the code. Just, you don't need to spend time writing tests. This happened to us, who created Pythagora - we coded it as fast as possible but when we added unit test generation, we realized that it cannot create tests for some functions. So, we refactored the code and made it more modular so that unit tests can be generated for it. 
+<br><br>
+- **What tests are the best**
+    - That's the best thing about Pythagora - it actually does help you think about the code. Just, you don't need to spend time writing tests. This happened to us, who created Pythagora - we coded it as fast as possible but when we added unit test generation, we realized that it cannot create tests for some functions. So, we refactored the code and made it more modular so that unit tests can be generated for it. 
+
+<br>
+
+# 🏁 Alpha version
 This is an alpha version of Pythagora. To get an update about the beta release or to give a <b>suggestion on tech (framework / database) you want Pythagora to support</b> you can 👉 <a href="http://eepurl.com/ikg_nT" target="_blank">add your email / comment here</a> 👈 .
 <br>
-<br>
-<br>
-<h1 id="connectwithus">🔗 Connect with us</h1>
+
+# 🔗 Connect with us
 💬 Join the discussion on <a href="https://discord.gg/npC5TAfj6e" target="_blank">our Discord server</a>.
 <br><br>
-📨 Get updates on new fetures and beta release by <a href="http://eepurl.com/ikg_nT" target="_blank">adding your email here</a>.
+📨 Get updates on new features and beta release by <a href="http://eepurl.com/ikg_nT" target="_blank">adding your email here</a>.
 <br><br>
-⭐ Star this repo to show support.
+🌟 As an open source tool, it would mean the world to us if you starred the Pythagora repo 🌟
 <br><br>
 <br><br>
 

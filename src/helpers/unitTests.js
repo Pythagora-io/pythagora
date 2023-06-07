@@ -176,7 +176,8 @@ async function saveTests(filePath, name, testData) {
 async function traverseDirectory(directory, onlyCollectFunctionData, prefix = '', funcName) {
     if (await checkPathType(directory) === 'file' && !onlyCollectFunctionData) {
         if (path.extname(directory) !== '.js') throw new Error('File is not a javascript file');
-        return await createTests(directory, prefix, funcName);
+        const newPrefix = `|   ${prefix}|   `;
+        return await createTests(directory, newPrefix, funcName);
     }
     const files = await fs.readdir(directory);
     for (const file of files) {
@@ -187,7 +188,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
             if (ignoreFolders.includes(path.basename(absolutePath))  || path.basename(absolutePath).charAt(0) === '.') continue;
 
             if (onlyCollectFunctionData && isPathInside(path.dirname(queriedPath), absolutePath)) {
-                folderStructureTree.push(getFolderTreeItem(prefix, isLast, path.basename(absolutePath), absolutePath));
+                updateFolderTree(prefix, isLast, absolutePath)
             }
 
             const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
@@ -196,7 +197,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
             if (path.extname(absolutePath) !== '.js') continue;
             if (onlyCollectFunctionData) {
                 if (isPathInside(path.dirname(queriedPath), absolutePath)) {
-                    folderStructureTree.push(getFolderTreeItem(prefix, isLast, path.basename(absolutePath), absolutePath));
+                    updateFolderTree(prefix, isLast, absolutePath);
                 }
                 await processFile(absolutePath);
             } else {
@@ -204,6 +205,12 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
                 await createTests(absolutePath, newPrefix, funcName);
             }
         }
+    }
+}
+
+function updateFolderTree(prefix, isLast, absolutePath) {
+    if (!folderStructureTree.find(fst => fst.absolutePath === absolutePath)) {
+        folderStructureTree.push(getFolderTreeItem(prefix, isLast, path.basename(absolutePath), absolutePath));
     }
 }
 

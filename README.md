@@ -5,7 +5,7 @@
   </picture>
 </p>
 <h2 align="center">Pythagora is on a mission to make automated tests<br>🤖 fully autonomous 🤖</h2>
-<h3 align="center">Just run one command and watch the tests being created</h3>
+<h3 align="center">Just run one command and watch the tests being created with GPT-4</h3>
 <br>
 
 The following details are for generating unit tests. To view the docs on how to generate **integration tests**, click [here](./src/docs/integration/README.md).
@@ -16,7 +16,7 @@ The following details are for generating unit tests. To view the docs on how to 
 
 To integrate Pythagora you just run:
 ```bash
-npm install pythagora
+npm i pythagora --save-dev
 ```
 And that's it! Now, you can run the following command from the root directory of your repo:
 
@@ -24,35 +24,7 @@ And that's it! Now, you can run the following command from the root directory of
 npx pythagora --unit-tests --func <FUNCTION_NAME>
 ```
 
-Where `<FUNCTION_NAME>` is the name of the function you want to generate unit tests for. Just make sure that your function is exported from a file.
-
-<br>
-
-# 🔎 Examples
-
-Here are examples of open sourced repositories that we forked and created tests with Pythagora so you can easily see it in action. 
-
-- [Lodash](https://github.com/Pythagora-io/pythagora-demo-lodash)
-  - 📝109 tests generated
-  - 🐞12 bugs found
-
-  ![node-fs-extra pythagora tests results](..%2F..%2FDownloads%2FScreenshot%202023-06-06%20at%2012.03.04.png)
-
-
-- [node-fs-extra](https://github.com/Pythagora-io/pythagora-demo-node-fs-extra)
-  - 📝109 tests generated
-  - 🐞12 bugs found
- 
-  ![node-fs-extra pythagora tests results](..%2F..%2FDownloads%2FScreenshot%202023-06-06%20at%2012.03.04.png)
-
-<br>
-
-# ▶️ How to run unit tests
-To run the generated tests, you can simply run
-```bash
-npx jest ./pythagora_tests/
-```
-or to run tests from a specific file or a folder, run `npx jest <PATH_TO_FILE_OR_FOLDER>`. Currently, Pythagora supports only generating Jest tests but if you would like it to generate tests in other frameworks, let us know at [hi@pythagora.ai](mailto:hi@pythagora.ai).
+Where `<FUNCTION_NAME>` is the name of the function you want to generate unit tests for. Just make sure that your function is exported from a file. You can see other options like generating tests for multiple files or folders [below in the Options section](#-options).
 
 <br>
 
@@ -72,25 +44,36 @@ Here are some demo videos that can help you get started.
 
 <br>
 
+# 🔎 Examples
+
+Here are examples of open sourced repositories that we forked and created tests with Pythagora so you can easily see it in action. 
+
+- [Lodash](https://github.com/Pythagora-io/pythagora-demo-lodash)
+  - 📝 1604 tests generated
+  - 🐞 13 bugs found (3 edge cases and 10 bugs)
+  - ⏳️ 4 hour run time
+
+  ![lodash pythagora tests results](https://github.com/Pythagora-io/pythagora/assets/10895136/c0a2a589-e3ef-4812-9ea2-545307fd1a1d)
+
+
+- [node-fs-extra](https://github.com/Pythagora-io/pythagora-demo-node-fs-extra)
+  - 📝 109 tests generated
+  - 🐞 12 bugs found
+  - ⏳️ 30 minutes run time
+ 
+  ![node-fs-extra pythagora tests results](..%2F..%2FDownloads%2FScreenshot%202023-06-06%20at%2012.03.04.png)
+
+<br>
+
 # 🔬 How does it work?
 When Pythagora generates unit tests, it uses the following approach:
 1. Find the function you want to test
 2. Find all the functions that are called from within that function
-   - This is done with AST (Abstract Syntax Tree) parsing
+  - This is done with AST (Abstract Syntax Tree) parsing
 3. Send the function you want to test and all the related functions to the Pythagora server which then generates the unit tests with GPT-4
-   - the Pythagora server is open sourced as well [here](https://github.com/Pythagora-io/api)
-   - You can find the prompts [in this folder](https://github.com/Pythagora-io/api/tree/main/prompts) on the Pythagora server
-<br>
-
-# ⚙️ Config
-Pythagora uses GPT-4 to generate tests so you either need to have OpenAI API Key or Pythagora API Key. You can get your [Pythagora API Key here](https://mailchi.mp/f4f4d7270a7a/api-waitlist) or [OpenAI API Key here](https://platform.openai.com/account/api-keys). Once you have it, add it to Pythagora with:
-```bash
-npx pythagora --config --pythagora-api-key <API_KEY>
-```
-or
-```bash
-npx pythagora --config --openai-api-key <API_KEY>
-```
+  - the Pythagora server is open sourced as well [here](https://github.com/Pythagora-io/api)
+  - You can find the prompts [in this folder](https://github.com/Pythagora-io/api/tree/main/prompts) on the Pythagora server
+    
 <br>
 
 # 📖 Options
@@ -117,6 +100,26 @@ npx pythagora --config --openai-api-key <API_KEY>
     ```bash
     npx pythagora --unit-tests --path ./path/to/folder/
     ```
+
+<br>
+
+# ⚙️ Config
+Pythagora uses GPT-4 to generate tests so you either need to have OpenAI API Key or Pythagora API Key. You can get your [Pythagora API Key here](https://mailchi.mp/f4f4d7270a7a/api-waitlist) or [OpenAI API Key here](https://platform.openai.com/account/api-keys). Once you have it, add it to Pythagora with:
+```bash
+npx pythagora --config --pythagora-api-key <API_KEY>
+```
+or
+```bash
+npx pythagora --config --openai-api-key <API_KEY>
+```
+<br>
+
+# ▶️ How to run unit tests
+To run the generated tests, you can simply run
+```bash
+npx jest ./pythagora_tests/
+```
+or to run tests from a specific file or a folder, run `npx jest <PATH_TO_FILE_OR_FOLDER>`. Currently, Pythagora supports only generating Jest tests but if you would like it to generate tests in other frameworks, let us know at [hi@pythagora.ai](mailto:hi@pythagora.ai).
 
 <br>
 

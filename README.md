@@ -61,7 +61,7 @@ Here are examples of open sourced repositories that we forked and created tests 
   - 🐞 12 bugs found
   - ⏳️ 30 minutes run time
  
-  ![node-fs-extra pythagora tests results](..%2F..%2FDownloads%2FScreenshot%202023-06-06%20at%2012.03.04.png)
+  ![node-fs-extra pythagora tests results](https://github.com/Pythagora-io/pythagora/assets/10895136/2026b9c1-968b-4a13-8614-20a961693657)
 
 <br>
 

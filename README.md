@@ -14,11 +14,11 @@ The following details are for generating unit tests. To view the docs on how to 
 
 # 🏃💨️ Quickstart
 
-To integrate Pythagora you just run:
+To install Pythagora run:
 ```bash
 npm i pythagora --save-dev
 ```
-And that's it! Now, you can run the following command from the root directory of your repo:
+Then, [add your API key](#-config) and you're ready to get tests generated. After that, just run the following command from the root directory of your repo:
 
 ```bash
 npx pythagora --unit-tests --func <FUNCTION_NAME>

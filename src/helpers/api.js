@@ -49,34 +49,34 @@ async function makeRequest(data, options, customLogFunction) {
             res.on('data', (chunk) => {
                 try {
                     let stringified = chunk.toString();
-                    if (stringified === 'pythagora_end') {
-                        gptResponse = '';
-                        end = true;
-                        return;
-                    }
-                    if (end) return gptResponse = stringified;
                     try {
                         let json = JSON.parse(stringified);
-                        if (json.error) gptResponse = json.error;
+                        if (json.error || json.message) gptResponse = json;
                         return;
                     } catch (e) {}
-                    let receivedMessages = extractGPTMessageFromStreamData(stringified);
-                    receivedMessages.forEach(rm => {
-                        let content = _.get(rm, 'choices.0.delta.content');
-                        if (content) {
-                            gptResponse += content;
-                            if (customLogFunction) customLogFunction(gptResponse);
-                            else process.stdout.write(content);
-                        }
-                    });
 
+                    if (!stringified.includes('pythagora_end:')) {
+                        let receivedMessages = extractGPTMessageFromStreamData(stringified);
+                        receivedMessages.forEach(rm => {
+                            let content = _.get(rm, 'choices.0.delta.content');
+                            if (content) {
+                                gptResponse += content;
+                                if (customLogFunction) customLogFunction(gptResponse);
+                                else process.stdout.write(content);
+                            }
+                        });
+                    } else {
+                        gptResponse += stringified;
+                        if (customLogFunction) customLogFunction(gptResponse);
+                        else process.stdout.write(stringified);
+                    }
                 } catch (e) {}
             });
-            res.on('end', async (a,b,c) => {
+            res.on('end', async function ()  {
                 process.stdout.write('\n');
                 if (res.statusCode >= 400) throw new Error(`Response status code: ${res.statusCode}. Error message: ${gptResponse}`);
                 if (gptResponse.message) throw new Error(`Error: ${gptResponse.message}. Code: ${gptResponse.code}`);
-                gptResponse = cleanupGPTResponse(gptResponse);
+                gptResponse = cleanupGPTResponse(gptResponse.split('pythagora_end:').pop());
                 resolve(gptResponse);
             });
         });

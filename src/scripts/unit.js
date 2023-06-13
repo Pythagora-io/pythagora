@@ -1,5 +1,5 @@
 const {generateTestsForDirectory} = require("../helpers/unitTests");
-let args = require('../utils/argumentsCheck.js');
+let args = require('../utils/getArgs.js');
 
 if (!args.path && !args.func) {
     console.log("Please provide a path or a function name to test");

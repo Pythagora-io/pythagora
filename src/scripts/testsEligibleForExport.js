@@ -4,7 +4,7 @@ const {getAllGeneratedTests} = require("../utils/common");
 const {convertOldTestForGPT} = require("../utils/legacy");
 const {testEligibleForExportLog} = require("../utils/cmdPrint");
 const {isEligibleForExport} = require("../helpers/api");
-const args = require("../utils/argumentsCheck");
+const args = require("../utils/getArgs");
 const {getFunctionsForExport} = require("../helpers/unitTests");
 
 

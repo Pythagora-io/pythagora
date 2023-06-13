@@ -211,6 +211,19 @@ function processAst(ast, cb) {
                         if (expression.right.type === 'Identifier') {
                             return cb(expression.right.name, null, 'exportFn');
                         }
+                        // When module.exports is set to an anonymous function
+                        else if (expression.right.type === 'FunctionExpression') {
+                            let funcName;
+                            if (expression.right.id) {
+                                funcName = expression.right.id.name;
+                            } else {
+                                // If function is anonymous, we will generate a name
+                                // based on the file name, line and column number
+                                const loc = path.node.loc.start;
+                                funcName = `anon_func_${loc.line}_${loc.column}`;
+                            }
+                            return cb(funcName, path, 'exportFnDef');
+                        }
                         // When module.exports is set to an object containing multiple functions
                         else if (expression.right.type === 'ObjectExpression') {
                             expression.right.properties.forEach(prop => {

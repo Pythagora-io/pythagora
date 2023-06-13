@@ -51,32 +51,23 @@ async function makeRequest(data, options, customLogFunction) {
                     let stringified = chunk.toString();
                     try {
                         let json = JSON.parse(stringified);
-                        if (json.error || json.message) gptResponse = json;
-                        return;
+                        if (json.error || json.message) {
+                            gptResponse = json;
+                            return;
+                        }
                     } catch (e) {}
 
-                    if (!stringified.includes('pythagora_end:')) {
-                        let receivedMessages = extractGPTMessageFromStreamData(stringified);
-                        receivedMessages.forEach(rm => {
-                            let content = _.get(rm, 'choices.0.delta.content');
-                            if (content) {
-                                gptResponse += content;
-                                if (customLogFunction) customLogFunction(gptResponse);
-                                else process.stdout.write(content);
-                            }
-                        });
-                    } else {
-                        gptResponse += stringified;
-                        if (customLogFunction) customLogFunction(gptResponse);
-                        else process.stdout.write(stringified);
-                    }
+                    gptResponse += stringified;
+                    if (customLogFunction) customLogFunction(gptResponse);
+                    else process.stdout.write(stringified);
                 } catch (e) {}
             });
             res.on('end', async function ()  {
                 process.stdout.write('\n');
                 if (res.statusCode >= 400) throw new Error(`Response status code: ${res.statusCode}. Error message: ${gptResponse}`);
+                if (gptResponse.error) throw new Error(`Error: ${gptResponse.error.message}. Code: ${gptResponse.error.code}`);
                 if (gptResponse.message) throw new Error(`Error: ${gptResponse.message}. Code: ${gptResponse.code}`);
-                gptResponse = cleanupGPTResponse(gptResponse.split('pythagora_end:').pop());
+                gptResponse = cleanupGPTResponse(gptResponse);
                 resolve(gptResponse);
             });
         });

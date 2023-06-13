@@ -38,6 +38,7 @@ async function processFile(filePath) {
         let ast = await getAstFromFilePath(filePath);
         let syntaxType = await getModuleTypeFromFilePath(ast);
         processAst(ast, (funcName, path, type) => {
+            if (type === 'exportFnDef') exportsFn.push(funcName);
             if (type === 'exportFn') {
                 exportsFn.push(funcName);
             } else if (type === 'exportObj') {

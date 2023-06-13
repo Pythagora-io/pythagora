@@ -1,6 +1,6 @@
 let { cutWithDots, compareJson, compareJsonDetailed } = require('./common');
 let pythagoraErrors = require('../const/errors');
-let args = require('../utils/argumentsCheck.js');
+let args = require('../utils/getArgs.js');
 let { PYTHAGORA_DELIMITER } = require('../const/common');
 
 let red = '\x1b[31m',

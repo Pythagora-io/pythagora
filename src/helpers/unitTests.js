@@ -15,7 +15,7 @@ const {
 } = require("../utils/code");
 const {getRelativePath, getFolderTreeItem, getTestFilePath, checkPathType, isPathInside} = require("../utils/files");
 const {initScreenForUnitTests} = require("./cmdGUI");
-const {green, red, blue, bold, reset} = require('../utils/CmdPrint').colors;
+const {green, red, blue, bold, reset} = require('../utils/cmdPrint').colors;
 
 let functionList = {},
     leftPanel,

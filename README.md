@@ -28,6 +28,10 @@ Where `<FUNCTION_NAME>` is the name of the function you want to generate unit te
 
 <br>
 
+**NOTE:** on Windows make sure to run all commands using `Git Bash` and not `Power Shell` or anything similiar
+
+<br>
+
 # 🎞 Demo
 
 Here are some demo videos that can help you get started.

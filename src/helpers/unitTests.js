@@ -27,6 +27,7 @@ let functionList = {},
     queriedPath = '',
     folderStructureTree = [],
     testsGenerated = [],
+    errors = [],
     ignoreFolders = ['node_modules', 'pythagora_tests']
 ;
 
@@ -158,6 +159,7 @@ async function createTests(filePath, prefix, funcToTest) {
         }
 
     } catch (e) {
+        errors.push(e);
         // writeLine(`Error parsing file ${filePath}: ${e}`);
     }
 }
@@ -235,8 +237,9 @@ async function generateTestsForDirectory(pathToProcess, funcName) {
 
     screen.destroy();
     process.stdout.write('\x1B[2J\x1B[0f');
+    if (errors.length) console.log('Errors encountered while trying to generate unit tests:\n', errors);
     if (testsGenerated.length === 0) {
-        console.log(`${bold+red}No tests generated${funcName ? ' - can\'t find a function named "' + funcName + '"' : ''}!${reset}`);
+        console.log(`${bold+red}No tests generated!${reset}`);
     } else {
         console.log(`Tests are saved in the following directories:${testsGenerated.reduce((acc, item) => acc + '\n' + blue + item, '')}`);
         console.log(`${bold+green}${testsGenerated.length} unit tests generated!${reset}`);

@@ -233,6 +233,11 @@ function processAst(ast, cb) {
                             });
                         }
                     }
+                    // Handle TypeScript transpiled exports
+                    else if (left.type === 'MemberExpression' &&
+                        left.object.name === 'exports') {
+                        return cb(left.property.name, null, 'exportFn');
+                    }
                 }
             }
 

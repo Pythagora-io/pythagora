@@ -1,4 +1,4 @@
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
 const { getUnitTests, checkForAPIKey} = require('./api');
@@ -28,7 +28,8 @@ let functionList = {},
     folderStructureTree = [],
     testsGenerated = [],
     errors = [],
-    ignoreFolders = ['node_modules', 'pythagora_tests']
+    ignoreFolders = ['node_modules', 'pythagora_tests'],
+    processExtensions = ['.js']
 ;
 
 async function processFile(filePath) {
@@ -142,16 +143,34 @@ async function createTests(filePath, prefix, funcToTest) {
             );
             spinner.start(folderStructureTree, indexToPush);
 
+            let testFilePath = path.join(getTestFilePath(filePath, rootPath), `/${funcData.functionName}.test.js`);
+            if (fs.existsSync(testFilePath)) {
+                await spinner.stop();
+                folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
+                continue;
+            }
+
             let formattedData = await reformatDataForPythagoraAPI(funcData, filePath, getTestFilePath(filePath, rootPath));
-            let tests = await getUnitTests(formattedData, (content) => {
+            let { tests, error } = await getUnitTests(formattedData, (content) => {
                 scrollableContent.setContent(content);
                 scrollableContent.setScrollPerc(100);
                 screen.render();
             });
-            let testPath = await saveTests(filePath, funcData.functionName, tests);
-            testsGenerated.push(testPath);
-            await spinner.stop();
-            folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
+
+            if (tests) {
+                let testPath = await saveTests(filePath, funcData.functionName, tests);
+                testsGenerated.push(testPath);
+                await spinner.stop();
+                folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
+            } else {
+                errors.push({
+                    file:filePath,
+                    function: funcData.functionName,
+                    error
+                });
+                await spinner.stop();
+                folderStructureTree[indexToPush].line = `${red}${folderStructureTree[indexToPush].line}${reset}`;
+            }
         }
 
         if (foundFunctions.length > 0) {
@@ -168,24 +187,24 @@ async function saveTests(filePath, name, testData) {
     let dir = getTestFilePath(filePath, rootPath);
 
     if (!await checkDirectoryExists(dir)) {
-        await fs.mkdir(dir, { recursive: true });
+        fs.mkdirSync(dir, { recursive: true });
     }
 
     let testPath = path.join(dir, `/${name}.test.js`);
-    await fs.writeFile(testPath, testData);
+    fs.writeFileSync(testPath, testData);
     return testPath;
 }
 
 async function traverseDirectory(directory, onlyCollectFunctionData, prefix = '', funcName) {
     if (await checkPathType(directory) === 'file' && !onlyCollectFunctionData) {
-        if (path.extname(directory) !== '.js') throw new Error('File is not a javascript file');
+        if (!processExtensions.includes(path.extname(directory))) throw new Error('File extension is not supported');
         const newPrefix = `|   ${prefix}|   `;
         return await createTests(directory, newPrefix, funcName);
     }
-    const files = await fs.readdir(directory);
+    const files = fs.readdirSync(directory);
     for (const file of files) {
         const absolutePath = path.join(directory, file);
-        const stat = await fs.stat(absolutePath);
+        const stat = fs.statSync(absolutePath);
         const isLast = files.indexOf(file) === files.length - 1;
         if (stat.isDirectory()) {
             if (ignoreFolders.includes(path.basename(absolutePath))  || path.basename(absolutePath).charAt(0) === '.') continue;
@@ -197,7 +216,7 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
             const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
             await traverseDirectory(absolutePath, onlyCollectFunctionData, newPrefix, funcName);
         } else {
-            if (path.extname(absolutePath) !== '.js') continue;
+            if (!processExtensions.includes(path.extname(absolutePath))) continue;
             if (onlyCollectFunctionData) {
                 if (isPathInside(path.dirname(queriedPath), absolutePath)) {
                     updateFolderTree(prefix, isLast, absolutePath);
@@ -225,7 +244,6 @@ async function getFunctionsForExport(dirPath) {
 }
 
 async function generateTestsForDirectory(pathToProcess, funcName) {
-
     checkForAPIKey();
     queriedPath = path.resolve(pathToProcess);
     rootPath = process.cwd();
@@ -237,7 +255,12 @@ async function generateTestsForDirectory(pathToProcess, funcName) {
 
     screen.destroy();
     process.stdout.write('\x1B[2J\x1B[0f');
-    if (errors.length) console.log('Errors encountered while trying to generate unit tests:\n', errors);
+    if (errors.length) {
+        let errLogPath = `${path.resolve(PYTHAGORA_UNIT_DIR, 'errorLogs.log')}`
+        fs.writeFileSync(errLogPath, JSON.stringify(errors));
+        console.error('There were errors encountered while trying to generate unit tests.\n');
+        console.error(`You can find logs here: ${errLogPath}`);
+    }
     if (testsGenerated.length === 0) {
         console.log(`${bold+red}No tests generated!${reset}`);
     } else {

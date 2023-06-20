@@ -64,9 +64,9 @@ async function makeRequest(data, options, customLogFunction) {
             });
             res.on('end', async function ()  {
                 process.stdout.write('\n');
-                if (res.statusCode >= 400) throw new Error(`Response status code: ${res.statusCode}. Error message: ${gptResponse}`);
-                if (gptResponse.error) throw new Error(`Error: ${gptResponse.error.message}. Code: ${gptResponse.error.code}`);
-                if (gptResponse.message) throw new Error(`Error: ${gptResponse.message}. Code: ${gptResponse.code}`);
+                if (res.statusCode >= 400) reject(new Error(`Response status code: ${res.statusCode}. Error message: ${gptResponse}`));
+                if (gptResponse.error) reject(new Error(`Error: ${gptResponse.error.message}. Code: ${gptResponse.error.code}`));
+                if (gptResponse.message) reject(new Error(`Error: ${gptResponse.message}. Code: ${gptResponse.code}`));
                 gptResponse = cleanupGPTResponse(gptResponse);
                 resolve(gptResponse);
             });
@@ -85,8 +85,14 @@ async function makeRequest(data, options, customLogFunction) {
 
 async function getUnitTests(data, customLogFunction) {
     let options = setOptions({path: '/api/generate-unit-tests'});
-    let resp = await makeRequest(JSON.stringify(data), options, customLogFunction);
-    return resp;
+    let tests, error;
+    try {
+        tests = await makeRequest(JSON.stringify(data), options, customLogFunction);
+    } catch (e) {
+        error = e;
+    } finally {
+        return {tests, error};
+    }
 }
 
 async function getJestAuthFunction(loginMongoQueriesArray, loginRequestBody, loginEndpointPath) {

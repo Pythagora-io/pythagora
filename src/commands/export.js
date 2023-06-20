@@ -24,7 +24,8 @@ const {
     getJestTest,
     getJestTestName,
     isEligibleForExport,
-    cleanupGPTResponse
+    cleanupGPTResponse,
+    checkForAPIKey
 } = require("../helpers/api");
 const _ = require('lodash');
 const args = require('../utils/getArgs.js');
@@ -129,6 +130,7 @@ function saveExportJson(exportsMetadata, test, testName) {
 }
 
 (async () => {
+    checkForAPIKey();
     setUpPythagoraDirs();
     cleanupDataFolder();
     let exportsMetadata = JSON.parse(fs.readFileSync(`./${PYTHAGORA_METADATA_DIR}/${EXPORT_METADATA_FILENAME}`));

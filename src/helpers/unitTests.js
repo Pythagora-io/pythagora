@@ -40,8 +40,9 @@ async function processFile(filePath) {
         let ast = await getAstFromFilePath(filePath);
         let syntaxType = await getModuleTypeFromFilePath(ast);
         processAst(ast, (funcName, path, type) => {
-            if (type === 'exportFnDef') exportsFn.push(funcName);
-            if (type === 'exportFn') {
+            if (type === 'exportFnDef') {
+                exportsFn.push(funcName);
+            } else if (type === 'exportFn') {
                 exportsFn.push(funcName);
             } else if (type === 'exportObj') {
                 exportsObj.push(funcName);
@@ -78,7 +79,15 @@ async function processFile(filePath) {
 
 async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
     let relatedCode = _.groupBy(funcData.relatedCode, 'fileName');
-    relatedCode = _.map(relatedCode, (value, key)  => ({ fileName: key, functionNames: value.map(item => item.funcName) }));
+    // TODO add check if there are more functionNames than 1 while exportedAsObject is true - this shouldn't happen ever
+    relatedCode = _.map(relatedCode, (value, key)  => {
+        return {
+            fileName: key,
+            functionNames: value.map(item => item.funcName),
+            exportedAsObject: value[0].exportedAsObject,
+            syntaxType: value[0].syntaxType
+        }
+    });
     let relatedCodeInSameFile = [funcData.functionName];
     funcData.relatedCode = [];
     for (const file of relatedCode) {
@@ -92,6 +101,9 @@ async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
             funcData.relatedCode.push({
                 fileName,
                 code,
+                functionNames: file.functionNames,
+                exportedAsObject: file.exportedAsObject,
+                syntaxType: file.syntaxType,
                 pathRelativeToTest: getRelativePath(fullPath, testFilePath + '/brija.test.js')
             });
         }

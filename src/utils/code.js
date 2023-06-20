@@ -4,6 +4,7 @@ const {default: babelTraverse} = require("@babel/traverse");
 const {default: generator} = require("@babel/generator");
 const {getRelativePath} = require("./files");
 const fs = require("fs").promises;
+const _ = require("lodash");
 
 
 function replaceRequirePaths(code, currentPath, testFilePath) {
@@ -52,10 +53,18 @@ async function getAstFromFilePath(filePath) {
 }
 
 async function getModuleTypeFromFilePath(ast) {
-    let moduleType = 'unknown';
+    let moduleType = 'CommonJS';
 
     babelTraverse(ast, {
         ImportDeclaration(path) {
+            moduleType = 'ES6';
+            path.stop(); // Stop traversal when an ESM statement is found
+        },
+        ExportNamedDeclaration(path) {
+            moduleType = 'ES6';
+            path.stop(); // Stop traversal when an ESM statement is found
+        },
+        ExportDefaultDeclaration(path) {
             moduleType = 'ES6';
             path.stop(); // Stop traversal when an ESM statement is found
         },
@@ -138,10 +147,9 @@ function getRelatedFunctions(node, ast, filePath, functionList) {
             }
             let functionFromList = functionList[requiredPath + ':' + funcName];
             if (functionFromList) {
-                relatedFunctions.push({
-                    fileName: requiredPath,
-                    funcName
-                });
+                relatedFunctions.push(_.extend(functionFromList, {
+                    fileName: requiredPath
+                }));
             }
         }
 

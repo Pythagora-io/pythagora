@@ -260,6 +260,8 @@ function processAst(ast, cb) {
                             return cb(prop.key.name, null, 'exportObj');
                         }
                     });
+                } else if (declaration.type === 'ClassDeclaration') {
+                    return cb(declaration.id ? declaration.id.name : declaration.name, null, 'exportFnDef');
                 }
             } else if (path.isExportNamedDeclaration()) {
                 if (path.node.declaration) {
@@ -269,6 +271,8 @@ function processAst(ast, cb) {
                         path.node.declaration.declarations.forEach(declaration => {
                             return cb(declaration.id.name, null, 'exportFn');
                         });
+                    } else if (path.node.declaration.type === 'ClassDeclaration') {
+                        return cb(path.node.declaration.id.name, null, 'exportFnDef');
                     }
                 } else if (path.node.specifiers.length > 0) {
                     path.node.specifiers.forEach(spec => {

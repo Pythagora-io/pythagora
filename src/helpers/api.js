@@ -64,11 +64,11 @@ async function makeRequest(data, options, customLogFunction) {
             });
             res.on('end', async function ()  {
                 process.stdout.write('\n');
-                if (res.statusCode >= 400) reject(new Error(`Response status code: ${res.statusCode}. Error message: ${gptResponse}`));
-                if (gptResponse.error) reject(new Error(`Error: ${gptResponse.error.message}. Code: ${gptResponse.error.code}`));
-                if (gptResponse.message) reject(new Error(`Error: ${gptResponse.message}. Code: ${gptResponse.code}`));
+                if (res.statusCode >= 400) return reject(new Error(`Response status code: ${res.statusCode}. Error message: ${gptResponse}`));
+                if (gptResponse.error) return reject(new Error(`Error: ${gptResponse.error.message}. Code: ${gptResponse.error.code}`));
+                if (gptResponse.message) return reject(new Error(`Error: ${gptResponse.message}. Code: ${gptResponse.code}`));
                 gptResponse = gptResponse.split('pythagora_end:').pop();
-                resolve(gptResponse);
+                return resolve(gptResponse);
             });
         });
 

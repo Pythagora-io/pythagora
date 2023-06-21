@@ -212,7 +212,14 @@ function processAst(ast, cb) {
                 const expression = path.node.expression;
                 if (expression && expression.type === 'AssignmentExpression') {
                     const left = expression.left;
-                    if (left.type === 'MemberExpression' &&
+                    if (left.object.type === 'MemberExpression' &&
+                        left.object.object.name === 'module' &&
+                        left.object.property.name === 'exports') {
+                        // When module.exports.funcName = func1
+                        if (expression.right.type === 'Identifier') {
+                            return cb(left.property.name, null, 'exportObj');
+                        }
+                    } else if (left.type === 'MemberExpression' &&
                         left.object.name === 'module' &&
                         left.property.name === 'exports') {
                         // When module.exports is set to a single function

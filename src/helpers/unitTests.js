@@ -13,7 +13,7 @@ const {
     getRelatedFunctions,
     getModuleTypeFromFilePath
 } = require("../utils/code");
-const {getRelativePath, getFolderTreeItem, getTestFilePath, checkPathType, isPathInside} = require("../utils/files");
+const {getRelativePath, getFolderTreeItem, getTestFolderPath, checkPathType, isPathInside} = require("../utils/files");
 const {initScreenForUnitTests} = require("./cmdGUI");
 const {green, red, blue, bold, reset} = require('../utils/cmdPrint').colors;
 
@@ -94,23 +94,23 @@ async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
         if (file.fileName === filePath) {
             relatedCodeInSameFile = relatedCodeInSameFile.concat(file.functionNames);
         } else {
-            let fileName = getRelativePath(file.fileName, filePath);
+            let fileName = getRelativePath(file.fileName, path.dirname(filePath));
             let code = await stripUnrelatedFunctions(file.fileName, file.functionNames);
             let fullPath = filePath.substring(0, filePath.lastIndexOf('/')) + '/' + fileName;
-            code = replaceRequirePaths(code, filePath, path.resolve(PYTHAGORA_UNIT_DIR) + '/brija.test.js');
+            code = replaceRequirePaths(code, filePath, getTestFolderPath(filePath, rootPath));
             funcData.relatedCode.push({
                 fileName,
                 code,
                 functionNames: file.functionNames,
                 exportedAsObject: file.exportedAsObject,
                 syntaxType: file.syntaxType,
-                pathRelativeToTest: getRelativePath(fullPath, testFilePath + '/brija.test.js')
+                pathRelativeToTest: getRelativePath(fullPath, testFilePath)
             });
         }
     }
     funcData.functionCode = await stripUnrelatedFunctions(filePath, relatedCodeInSameFile);
-    funcData.functionCode = replaceRequirePaths(funcData.functionCode, path.dirname(filePath), path.resolve(PYTHAGORA_UNIT_DIR) + '/brija.test.js');
-    funcData.pathRelativeToTest = getRelativePath(filePath, testFilePath + '/brija.test.js');
+    funcData.functionCode = replaceRequirePaths(funcData.functionCode, path.dirname(filePath), getTestFolderPath(filePath, rootPath));
+    funcData.pathRelativeToTest = getRelativePath(filePath, testFilePath);
     return funcData;
 }
 
@@ -155,14 +155,14 @@ async function createTests(filePath, prefix, funcToTest) {
             );
             spinner.start(folderStructureTree, indexToPush);
 
-            let testFilePath = path.join(getTestFilePath(filePath, rootPath), `/${funcData.functionName}.test.js`);
+            let testFilePath = path.join(getTestFolderPath(filePath, rootPath), `/${funcData.functionName}.test.js`);
             if (fs.existsSync(testFilePath)) {
                 await spinner.stop();
                 folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
                 continue;
             }
 
-            let formattedData = await reformatDataForPythagoraAPI(funcData, filePath, getTestFilePath(filePath, rootPath));
+            let formattedData = await reformatDataForPythagoraAPI(funcData, filePath, getTestFolderPath(filePath, rootPath));
             let { tests, error } = await getUnitTests(formattedData, (content) => {
                 scrollableContent.setContent(content);
                 scrollableContent.setScrollPerc(100);
@@ -196,7 +196,7 @@ async function createTests(filePath, prefix, funcToTest) {
 }
 
 async function saveTests(filePath, name, testData) {
-    let dir = getTestFilePath(filePath, rootPath);
+    let dir = getTestFolderPath(filePath, rootPath);
 
     if (!await checkDirectoryExists(dir)) {
         fs.mkdirSync(dir, { recursive: true });

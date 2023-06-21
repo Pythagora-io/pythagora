@@ -6,4 +6,4 @@ if (!args.path && !args.func) {
     process.exit(1);
 }
 if (!args.path) args.path = process.cwd();
-generateTestsForDirectory(args.path, args.func);
+generateTestsForDirectory(args);

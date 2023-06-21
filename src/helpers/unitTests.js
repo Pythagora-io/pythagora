@@ -29,7 +29,9 @@ let functionList = {},
     testsGenerated = [],
     errors = [],
     ignoreFolders = ['node_modules', 'pythagora_tests'],
-    processExtensions = ['.js']
+    processExtensions = ['.js'],
+    ignoreErrors = ['BABEL_PARSER_SYNTAX_ERROR'],
+    force
 ;
 
 async function processFile(filePath) {
@@ -156,7 +158,7 @@ async function createTests(filePath, prefix, funcToTest) {
             spinner.start(folderStructureTree, indexToPush);
 
             let testFilePath = path.join(getTestFilePath(filePath, rootPath), `/${funcData.functionName}.test.js`);
-            if (fs.existsSync(testFilePath)) {
+            if (fs.existsSync(testFilePath) && !force) {
                 await spinner.stop();
                 folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
                 continue;
@@ -190,8 +192,7 @@ async function createTests(filePath, prefix, funcToTest) {
         }
 
     } catch (e) {
-        errors.push(e);
-        // writeLine(`Error parsing file ${filePath}: ${e}`);
+        if (!ignoreErrors.includes(e.code)) errors.push(e);
     }
 }
 
@@ -255,7 +256,11 @@ async function getFunctionsForExport(dirPath) {
     return functionList;
 }
 
-async function generateTestsForDirectory(pathToProcess, funcName) {
+async function generateTestsForDirectory(args) {
+    let pathToProcess = args.path,
+        funcName = args.func;
+    force = args.force;
+
     checkForAPIKey();
     queriedPath = path.resolve(pathToProcess);
     rootPath = process.cwd();

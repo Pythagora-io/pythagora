@@ -264,7 +264,7 @@ function processAst(ast, cb) {
             } else if (path.isExportNamedDeclaration()) {
                 if (path.node.declaration) {
                     if (path.node.declaration.type === 'FunctionDeclaration') {
-                        return cb(path.node.declaration.id.name, null, 'exportFn');
+                        return cb(path.node.declaration.id.name, null, 'exportFnDef');
                     } else if (path.node.declaration.type === 'VariableDeclaration') {
                         path.node.declaration.declarations.forEach(declaration => {
                             return cb(declaration.id.name, null, 'exportFn');

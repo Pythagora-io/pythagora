@@ -109,7 +109,7 @@ do
     exit 0
   elif [[ "${args[$i]}" == "--export" ]]
   then
-    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/commands/export.js"
+    PYTHAGORA_CONFIG="$@" node -e "require('./node_modules/${pythagora_dir}/src/commands/export.js').runExport()"
     exit 0
   elif [[ "${args[$i]}" == "--mode" ]]
   then

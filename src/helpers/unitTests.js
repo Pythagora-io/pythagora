@@ -44,7 +44,9 @@ async function processFile(filePath) {
                 exportsFn.push(funcName);
             } else if (type === 'exportObj') {
                 exportsObj.push(funcName);
-            } else {
+            }
+
+            if (!['exportFn', 'exportObj'].includes(type)) {
                 functions.push({
                     funcName,
                     code: generator(path.node).code,

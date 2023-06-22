@@ -215,10 +215,12 @@ function processAst(ast, cb) {
                     if (left.object.type === 'MemberExpression' &&
                         left.object.object.name === 'module' &&
                         left.object.property.name === 'exports') {
-                        // When module.exports.funcName = func1
                         if (expression.right.type === 'Identifier') {
+                            // module.exports.func1 = func1
                             return cb(left.property.name, null, 'exportObj');
                         } else if (expression.right.type === 'FunctionExpression') {
+                            // module.exports.funcName = function() { ... }
+                            // module.exports = function() { ... }
                             const loc = path.node.loc.start;
                             let funcName = (left.property.name) || `anon_func_${loc.line}_${loc.column}`;
                             return cb(funcName, path, 'exportObj');
@@ -226,27 +228,24 @@ function processAst(ast, cb) {
                     } else if (left.type === 'MemberExpression' &&
                         left.object.name === 'module' &&
                         left.property.name === 'exports') {
-                        // When module.exports is set to a single function
                         if (expression.right.type === 'Identifier') {
+                            // module.exports = func1
                             return cb(expression.right.name, null, 'exportFn');
-                        }
-                        // When module.exports is set to an anonymous function
-                        else if (expression.right.type === 'FunctionExpression') {
+                        } else if (expression.right.type === 'FunctionExpression') {
                             let funcName;
                             if (expression.right.id) {
+                                // module.exports = function func1() { ... }
                                 funcName = expression.right.id.name;
                             } else {
-                                // If function is anonymous, we will generate a name
-                                // based on the file name, line and column number
+                                // module.exports = function() { ... }
                                 const loc = path.node.loc.start;
                                 funcName = `anon_func_${loc.line}_${loc.column}`;
                             }
                             return cb(funcName, path, 'exportFnDef');
-                        }
-                        // When module.exports is set to an object containing multiple functions
-                        else if (expression.right.type === 'ObjectExpression') {
+                        } else if (expression.right.type === 'ObjectExpression') {
                             expression.right.properties.forEach(prop => {
                                 if (prop.type === 'ObjectProperty') {
+                                    // module.exports = { func1 };
                                     return cb(prop.key.name, null, 'exportObj');
                                 }
                             });
@@ -266,29 +265,39 @@ function processAst(ast, cb) {
             if (path.isExportDefaultDeclaration()) {
                 const declaration = path.node.declaration;
                 if (declaration.type === 'FunctionDeclaration' || declaration.type === 'Identifier') {
+                    // export default func1;
+                    // TODO export default function() { ... }
+                    // TODO cover anonimous functions - add "anon_" name
                     return cb(declaration.id ? declaration.id.name : declaration.name, null, 'exportFn');
                 } else if (declaration.type === 'ObjectExpression') {
                     declaration.properties.forEach(prop => {
                         if (prop.type === 'ObjectProperty') {
+                            // export default { func1: func }
+                            // export default { func1 }
                             return cb(prop.key.name, null, 'exportObj');
                         }
                     });
                 } else if (declaration.type === 'ClassDeclaration') {
+                    // export default class Class1 { ... }
                     return cb(declaration.id ? declaration.id.name : declaration.name, null, 'exportFnDef');
                 }
             } else if (path.isExportNamedDeclaration()) {
                 if (path.node.declaration) {
                     if (path.node.declaration.type === 'FunctionDeclaration') {
+                        // export function func1 () { ... }
+                        // export class Class1 () { ... }
                         return cb(path.node.declaration.id.name, null, 'exportFnDef');
                     } else if (path.node.declaration.type === 'VariableDeclaration') {
                         path.node.declaration.declarations.forEach(declaration => {
                             return cb(declaration.id.name, null, 'exportFn');
                         });
                     } else if (path.node.declaration.type === 'ClassDeclaration') {
+                        // export class Class1 { ... }
                         return cb(path.node.declaration.id.name, null, 'exportFnDef');
                     }
                 } else if (path.node.specifiers.length > 0) {
                     path.node.specifiers.forEach(spec => {
+                        // export { func as func1 }
                         return cb(spec.exported.name, null, 'exportObj');
                     });
                 }

@@ -218,6 +218,10 @@ function processAst(ast, cb) {
                         // When module.exports.funcName = func1
                         if (expression.right.type === 'Identifier') {
                             return cb(left.property.name, null, 'exportObj');
+                        } else if (expression.right.type === 'FunctionExpression') {
+                            const loc = path.node.loc.start;
+                            let funcName = (left.property.name) || `anon_func_${loc.line}_${loc.column}`;
+                            return cb(funcName, path, 'exportObj');
                         }
                     } else if (left.type === 'MemberExpression' &&
                         left.object.name === 'module' &&
@@ -251,7 +255,9 @@ function processAst(ast, cb) {
                     // Handle TypeScript transpiled exports
                     else if (left.type === 'MemberExpression' &&
                         left.object.name === 'exports') {
-                        return cb(left.property.name, null, 'exportFn');
+                        // exports.func1 = function() { ... }
+                        // exports.func1 = func1
+                        return cb(left.property.name, null, 'exportObj');
                     }
                 }
             }

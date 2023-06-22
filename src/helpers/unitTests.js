@@ -29,7 +29,9 @@ let functionList = {},
     testsGenerated = [],
     errors = [],
     ignoreFolders = ['node_modules', 'pythagora_tests'],
-    processExtensions = ['.js']
+    processExtensions = ['.js'],
+    ignoreErrors = ['BABEL_PARSER_SYNTAX_ERROR'],
+    force
 ;
 
 async function processFile(filePath) {
@@ -156,7 +158,7 @@ async function createTests(filePath, prefix, funcToTest) {
             spinner.start(folderStructureTree, indexToPush);
 
             let testFilePath = path.join(getTestFolderPath(filePath, rootPath), `/${funcData.functionName}.test.js`);
-            if (fs.existsSync(testFilePath)) {
+            if (fs.existsSync(testFilePath) && !force) {
                 await spinner.stop();
                 folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
                 continue;
@@ -174,11 +176,11 @@ async function createTests(filePath, prefix, funcToTest) {
                 testsGenerated.push(testPath);
                 await spinner.stop();
                 folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
-            } else {
+            } else if (error) {
                 errors.push({
                     file:filePath,
                     function: funcData.functionName,
-                    error
+                    error: { stack: error.stack, message: error.message }
                 });
                 await spinner.stop();
                 folderStructureTree[indexToPush].line = `${red}${folderStructureTree[indexToPush].line}${reset}`;
@@ -190,8 +192,7 @@ async function createTests(filePath, prefix, funcToTest) {
         }
 
     } catch (e) {
-        errors.push(e);
-        // writeLine(`Error parsing file ${filePath}: ${e}`);
+        if (!ignoreErrors.includes(e.code)) errors.push(e);
     }
 }
 
@@ -255,7 +256,11 @@ async function getFunctionsForExport(dirPath) {
     return functionList;
 }
 
-async function generateTestsForDirectory(pathToProcess, funcName) {
+async function generateTestsForDirectory(args) {
+    let pathToProcess = args.path,
+        funcName = args.func;
+    force = args.force;
+
     checkForAPIKey();
     queriedPath = path.resolve(pathToProcess);
     rootPath = process.cwd();
@@ -269,7 +274,7 @@ async function generateTestsForDirectory(pathToProcess, funcName) {
     process.stdout.write('\x1B[2J\x1B[0f');
     if (errors.length) {
         let errLogPath = `${path.resolve(PYTHAGORA_UNIT_DIR, 'errorLogs.log')}`
-        fs.writeFileSync(errLogPath, JSON.stringify(errors));
+        fs.writeFileSync(errLogPath, JSON.stringify(errors, null, 2));
         console.error('There were errors encountered while trying to generate unit tests.\n');
         console.error(`You can find logs here: ${errLogPath}`);
     }

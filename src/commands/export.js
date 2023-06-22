@@ -24,7 +24,6 @@ const {
     getJestTest,
     getJestTestName,
     isEligibleForExport,
-    cleanupGPTResponse,
     checkForAPIKey
 } = require("../helpers/api");
 const _ = require('lodash');
@@ -69,8 +68,7 @@ async function configureAuthFile(generatedTests) {
     }
 
     let loginData = pythagoraMetadata.exportRequirements.login;
-    let gptResponse = await getJestAuthFunction(loginData.mongoQueriesArray, loginData.requestBody, loginData.endpointPath);
-    let code = cleanupGPTResponse(gptResponse);
+    let code = await getJestAuthFunction(loginData.mongoQueriesArray, loginData.requestBody, loginData.endpointPath);
 
     fs.writeFileSync(`./${EXPORTED_TESTS_DIR}/auth.js`, code);
 }

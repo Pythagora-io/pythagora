@@ -64,11 +64,11 @@ async function makeRequest(data, options, customLogFunction) {
             });
             res.on('end', async function ()  {
                 process.stdout.write('\n');
-                if (res.statusCode >= 400) reject(new Error(`Response status code: ${res.statusCode}. Error message: ${gptResponse}`));
-                if (gptResponse.error) reject(new Error(`Error: ${gptResponse.error.message}. Code: ${gptResponse.error.code}`));
-                if (gptResponse.message) reject(new Error(`Error: ${gptResponse.message}. Code: ${gptResponse.code}`));
-                gptResponse = cleanupGPTResponse(gptResponse);
-                resolve(gptResponse);
+                if (res.statusCode >= 400) return reject(new Error(`Response status code: ${res.statusCode}. Error message: ${gptResponse}`));
+                if (gptResponse.error) return reject(new Error(`Error: ${gptResponse.error.message}. Code: ${gptResponse.error.code}`));
+                if (gptResponse.message) return reject(new Error(`Error: ${gptResponse.message}. Code: ${gptResponse.code}`));
+                gptResponse = gptResponse.split('pythagora_end:').pop();
+                return resolve(gptResponse);
             });
         });
 
@@ -130,14 +130,6 @@ async function isEligibleForExport(test) {
     }
 }
 
-function cleanupGPTResponse(gptResponse) {
-    if (gptResponse.substring(0, 3) === "```") {
-        gptResponse = gptResponse.substring(gptResponse.indexOf('\n') + 1, gptResponse.lastIndexOf('```'));
-    }
-
-    return gptResponse;
-}
-
 function checkForAPIKey() {
     if (!args.pythagora_api_key && !args.openai_api_key) {
         console.log(`${bold+red}No API key found!${reset}`);
@@ -155,7 +147,6 @@ module.exports = {
     getJestTest,
     getJestTestName,
     isEligibleForExport,
-    cleanupGPTResponse,
     getUnitTests,
     checkForAPIKey
 }

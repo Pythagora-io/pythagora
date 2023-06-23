@@ -29,7 +29,7 @@ let functionList = {},
     testsGenerated = [],
     errors = [],
     ignoreFolders = ['node_modules', 'pythagora_tests'],
-    processExtensions = ['.js'],
+    processExtensions = ['.js', '.ts'],
     ignoreErrors = ['BABEL_PARSER_SYNTAX_ERROR'],
     force
 ;
@@ -118,6 +118,7 @@ async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
 
 async function createTests(filePath, prefix, funcToTest) {
     try {
+        let extension = path.extname(filePath);
         let ast = await getAstFromFilePath(filePath);
         const fileIndex = folderStructureTree.findIndex(item => item.absolutePath === filePath);
 
@@ -142,8 +143,14 @@ async function createTests(filePath, prefix, funcToTest) {
             }
         });
 
-        for (const [i, funcData] of foundFunctions.entries()) {
-            let isLast = foundFunctions.indexOf(funcData) === foundFunctions.length - 1;
+        const uniqueFoundFunctions = foundFunctions.filter((item, index, self) =>
+                index === self.findIndex((t) => (
+                    t.functionName === item.functionName && t.functionCode === item.functionCode
+                ))
+        );
+
+        for (const [i, funcData] of uniqueFoundFunctions.entries()) {
+            let isLast = uniqueFoundFunctions.indexOf(funcData) === uniqueFoundFunctions.length - 1;
             let indexToPush = fileIndex + 1 + i;
             folderStructureTree.splice(
                 indexToPush,
@@ -151,7 +158,7 @@ async function createTests(filePath, prefix, funcToTest) {
                 getFolderTreeItem(
                     prefix,
                     isLast,
-                    `${funcData.functionName}.test.js`,
+                    `${funcData.functionName}.test${extension}`,
                     filePath + ':' + funcData.functionName
                 )
             );
@@ -187,7 +194,7 @@ async function createTests(filePath, prefix, funcToTest) {
             }
         }
 
-        if (foundFunctions.length > 0) {
+        if (uniqueFoundFunctions.length > 0) {
             folderStructureTree[fileIndex].line = `${green+bold}${folderStructureTree[fileIndex].line}${reset}`;
         }
 
@@ -198,12 +205,13 @@ async function createTests(filePath, prefix, funcToTest) {
 
 async function saveTests(filePath, name, testData) {
     let dir = getTestFolderPath(filePath, rootPath);
+    let extension = path.extname(filePath);
 
     if (!await checkDirectoryExists(dir)) {
         fs.mkdirSync(dir, { recursive: true });
     }
 
-    let testPath = path.join(dir, `/${name}.test.js`);
+    let testPath = path.join(dir, `/${name}.test${extension}`);
     fs.writeFileSync(testPath, testData);
     return testPath;
 }
@@ -273,7 +281,7 @@ async function generateTestsForDirectory(args) {
     screen.destroy();
     process.stdout.write('\x1B[2J\x1B[0f');
     if (errors.length) {
-        let errLogPath = `${path.resolve(PYTHAGORA_UNIT_DIR, 'errorLogs.log')}`
+        let errLogPath = `${path.resolve(PYTHAGORA_UNIT_DIR, 'errorLogs.log')}`;
         fs.writeFileSync(errLogPath, JSON.stringify(errors, null, 2));
         console.error('There were errors encountered while trying to generate unit tests.\n');
         console.error(`You can find logs here: ${errLogPath}`);

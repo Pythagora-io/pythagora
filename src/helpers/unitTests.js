@@ -4,7 +4,7 @@ const _ = require('lodash');
 const { getUnitTests, checkForAPIKey} = require('./api');
 const {PYTHAGORA_UNIT_DIR} = require("../const/common");
 const generator = require("@babel/generator").default;
-const {delay, checkDirectoryExists} = require("../utils/common");
+const {checkDirectoryExists} = require("../utils/common");
 const {
     stripUnrelatedFunctions,
     replaceRequirePaths,
@@ -18,8 +18,6 @@ const {initScreenForUnitTests} = require("./cmdGUI");
 const {green, red, blue, bold, reset} = require('../utils/cmdPrint').colors;
 
 let functionList = {},
-    leftPanel,
-    rightPanel,
     screen,
     scrollableContent,
     spinner,
@@ -27,9 +25,11 @@ let functionList = {},
     queriedPath = '',
     folderStructureTree = [],
     testsGenerated = [],
+    skippedFiles = [],
     errors = [],
-    ignoreFolders = ['node_modules', 'pythagora_tests'],
-    processExtensions = ['.js', '.ts'],
+    ignoreFolders = ['node_modules', 'pythagora_tests', '__tests__'],
+    ignoreFilesEndingWith = [".test.js", ".test.ts", ".test.tsx"],
+    processExtensions = ['.js', '.ts', '.tsx'],
     ignoreErrors = ['BABEL_PARSER_SYNTAX_ERROR'],
     force
 ;
@@ -164,8 +164,9 @@ async function createTests(filePath, prefix, funcToTest) {
             );
             spinner.start(folderStructureTree, indexToPush);
 
-            let testFilePath = path.join(getTestFolderPath(filePath, rootPath), `/${funcData.functionName}.test.js`);
+            let testFilePath = path.join(getTestFolderPath(filePath, rootPath), `/${funcData.functionName}.test${extension}`);
             if (fs.existsSync(testFilePath) && !force) {
+                skippedFiles.push(testFilePath);
                 await spinner.stop();
                 folderStructureTree[indexToPush].line = `${green}${folderStructureTree[indexToPush].line}${reset}`;
                 continue;
@@ -227,11 +228,14 @@ async function traverseDirectory(directory, onlyCollectFunctionData, prefix = ''
         const absolutePath = path.join(directory, file);
         const stat = fs.statSync(absolutePath);
         const isLast = files.indexOf(file) === files.length - 1;
+
+        if (ignoreFilesEndingWith.some(ending => file.endsWith(ending))) continue;
+
         if (stat.isDirectory()) {
-            if (ignoreFolders.includes(path.basename(absolutePath))  || path.basename(absolutePath).charAt(0) === '.') continue;
+            if (ignoreFolders.includes(path.basename(absolutePath)) || path.basename(absolutePath).charAt(0) === '.') continue;
 
             if (onlyCollectFunctionData && isPathInside(path.dirname(queriedPath), absolutePath)) {
-                updateFolderTree(prefix, isLast, absolutePath)
+                updateFolderTree(prefix, isLast, absolutePath);
             }
 
             const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
@@ -286,6 +290,7 @@ async function generateTestsForDirectory(args) {
         console.error('There were errors encountered while trying to generate unit tests.\n');
         console.error(`You can find logs here: ${errLogPath}`);
     }
+    if (skippedFiles.length) console.log(`${bold}${skippedFiles.length} files were skipped because tests already exist. If you want to override them add "--force" flag to command${reset}`);
     if (testsGenerated.length === 0) {
         console.log(`${bold+red}No tests generated!${reset}`);
     } else {

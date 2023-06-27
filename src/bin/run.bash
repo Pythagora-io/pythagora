@@ -53,28 +53,20 @@ do
   elif [[ "${args[$i]}" == "--config" ]]
   then
     # TODO refactor and make it flexible
-    CONFIG_DIR="./.pythagora"
-    CONFIG_FILE="$CONFIG_DIR/config.json"
-    TMP_FILE="$CONFIG_DIR/tmp.json"
+    CONFIG_FILE="./.pythagora/config.json"
+    rm "$CONFIG_FILE"
 
-    # Create the config file if it doesn't exist
     if [ ! -f "$CONFIG_FILE" ]; then
-        mkdir -p $CONFIG_DIR
-        echo "{}" > $CONFIG_FILE
+        mkdir -p ./.pythagora
+        touch "./$CONFIG_FILE"
     fi
 
     API_NAME="${args[$i+1]//--/}"
     API_NAME="${API_NAME//-/_}"
     API_KEY="${args[$i+2]}"
-
-    if [ "$API_NAME" == "pythagora_api_key" ]; then
-        jq 'del(.openai_api_key)' $CONFIG_FILE > $TMP_FILE && mv $TMP_FILE $CONFIG_FILE
-    elif [ "$API_NAME" == "openai_api_key" ]; then
-        jq 'del(.pythagora_api_key)' $CONFIG_FILE > $TMP_FILE && mv $TMP_FILE $CONFIG_FILE
-    fi
-
-    # Use jq to add the new key-value pair to the JSON object
-    jq --arg key "$API_NAME" --arg value "$API_KEY" '. + {($key): $value}' $CONFIG_FILE > $TMP_FILE && mv $TMP_FILE $CONFIG_FILE
+    echo "{" >> $CONFIG_FILE
+    echo "    \"$API_NAME\": \"$API_KEY\"" >> $CONFIG_FILE
+    echo "}" >> $CONFIG_FILE
     echo "${green}${bold}API key added to config!${reset}"
     exit 0
   elif [[ "${args[$i]}" == "--review" ]]

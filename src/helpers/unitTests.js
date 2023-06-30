@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
-const { getUnitTests, checkForAPIKey} = require('./api');
+const API = require('./api');
 const {PYTHAGORA_UNIT_DIR} = require("../const/common");
 const generator = require("@babel/generator").default;
 const {checkDirectoryExists} = require("../utils/common");
@@ -34,13 +34,45 @@ let functionList = {},
     force
 ;
 
-async function processFile(filePath) {
+function resolveFilePath(filePath, extension) {
+    if (fs.existsSync(filePath)) {
+        return filePath;
+    }
+
+    const filePathWithExtension = `${filePath}${extension}`;
+    if (fs.existsSync(filePathWithExtension)) {
+        return filePathWithExtension;
+    }
+
+    return undefined;
+}
+
+async function processFile(filePath, filesToProcess) {
     try {
         let exportsFn = [];
         let exportsObj = [];
         let functions = [];
         let ast = await getAstFromFilePath(filePath);
         let syntaxType = await getModuleTypeFromFilePath(ast);
+        let extension = path.extname(filePath);
+
+        // Analyze dependencies
+        ast.program.body.forEach(node => {
+            if (node.type === "ImportDeclaration") {
+                let importedFile = path.resolve(path.dirname(filePath), node.source.value);
+                importedFile = resolveFilePath(importedFile, extension);
+                if (importedFile && !filesToProcess.includes(importedFile)) {
+                    filesToProcess.push(importedFile);
+                }
+            } else if (node.type === "VariableDeclaration" && node.declarations[0].init.type === "CallExpression" && node.declarations[0].init.callee.name === "require") {
+                let importedFile = path.resolve(path.dirname(filePath), node.declarations[0].init.arguments[0].value);
+                importedFile = resolveFilePath(importedFile, extension);
+                if (importedFile && !filesToProcess.includes(importedFile)) {
+                    filesToProcess.push(importedFile);
+                }
+            }
+        });
+
         processAst(ast, (funcName, path, type) => {
             if (type === 'exportFn' || type === 'exportFnDef') {
                 exportsFn.push(funcName);
@@ -116,7 +148,7 @@ async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
     return funcData;
 }
 
-async function createTests(filePath, prefix, funcToTest) {
+async function createTests(filePath, prefix, funcToTest, processingFunction = 'getUnitTests') {
     try {
         let extension = path.extname(filePath);
         let ast = await getAstFromFilePath(filePath);
@@ -173,7 +205,7 @@ async function createTests(filePath, prefix, funcToTest) {
             }
 
             let formattedData = await reformatDataForPythagoraAPI(funcData, filePath, getTestFolderPath(filePath, rootPath));
-            let { tests, error } = await getUnitTests(formattedData, (content) => {
+            let { tests, error } = await API[processingFunction](formattedData, (content) => {
                 scrollableContent.setContent(content);
                 scrollableContent.setScrollPerc(100);
                 screen.render();
@@ -217,41 +249,48 @@ async function saveTests(filePath, name, testData) {
     return testPath;
 }
 
-async function traverseDirectory(directory, onlyCollectFunctionData, prefix = '', funcName) {
-    if (await checkPathType(directory) === 'file' && !onlyCollectFunctionData) {
-        if (!processExtensions.includes(path.extname(directory))) throw new Error('File extension is not supported');
+async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', funcName, filesToProcess = [file], processingFunction) {
+    if (await checkPathType(file) === 'file' && !onlyCollectFunctionData) {
+        if (!processExtensions.includes(path.extname(file))) throw new Error('File extension is not supported');
         const newPrefix = `|   ${prefix}|   `;
-        return await createTests(directory, newPrefix, funcName);
+        return await createTests(file, newPrefix, funcName, processingFunction);
     }
-    const files = fs.readdirSync(directory);
-    for (const file of files) {
-        const absolutePath = path.join(directory, file);
-        const stat = fs.statSync(absolutePath);
-        const isLast = files.indexOf(file) === files.length - 1;
 
-        if (ignoreFilesEndingWith.some(ending => file.endsWith(ending))) continue;
+    const absolutePath = path.resolve(file);
+    const stat = fs.statSync(absolutePath);
+    const isLast = filesToProcess.length === 0;
 
-        if (stat.isDirectory()) {
-            if (ignoreFolders.includes(path.basename(absolutePath)) || path.basename(absolutePath).charAt(0) === '.') continue;
+    if (ignoreFilesEndingWith.some(ending => file.endsWith(ending))) return;
 
-            if (onlyCollectFunctionData && isPathInside(path.dirname(queriedPath), absolutePath)) {
+    if (stat.isDirectory()) {
+        if (ignoreFolders.includes(path.basename(absolutePath)) || path.basename(absolutePath).charAt(0) === '.') return;
+        console.log(file)
+
+        if (onlyCollectFunctionData && isPathInside(path.dirname(queriedPath), absolutePath)) {
+            updateFolderTree(prefix, isLast, absolutePath);
+        }
+
+        const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
+        const directoryFiles = fs.readdirSync(absolutePath);
+        filesToProcess.push(...directoryFiles.map(f => path.join(absolutePath, f)));
+    } else {
+        if (!processExtensions.includes(path.extname(absolutePath))) return;
+        console.log(file)
+
+        if (onlyCollectFunctionData) {
+            if (isPathInside(path.dirname(queriedPath), absolutePath)) {
                 updateFolderTree(prefix, isLast, absolutePath);
             }
-
-            const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-            await traverseDirectory(absolutePath, onlyCollectFunctionData, newPrefix, funcName);
+            await processFile(absolutePath, filesToProcess);
         } else {
-            if (!processExtensions.includes(path.extname(absolutePath))) continue;
-            if (onlyCollectFunctionData) {
-                if (isPathInside(path.dirname(queriedPath), absolutePath)) {
-                    updateFolderTree(prefix, isLast, absolutePath);
-                }
-                await processFile(absolutePath);
-            } else {
-                const newPrefix = isLast ? `|   ${prefix}    ` : `|   ${prefix}|   `;
-                await createTests(absolutePath, newPrefix, funcName);
-            }
+            const newPrefix = isLast ? `|   ${prefix}    ` : `|   ${prefix}|   `;
+            await createTests(absolutePath, newPrefix, funcName, processingFunction);
         }
+    }
+
+    while (filesToProcess.length > 0) {
+        const nextFile = filesToProcess.shift();
+        await traverseDirectory(nextFile, onlyCollectFunctionData, prefix, funcName, filesToProcess, processingFunction);
     }
 }
 
@@ -268,19 +307,20 @@ async function getFunctionsForExport(dirPath) {
     return functionList;
 }
 
-async function generateTestsForDirectory(args) {
+async function generateTestsForDirectory(args, processingFunction = 'getUnitTests') {
     let pathToProcess = args.path,
         funcName = args.func;
     force = args.force;
 
-    checkForAPIKey();
+    API.checkForAPIKey();
     queriedPath = path.resolve(pathToProcess);
     rootPath = process.cwd();
     ({ screen, spinner, scrollableContent } = initScreenForUnitTests());
 
-    await traverseDirectory(rootPath, true);  // first pass: collect all function names and codes
-    await traverseDirectory(rootPath, true);  // second pass: collect all related functions
-    await traverseDirectory(queriedPath, false, undefined, funcName);  // second pass: print functions and their related functions
+    let filesToProcess = [];
+    await traverseDirectory(queriedPath, true, undefined, funcName, filesToProcess, processingFunction);
+    await traverseDirectory(queriedPath, true, undefined, funcName, filesToProcess, processingFunction);
+    await traverseDirectory(queriedPath, false, undefined, funcName, filesToProcess, processingFunction);
 
     screen.destroy();
     process.stdout.write('\x1B[2J\x1B[0f');

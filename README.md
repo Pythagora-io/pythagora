@@ -160,9 +160,6 @@ or to run tests from a specific file or a folder, run `npx jest <PATH_TO_FILE_OR
 <br><br>
 - **Tests help me think about my code - I don't want to generate them automatically**
     - That's the best thing about Pythagora - it actually does help you think about the code. Just, you don't need to spend time writing tests. This happened to us, who created Pythagora - we coded it as fast as possible but when we added unit test generation, we realized that it cannot create tests for some functions. So, we refactored the code and made it more modular so that unit tests can be generated for it. 
-<br><br>
-- **What tests are the best**
-    - That's the best thing about Pythagora - it actually does help you think about the code. Just, you don't need to spend time writing tests. This happened to us, who created Pythagora - we coded it as fast as possible but when we added unit test generation, we realized that it cannot create tests for some functions. So, we refactored the code and made it more modular so that unit tests can be generated for it. 
 
 <br>
 

@@ -27,6 +27,8 @@ let functionList = {},
     testsGenerated = [],
     skippedFiles = [],
     errors = [],
+    filesToProcess = [],
+    processedFiles = [],
     ignoreFolders = ['node_modules', 'pythagora_tests', '__tests__'],
     ignoreFilesEndingWith = [".test.js", ".test.ts", ".test.tsx"],
     processExtensions = ['.js', '.ts', '.tsx'],
@@ -249,9 +251,16 @@ async function saveTests(filePath, name, testData) {
     return testPath;
 }
 
-async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', funcName, filesToProcess = [file], processingFunction) {
+async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', funcName, processingFunction) {
+    if (processedFiles.includes(file)) {
+        return;
+    }
+    processedFiles.push(file);
+
     if (await checkPathType(file) === 'file' && !onlyCollectFunctionData) {
-        if (!processExtensions.includes(path.extname(file))) throw new Error('File extension is not supported');
+        if (!processExtensions.includes(path.extname(file))) {
+            throw new Error('File extension is not supported');
+        }
         const newPrefix = `|   ${prefix}|   `;
         return await createTests(file, newPrefix, funcName, processingFunction);
     }
@@ -264,18 +273,30 @@ async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', fun
 
     if (stat.isDirectory()) {
         if (ignoreFolders.includes(path.basename(absolutePath)) || path.basename(absolutePath).charAt(0) === '.') return;
-        console.log(file)
 
         if (onlyCollectFunctionData && isPathInside(path.dirname(queriedPath), absolutePath)) {
             updateFolderTree(prefix, isLast, absolutePath);
         }
 
         const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
-        const directoryFiles = fs.readdirSync(absolutePath);
-        filesToProcess.push(...directoryFiles.map(f => path.join(absolutePath, f)));
+        const directoryFiles = fs.readdirSync(absolutePath)
+            .filter(f => {
+                const absoluteFilePath = path.join(absolutePath, f);
+                const fileStat = fs.statSync(absoluteFilePath);
+                if (fileStat.isDirectory()) {
+                    const baseName = path.basename(absoluteFilePath);
+                    return !ignoreFolders.includes(baseName) && !baseName.startsWith('.');
+                } else {
+                    const ext = path.extname(f);
+                    return processExtensions.includes(ext) && !ignoreFilesEndingWith.some(ending => f.endsWith(ending));
+                }
+            })
+            .map(f => path.join(absolutePath, f));
+        filesToProcess.push(...directoryFiles);
+
+
     } else {
         if (!processExtensions.includes(path.extname(absolutePath))) return;
-        console.log(file)
 
         if (onlyCollectFunctionData) {
             if (isPathInside(path.dirname(queriedPath), absolutePath)) {
@@ -290,7 +311,10 @@ async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', fun
 
     while (filesToProcess.length > 0) {
         const nextFile = filesToProcess.shift();
-        await traverseDirectory(nextFile, onlyCollectFunctionData, prefix, funcName, filesToProcess, processingFunction);
+        if (processedFiles.includes(nextFile)) {
+            continue; // Skip processing if it has already been processed
+        }
+        await traverseDirectory(nextFile, onlyCollectFunctionData, prefix, funcName, processingFunction);
     }
 }
 
@@ -303,6 +327,7 @@ function updateFolderTree(prefix, isLast, absolutePath) {
 async function getFunctionsForExport(dirPath) {
     rootPath = dirPath;
     await traverseDirectory(rootPath, true);
+    processedFiles = [];
     await traverseDirectory(rootPath, true);
     return functionList;
 }
@@ -317,10 +342,11 @@ async function generateTestsForDirectory(args, processingFunction = 'getUnitTest
     rootPath = process.cwd();
     ({ screen, spinner, scrollableContent } = initScreenForUnitTests());
 
-    let filesToProcess = [];
-    await traverseDirectory(queriedPath, true, undefined, funcName, filesToProcess, processingFunction);
-    await traverseDirectory(queriedPath, true, undefined, funcName, filesToProcess, processingFunction);
-    await traverseDirectory(queriedPath, false, undefined, funcName, filesToProcess, processingFunction);
+    await traverseDirectory(queriedPath, true, undefined, funcName, processingFunction);
+    processedFiles = [];
+    await traverseDirectory(queriedPath, true, undefined, funcName, processingFunction);
+    processedFiles = [];
+    await traverseDirectory(queriedPath, false, undefined, funcName, processingFunction);
 
     screen.destroy();
     process.stdout.write('\x1B[2J\x1B[0f');
@@ -330,7 +356,7 @@ async function generateTestsForDirectory(args, processingFunction = 'getUnitTest
         console.error('There were errors encountered while trying to generate unit tests.\n');
         console.error(`You can find logs here: ${errLogPath}`);
     }
-    if (skippedFiles.length) console.log(`${bold}${skippedFiles.length} files were skipped because tests already exist. If you want to override them add "--force" flag to command${reset}`);
+    if (skippedFiles.length) console.log(`${bold}Generation of ${skippedFiles.length} test suites were skipped because tests already exist. If you want to override them add "--force" flag to command${reset}`);
     if (testsGenerated.length === 0) {
         console.log(`${bold+red}No tests generated!${reset}`);
     } else {

@@ -51,7 +51,7 @@ Here are examples of open sourced repositories that we forked and created tests 
 
 - [Lodash](https://github.com/Pythagora-io/pythagora-demo-lodash)
   - 📝 1604 tests generated
-  - 🐞 13 bugs found (3 edge cases and 10 bugs)
+  - 🐞 11 bugs found (1 edge case and 10 bugs)
   - ⏳️ 4 hour run time
 
   ![lodash pythagora tests results](https://github.com/Pythagora-io/pythagora/assets/10895136/c0a2a589-e3ef-4812-9ea2-545307fd1a1d)
@@ -159,9 +159,6 @@ or to run tests from a specific file or a folder, run `npx jest <PATH_TO_FILE_OR
   - Absolutely. As mentioned above, some tests might be incorrectly written so it's best for you to review all tests before committing them. Nevertheless, I think this will save you a lot of time and will help you think about your code in a different way.
 <br><br>
 - **Tests help me think about my code - I don't want to generate them automatically**
-    - That's the best thing about Pythagora - it actually does help you think about the code. Just, you don't need to spend time writing tests. This happened to us, who created Pythagora - we coded it as fast as possible but when we added unit test generation, we realized that it cannot create tests for some functions. So, we refactored the code and made it more modular so that unit tests can be generated for it. 
-<br><br>
-- **What tests are the best**
     - That's the best thing about Pythagora - it actually does help you think about the code. Just, you don't need to spend time writing tests. This happened to us, who created Pythagora - we coded it as fast as possible but when we added unit test generation, we realized that it cannot create tests for some functions. So, we refactored the code and made it more modular so that unit tests can be generated for it. 
 
 <br>

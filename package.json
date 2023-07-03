@@ -1,6 +1,6 @@
 {
   "name": "pythagora",
-  "version": "0.0.69",
+  "version": "0.0.73",
   "author": {
     "name": "Zvonimir Sabljic",
     "email": "hi@pythagora.ai"
@@ -17,7 +17,8 @@
     "publish-pythagora": "src/bin/publish.bash",
     "prepublishOnly": "node src/bin/prepublish.js",
     "postinstall": "node src/bin/postinstall.js",
-    "test": "npx jest ./pythagora_tests/ --coverage"
+    "test": "npx jest ./pythagora_tests/ --coverage",
+    "generate-unit-tests": "npx pythagora --unit-tests --path ./src"
   },
   "bin": {
     "pythagora": "src/bin/run.js"

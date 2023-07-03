@@ -287,8 +287,10 @@ function processAst(ast, cb) {
                         // export class Class1 () { ... }
                         return cb(path.node.declaration.id.name, path, 'exportObj');
                     } else if (path.node.declaration.type === 'VariableDeclaration') {
+                        // export const const1 = 'constant';
+                        // export const func1 = () => { ... }
                         path.node.declaration.declarations.forEach(declaration => {
-                            return cb(declaration.id.name, path, 'exportFn');
+                            return cb(declaration.id.name, path, 'exportObj');
                         });
                     } else if (path.node.declaration.type === 'ClassDeclaration') {
                         // export class Class1 { ... }

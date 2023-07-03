@@ -51,7 +51,7 @@ Here are examples of open sourced repositories that we forked and created tests 
 
 - [Lodash](https://github.com/Pythagora-io/pythagora-demo-lodash)
   - 📝 1604 tests generated
-  - 🐞 13 bugs found (3 edge cases and 10 bugs)
+  - 🐞 11 bugs found (1 edge case and 10 bugs)
   - ⏳️ 4 hour run time
 
   ![lodash pythagora tests results](https://github.com/Pythagora-io/pythagora/assets/10895136/c0a2a589-e3ef-4812-9ea2-545307fd1a1d)

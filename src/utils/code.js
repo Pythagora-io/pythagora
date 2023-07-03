@@ -85,7 +85,6 @@ async function getModuleTypeFromFilePath(ast) {
     return moduleType;
 }
 
-
 function collectTopRequires(node) {
     let requires = [];
     babelTraverse(node, {
@@ -335,6 +334,62 @@ function processAst(ast, cb) {
     });
 }
 
+function getSourceCodeFromAst (ast) {
+    return generator(ast).code;
+}
+
+function collectTestRequires(node) {
+    let requires = [];
+    babelTraverse(node, {
+        ImportDeclaration(path) {
+            //path.node.specifiers[0].local.name
+            if (path.node && path.node.specifiers && path.node.specifiers.length > 0) {
+                const requireData = {
+                    code: generator(path.node).code,
+                    functionNames: []
+                }
+
+                _.forEach(path.node.specifiers, (s) => {
+                    if (s.local && s.local.name) requireData.functionNames.push(s.local.name)
+                })
+
+                requires.push(requireData);
+            }
+        }
+    });
+    return requires;
+}
+
+function getRelatedTestImports(ast, filePath, functionList) {
+    let relatedFunctions = [];
+    let requiresFromFile = collectTestRequires(ast);
+
+    for (let fileImport in requiresFromFile) {
+        let requiredPath = getPathFromRequireOrImport(requiresFromFile[fileImport].code);
+        requiredPath = getFullPathFromRequireOrImport(requiredPath, filePath);
+        
+        _.forEach(requiresFromFile[fileImport].functionNames, (funcName) => {
+            let functionFromList = functionList[requiredPath + ':' + funcName];
+            // let existingFile = relatedFunctions.find(f => f.filePath == functionFromList.filePath);
+
+            // if (existingFile) {
+            //     existingFile.code += `\n${functionFromList.code}`
+            // } else if (functionFromList) {
+            //     relatedFunctions.push(_.extend(functionFromList, {
+            //         fileName: requiredPath
+            //     }));
+            // }
+            if (functionFromList) {
+                relatedFunctions.push(_.extend(functionFromList, {
+                    fileName: requiredPath
+                }));
+            }
+        })
+    }
+
+    return relatedFunctions;
+}
+
 module.exports = {
     replaceRequirePaths,
     getAstFromFilePath,
@@ -343,5 +398,7 @@ module.exports = {
     getRelatedFunctions,
     stripUnrelatedFunctions,
     processAst,
-    getModuleTypeFromFilePath
+    getModuleTypeFromFilePath,
+    getSourceCodeFromAst,
+    getRelatedTestImports
 }

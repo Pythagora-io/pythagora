@@ -9,7 +9,7 @@ yellow=$(tput setaf 3)
 green=$(tput setaf 2)
 reset=$(tput sgr0)
 bold=$(tput bold)
-pythagora_dir="pythagora"
+pythagora_dir="$1"
 
 function exit_handler {
   while [ ! -f "./.pythagora/finishingup" ]
@@ -24,26 +24,6 @@ function exit_handler {
   fi
   exit 0
 }
-
-commands=(basename realpath dirname)
-found_all=true
-
-for cmd in "${commands[@]}"; do
-  if ! command -v "$cmd" >/dev/null 2>&1 ; then
-    echo "$cmd command not found"
-    found_all=false
-  fi
-done
-
-if [ "$found_all" = true ] ;
-then
-  pythagora_dir=$(basename "$(dirname "$(dirname "$(dirname "$(realpath "$0")")")")")
-fi
-
-if [ "$pythagora_dir" == "pythagora-dev" ]
-then
-  pythagora_dir="@pythagora.io/pythagora-dev"
-fi
 
 for (( i=0; i<${#args[@]}; i++ ))
 do
@@ -71,37 +51,37 @@ do
     exit 0
   elif [[ "${args[$i]}" == "--review" ]]
   then
-    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/review.js"
+    PYTHAGORA_CONFIG="$@" node "${pythagora_dir}/src/scripts/review.js"
     exit 0
   elif [[ "${args[$i]}" == "--tests-eligible-for-export" ]]
   then
     echo "${yellow}${bold}Tests eligible for export:${reset}"
-    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/testsEligibleForExport.js"
+    PYTHAGORA_CONFIG="$@" node "${pythagora_dir}/src/scripts/testsEligibleForExport.js"
     exit 0
   elif [[ "${args[$i]}" == "--unit-tests" ]]
   then
     echo "${green}${bold}Generating unit tests...${reset}"
-    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/unit.js"
+    PYTHAGORA_CONFIG="$@" node "${pythagora_dir}/src/scripts/unit.js"
     exit 0
   elif [[ "${args[$i]}" == "--export-setup" ]]
   then
-    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/enterData.js"
+    PYTHAGORA_CONFIG="$@" node "${pythagora_dir}/src/scripts/enterData.js"
     exit 0
   elif [[ "${args[$i]}" =~ ^--rename[-_]tests$ ]]
   then
-    node "./node_modules/${pythagora_dir}/src/scripts/renameTests.js"
+    node "${pythagora_dir}/src/scripts/renameTests.js"
     exit 0
   elif [[ "${args[$i]}" =~ ^--delete[-_]all[-_]failed$ ]]
   then
-    node "./node_modules/${pythagora_dir}/src/scripts/deleteAllFailed.js"
+    node "${pythagora_dir}/src/scripts/deleteAllFailed.js"
     exit 0
   elif [[ "${args[$i]}" == "--delete" ]]
   then
-    PYTHAGORA_CONFIG="$@" node "./node_modules/${pythagora_dir}/src/scripts/deleteTest.js"
+    PYTHAGORA_CONFIG="$@" node "${pythagora_dir}/src/scripts/deleteTest.js"
     exit 0
   elif [[ "${args[$i]}" == "--export" ]]
   then
-    PYTHAGORA_CONFIG="$@" node -e "require('./node_modules/${pythagora_dir}/src/commands/export.js').runExport()"
+    PYTHAGORA_CONFIG="$@" node -e "require('${pythagora_dir}/src/commands/export.js').runExport()"
     exit 0
   elif [[ "${args[$i]}" == "--mode" ]]
   then
@@ -118,7 +98,7 @@ fi
 if [[ " ${args[@]} " =~ " --no-code-coverage " ]] || ([[ ! " ${args[@]} " =~ " --mode test " ]] && [[ ! " ${args[@]} " =~ " --mode=test " ]])
 then
   args=( "${args[@]//--no-code-coverage/}" )
-  PYTHAGORA_CONFIG="$@" NODE_OPTIONS="${inspect} --require ./node_modules/${pythagora_dir}/src/RunPythagora.js" $init_command &
+  PYTHAGORA_CONFIG="$@" NODE_OPTIONS="${inspect} --require ${pythagora_dir}/src/RunPythagora.js" $init_command &
 else
   nyc_args=( "--reporter=text-summary" )
 
@@ -129,11 +109,11 @@ else
     nyc_args+=( "--report-dir=./pythagora_tests/code_coverage_report" )
   fi
 
-  if [ -f "./node_modules/$pythagora_dir/node_modules/nyc/bin/nyc.js" ]
+  if [ -f "$pythagora_dir/node_modules/nyc/bin/nyc.js" ]
   then
-    PYTHAGORA_CONFIG="$@" NODE_OPTIONS="${inspect} --require ./node_modules/${pythagora_dir}/src/RunPythagora.js" ./node_modules/"$pythagora_dir"/node_modules/nyc/bin/nyc.js "${nyc_args[@]}" $init_command &
+    PYTHAGORA_CONFIG="$@" NODE_OPTIONS="${inspect} --require ${pythagora_dir}/src/RunPythagora.js" "$pythagora_dir"/node_modules/nyc/bin/nyc.js "${nyc_args[@]}" $init_command &
   else
-    PYTHAGORA_CONFIG="$@" NODE_OPTIONS="${inspect} --require ./node_modules/${pythagora_dir}/src/RunPythagora.js" ./node_modules/nyc/bin/nyc.js "${nyc_args[@]}" $init_command &
+    PYTHAGORA_CONFIG="$@" NODE_OPTIONS="${inspect} --require ${pythagora_dir}/src/RunPythagora.js" ./node_modules/nyc/bin/nyc.js "${nyc_args[@]}" $init_command &
   fi
 
 fi

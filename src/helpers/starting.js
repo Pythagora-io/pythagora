@@ -9,6 +9,7 @@ const {
     METADATA_FILENAME,
     EXPORT_METADATA_FILENAME
 } = require("../const/common");
+let args = require('../utils/getArgs.js');
 
 
 function checkDependencies() {
@@ -48,6 +49,7 @@ function getPythagoraVersion(pythagora) {
             const filePath = path.resolve(dir, file);
             const fileStat = fs.statSync(filePath);
 
+            if (filePath.indexOf('pythagora') > -1 || filePath.indexOf('@pythagora.io') > -1 || filePath.indexOf('@types') > -1) return;
             if (fileStat.isDirectory() && file[0] !== '.' && file !== 'node_modules') {
                 findPackageJson(filePath);
             } else if (file === "package.json") {
@@ -88,12 +90,13 @@ function startPythagora(args, app) {
 }
 
 function setUpPythagoraDirs() {
-    if (!fs.existsSync(`./${PYTHAGORA_TESTS_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
-    if (!fs.existsSync(`./${EXPORTED_TESTS_DIR}`)) fs.mkdirSync(`./${EXPORTED_TESTS_DIR}`);
-    if (!fs.existsSync(`./${EXPORTED_TESTS_DATA_DIR}`)) fs.mkdirSync(`./${EXPORTED_TESTS_DATA_DIR}`);
-    if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/`)) fs.mkdirSync(`./${PYTHAGORA_METADATA_DIR}/`);
-    if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`)) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, '{}');
-    if (!fs.existsSync(`./${PYTHAGORA_METADATA_DIR}/${EXPORT_METADATA_FILENAME}`)) fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${EXPORT_METADATA_FILENAME}`, '{}');
+    let root = args.pythagora_root;
+    if (!fs.existsSync(path.resolve(root, PYTHAGORA_TESTS_DIR))) fs.mkdirSync(path.resolve(root, PYTHAGORA_TESTS_DIR));
+    if (!fs.existsSync(path.resolve(root, EXPORTED_TESTS_DIR))) fs.mkdirSync(path.resolve(root, EXPORTED_TESTS_DIR));
+    if (!fs.existsSync(path.resolve(root, EXPORTED_TESTS_DATA_DIR))) fs.mkdirSync(path.resolve(root, EXPORTED_TESTS_DATA_DIR));
+    if (!fs.existsSync(path.resolve(root, PYTHAGORA_METADATA_DIR))) fs.mkdirSync(path.resolve(root, PYTHAGORA_METADATA_DIR));
+    if (!fs.existsSync(path.resolve(root, PYTHAGORA_METADATA_DIR, METADATA_FILENAME))) fs.writeFileSync(path.resolve(root, PYTHAGORA_METADATA_DIR, METADATA_FILENAME), '{}');
+    if (!fs.existsSync(path.resolve(root, PYTHAGORA_METADATA_DIR, EXPORT_METADATA_FILENAME))) fs.writeFileSync(path.resolve(root, PYTHAGORA_METADATA_DIR, EXPORT_METADATA_FILENAME), '{}');
 }
 
 module.exports = {

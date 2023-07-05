@@ -9,7 +9,7 @@ yellow=$(tput setaf 3)
 green=$(tput setaf 2)
 reset=$(tput sgr0)
 bold=$(tput bold)
-pythagora_dir="$1"
+pythagora_dir="$2"
 
 function exit_handler {
   while [ ! -f "./.pythagora/finishingup" ]

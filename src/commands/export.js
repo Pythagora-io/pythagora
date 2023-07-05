@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const {
     EXPORTED_TESTS_DIR,
     PYTHAGORA_METADATA_DIR,
@@ -27,7 +28,7 @@ async function runExport() {
     checkForAPIKey();
     setUpPythagoraDirs();
     cleanupDataFolder();
-    let exportsMetadata = JSON.parse(fs.readFileSync(`./${PYTHAGORA_METADATA_DIR}/${EXPORT_METADATA_FILENAME}`));
+    let exportsMetadata = JSON.parse(fs.readFileSync(path.resolve(args.pythagora_root, PYTHAGORA_METADATA_DIR, EXPORT_METADATA_FILENAME)));
     let generatedTests = getAllGeneratedTests();
     await createDefaultFiles(generatedTests);
 

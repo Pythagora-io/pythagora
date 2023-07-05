@@ -4,6 +4,7 @@ const { getCircularReplacer } = require('./utils/common.js')
 const { PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHAGORA_DELIMITER, PYTHAGORA_TESTS_DIR } = require('./const/common.js');
 
 const fs = require('fs');
+const path = require('path');
 const { exec } = require('child_process');
 const {getAllGeneratedTests} = require("./utils/common");
 
@@ -39,7 +40,7 @@ async function runTests(tests, testsToExecute) {
 }
 
 function updateReviewFile(testsToExecute, reviewData) {
-    let reviewFilePath = `./${PYTHAGORA_METADATA_DIR}/${REVIEW_DATA_FILENAME}`;
+    let reviewFilePath = path.resolve(Pythagora.pythagora_root, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME);
     let oldReviewData = [];
 
     if (testsToExecute && fs.existsSync(reviewFilePath)) {
@@ -58,7 +59,7 @@ function updateReviewFile(testsToExecute, reviewData) {
         let testsToExecute = Pythagora.getTestsToExecute();
         if (testsToExecute && !testsToExecute.length) throw new Error('There are no tests to execute. Check if you put arguments in Pythagora command correctly.');
 
-        Pythagora.testId ? logTestStarting(Pythagora.testId) : logTestsStarting(fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`));
+        Pythagora.testId ? logTestStarting(Pythagora.testId) : logTestsStarting(fs.readdirSync(path.resolve(Pythagora.pythagora_root, PYTHAGORA_TESTS_DIR)));
         pythagoraTests = pythagoraTests.filter(t => !testsToExecute || testsToExecute.includes(t.id));
         let { results, reviewData } = await runTests(pythagoraTests);
 

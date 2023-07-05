@@ -33,7 +33,10 @@ let functionList = {},
     ignoreFilesEndingWith = [".test.js", ".test.ts", ".test.tsx"],
     processExtensions = ['.js', '.ts', '.tsx'],
     ignoreErrors = ['BABEL_PARSER_SYNTAX_ERROR'],
-    force
+    force,
+    isFileToIgnore = (fileName) => {
+        return ignoreFilesEndingWith.some(ending => fileName.endsWith(ending))
+    }
 ;
 
 function resolveFilePath(filePath, extension) {
@@ -269,7 +272,7 @@ async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', fun
     const stat = fs.statSync(absolutePath);
     const isLast = filesToProcess.length === 0;
 
-    if (ignoreFilesEndingWith.some(ending => file.endsWith(ending))) return;
+    if (!stat.isDirectory() && isFileToIgnore(file)) return;
 
     if (stat.isDirectory()) {
         if (ignoreFolders.includes(path.basename(absolutePath)) || path.basename(absolutePath).charAt(0) === '.') return;
@@ -288,7 +291,7 @@ async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', fun
                     return !ignoreFolders.includes(baseName) && !baseName.startsWith('.');
                 } else {
                     const ext = path.extname(f);
-                    return processExtensions.includes(ext) && !ignoreFilesEndingWith.some(ending => f.endsWith(ending));
+                    return processExtensions.includes(ext) && !isFileToIgnore(f);
                 }
             })
             .map(f => path.join(absolutePath, f));
@@ -324,12 +327,15 @@ function updateFolderTree(prefix, isLast, absolutePath) {
     }
 }
 
-async function getFunctionsForExport(dirPath) {
+async function getFunctionsForExport(dirPath, ignoreFilesRewrite) {
+    if (ignoreFilesRewrite) {
+        isFileToIgnore = ignoreFilesRewrite;
+    }
     rootPath = dirPath;
     await traverseDirectory(rootPath, true);
     processedFiles = [];
     await traverseDirectory(rootPath, true);
-    return functionList;
+    return {functionList, folderStructureTree};
 }
 
 async function generateTestsForDirectory(args, processingFunction = 'getUnitTests') {
@@ -363,6 +369,7 @@ async function generateTestsForDirectory(args, processingFunction = 'getUnitTest
         console.log(`Tests are saved in the following directories:${testsGenerated.reduce((acc, item) => acc + '\n' + blue + item, '')}`);
         console.log(`${bold+green}${testsGenerated.length} unit tests generated!${reset}`);
     }
+    
     process.exit(0);
 }
 

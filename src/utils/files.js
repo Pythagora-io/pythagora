@@ -1,6 +1,7 @@
 const path = require("path");
 const {PYTHAGORA_UNIT_DIR} = require("../const/common");
 const fs = require("fs").promises;
+const fsSync = require("fs");
 
 
 async function checkPathType(path) {
@@ -18,9 +19,11 @@ function getRelativePath(filePath, referenceFolderPath) {
 
 
 function getFolderTreeItem(prefix, isLast, name, absolutePath) {
+    const stat = fsSync.statSync(absolutePath);
     return {
         line: `${prefix}${isLast ? '└───' : '├───'}${name}`,
-        absolutePath
+        absolutePath,
+        isDirectory: stat.isDirectory()
     };
 }
 

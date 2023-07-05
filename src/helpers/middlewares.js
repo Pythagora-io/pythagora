@@ -11,7 +11,7 @@ const _ = require("lodash");
 let  { executionAsyncId } = require('node:async_hooks');
 const fs = require('fs');
 const {logLoginEndpointCaptured} = require("../utils/cmdPrint");
-
+const path = require('path');
 
 function setUpExpressMiddlewares(app) {
 
@@ -358,7 +358,7 @@ function saveCaptureToFile(reqData, pythagora) {
     reqData.pythagoraVersion = pythagora.version;
     reqData.pythagoraDevVersion = pythagora.devVersion;
     reqData.createdAt = new Date().toISOString();
-    let endpointFileName = `./${PYTHAGORA_TESTS_DIR}/${reqData.endpoint.replace(/\//g, PYTHAGORA_DELIMITER)}.json`;
+    let endpointFileName = path.resolve(pythagora.pythagora_root, PYTHAGORA_TESTS_DIR, `${reqData.endpoint.replace(/\//g, PYTHAGORA_DELIMITER)}.json`);
     if (!fs.existsSync(endpointFileName)) fs.writeFileSync(endpointFileName, JSON.stringify([reqData], getCircularReplacer(), 2));
     else {
         let fileContent = JSON.parse(fs.readFileSync(endpointFileName));

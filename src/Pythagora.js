@@ -18,6 +18,7 @@ let  { BatchInterceptor } = require('@mswjs/interceptors');
 let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');
 let  fs = require("fs");
 let  _ = require("lodash");
+const path = require('path');
 let  { AsyncLocalStorage } = require('node:async_hooks');
 // const duplexify = require('duplexify');
 
@@ -36,6 +37,7 @@ class Pythagora {
         this.ignore = args.ignore;
         this.fullCodeCoverageReport = args.full_code_coverage_report;
         this.initCommand = args.init_command.join(' ');
+        this.pythagora_root = args.pythagora_root
 
         this.idSeq = 0;
         this.requests = {};
@@ -77,7 +79,7 @@ class Pythagora {
                 if (!result) {
                     failedRequests.push(request.endpoint);
                     console.log(`Capture is not valid for endpoint ${request.endpoint} (${request.method}). Erasing...`)
-                    let reqFileName = `./${PYTHAGORA_TESTS_DIR}/${request.endpoint.replace(/\//g, PYTHAGORA_DELIMITER)}.json`;
+                    let reqFileName = path.resolve(this.pythagora_root, PYTHAGORA_TESTS_DIR, `${request.endpoint.replace(/\//g, PYTHAGORA_DELIMITER)}.json`);
                     if (!fs.existsSync(reqFileName)) continue;
                     let fileContent = JSON.parse(fs.readFileSync(reqFileName));
                     if (fileContent.length === 1) {
@@ -101,7 +103,7 @@ class Pythagora {
             logCaptureFinished(savedRequests.length, failedRequests.length);
         }
 
-        fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/finishingup`, 'done');
+        fs.writeFileSync(path.resolve(this.pythagora_root, PYTHAGORA_METADATA_DIR, 'finishingup'), 'done');
         process.exit();
     }
 
@@ -128,7 +130,7 @@ class Pythagora {
         }]);
         this.metadata.runs = this.metadata.runs.slice(-10);
         this.metadata.initCommand = this.initCommand;
-        fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`, JSON.stringify(this.metadata, getCircularReplacer(), 2));
+        fs.writeFileSync(path.resolve(this.pythagora_root, PYTHAGORA_METADATA_DIR, METADATA_FILENAME), JSON.stringify(this.metadata, getCircularReplacer(), 2));
         console.log('Test run metadata saved.');
     }
 
@@ -234,9 +236,9 @@ class Pythagora {
     }
 
     async getRequestMockDataById(req) {
-        let path = `./${PYTHAGORA_TESTS_DIR}/${req.path.replace(/\//g, PYTHAGORA_DELIMITER)}.json`;
-        if (!fs.existsSync(path)) return;
-        let capturedRequests = JSON.parse(await fs.promises.readFile(path, 'utf8'));
+        let reqPath = path.resolve(this.pythagora_root, PYTHAGORA_TESTS_DIR, `${req.path.replace(/\//g, PYTHAGORA_DELIMITER)}.json`);
+        if (!fs.existsSync(reqPath)) return;
+        let capturedRequests = JSON.parse(await fs.promises.readFile(reqPath, 'utf8'));
         return capturedRequests.find(request => request.id === req.headers['pythagora-req-id']);
     }
 

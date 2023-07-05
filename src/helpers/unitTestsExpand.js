@@ -5,6 +5,7 @@ const { expandUnitTests, checkForAPIKey} = require('./api');
 const {PYTHAGORA_UNIT_DIR} = require("../const/common");
 const {checkDirectoryExists} = require("../utils/common");
 const {
+    replaceRequirePaths,
     getAstFromFilePath,
     getRelatedTestImports,
     getSourceCodeFromAst,
@@ -80,16 +81,19 @@ async function createAdditionalTests(filePath, prefix) {
         const ast = await getAstFromFilePath(filePath);
         let syntaxType = await getModuleTypeFromFilePath(ast);
 
-        const importRegex = /^(.*import.*|.*require.*)$/gm;
-        let testCode = getSourceCodeFromAst(ast);
-        testCode = testCode.replace(importRegex, '');
-
-        const relatedTestCode = getRelatedTestImports(ast, filePath, functionList);
         const testPath = path.join(
             path.resolve(PYTHAGORA_UNIT_DIR),
             filePath.replace(rootPath, '')
         );
 
+        let testCode = getSourceCodeFromAst(ast);
+        testCode = replaceRequirePaths(
+            testCode,
+            filePath,
+            testPath.substring(0, testPath.lastIndexOf('/'))
+        );
+
+        const relatedTestCode = getRelatedTestImports(ast, filePath, functionList);
         const formattedData = reformatDataForPythagoraAPI(filePath, testCode, relatedTestCode, syntaxType)
         const fileIndex = folderStructureTree.findIndex(item => item.absolutePath === filePath);
         spinner.start(folderStructureTree, fileIndex);
@@ -153,7 +157,7 @@ async function traverseDirectoryTests(directory, prefix = '') {
 }
 
 async function expandTestsForDirectory(args) {
-    let pathToProcess = args.expand_path;
+    let pathToProcess = args.path;
     force = args.force;
 
     checkForAPIKey();

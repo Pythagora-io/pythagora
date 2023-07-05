@@ -19,11 +19,11 @@ function getRelativePath(filePath, referenceFolderPath) {
 
 
 function getFolderTreeItem(prefix, isLast, name, absolutePath) {
-    const stat = fsSync.statSync(absolutePath);
+    const isDirectory = absolutePath.includes(':') ? false : fsSync.statSync(absolutePath).isDirectory();
     return {
         line: `${prefix}${isLast ? '└───' : '├───'}${name}`,
         absolutePath,
-        isDirectory: stat.isDirectory()
+        isDirectory
     };
 }
 

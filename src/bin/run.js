@@ -40,10 +40,11 @@ exec(bashCommand, (error, stdout, stderr) => {
   const bashScript = winOS ? process.argv[1].replace('run.js', 'run.bash') : path.join(__dirname, 'run.bash');
   const scriptDir = path.dirname(bashScript);  // Get the directory of the bash script
   const pythagoraDir = path.dirname(path.dirname(scriptDir)); // Get the pythagora directory
+  const pythagoraRoot = process.argv[1].split('node_modules')[0];
   const args = process.argv.slice(2);
 
   // Run the bash script and forward all arguments
-  const child = spawn(bashPath, [bashScript, pythagoraDir, ...args], { stdio: 'inherit' });
+  const child = spawn(bashPath, [bashScript, ...['--pythagora-dir', pythagoraDir, '--pythagora-root', pythagoraRoot, ...args]], { stdio: 'inherit' });
 
   child.on('error', (error) => {
     console.error(`Error running the bash script: ${error.message}`);

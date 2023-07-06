@@ -1,12 +1,14 @@
 const fs = require('fs');
+const path = require('path');
 const readline = require('readline');
 const _ = require('lodash');
+let args = require('../utils/getArgs.js');
 
 const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('../const/common.js');
 const { logChange } = require('../utils/cmdPrint.js');
 const { compareJson, getMetadata } = require('../utils/common.js');
 
-const reviewFilePath = `./${PYTHAGORA_METADATA_DIR}/${REVIEW_DATA_FILENAME}`;
+const reviewFilePath = path.resolve(args.pythagora_root, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME);
 const metadata = getMetadata();
 
 if (!fs.existsSync(reviewFilePath)) return console.log('There is no changes stored for review. Please run tests first.');
@@ -46,7 +48,7 @@ function saveReviewJson(i, oldJson) {
 }
 
 function acceptChange(change, index, reviewJson) {
-    let filePath = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
+    let filePath = path.resolve(args.pythagora_root, PYTHAGORA_TESTS_DIR, change.filename);
     let file = fs.readFileSync(filePath);
     let json = JSON.parse(file);
 
@@ -66,7 +68,7 @@ function acceptChange(change, index, reviewJson) {
 }
 
 function deleteChange(change, index, reviewJson) {
-    let filePath = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
+    let filePath = path.resolve(args.pythagora_root, PYTHAGORA_TESTS_DIR, change.filename);
     let file = fs.readFileSync(filePath);
     let json = JSON.parse(file);
 
@@ -177,8 +179,8 @@ const displayChangesAndPrompt = (index, arr, displayChange = true) => {
 
     // Display the JSON data to the user
     if (displayChange) {
-        let path = `./${PYTHAGORA_TESTS_DIR}/${change.filename}`;
-        let capturedRequests = JSON.parse(fs.readFileSync(path, 'utf8'));
+        let filePath = path.resolve(args.pythagora_root, PYTHAGORA_TESTS_DIR, change.filename);
+        let capturedRequests = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         let req = capturedRequests.find(request => request.id === change.id);
         if (!req) {
             setTimeout(() => {

@@ -66,7 +66,7 @@ async function configureAuthFile(generatedTests) {
     let loginData = pythagoraMetadata.exportRequirements.login;
     let code = await getJestAuthFunction(loginData.mongoQueriesArray, loginData.requestBody, loginData.endpointPath);
 
-    fs.writeFileSync(`./${EXPORTED_TESTS_DIR}/auth.js`, code);
+    fs.writeFileSync(path.resolve(args.pythagora_root, EXPORTED_TESTS_DIR, 'auth.js'), code);
 }
 
 function configurePrepareDbFile() {
@@ -74,8 +74,8 @@ function configurePrepareDbFile() {
 }
 
 function cleanupDataFolder() {
-    const pythagoraTestsFolderPath = `./${EXPORTED_TESTS_DIR}`;
-    const dataFolderPath = `./${EXPORTED_TESTS_DATA_DIR}`;
+    const pythagoraTestsFolderPath = path.resolve(args.pythagora_root, EXPORTED_TESTS_DIR);
+    const dataFolderPath = path.resolve(args.pythagora_root, EXPORTED_TESTS_DATA_DIR);
 
     try {
         // Read the files in the ./pythagora_tests/data folder
@@ -120,7 +120,7 @@ function saveExportJson(exportsMetadata, test, testName) {
         endpoint: test.endpoint,
         testName
     };
-    fs.writeFileSync(`./${PYTHAGORA_METADATA_DIR}/${EXPORT_METADATA_FILENAME}`, JSON.stringify(exportsMetadata));
+    fs.writeFileSync(path.resolve(args.pythagora_root, PYTHAGORA_METADATA_DIR, EXPORT_METADATA_FILENAME), JSON.stringify(exportsMetadata));
 }
 
 module.exports = {

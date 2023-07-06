@@ -8,6 +8,7 @@ const {
     PYTHAGORA_DELIMITER
 } = require("../const/common");
 const path = require('path');
+const args = require('./getArgs.js');
 let mongodb;
 // this is needed so that "mongodb" is not required before mongo patches are applied
 const ObjectId = class {
@@ -265,7 +266,7 @@ function convertToRegularObject(obj) {
 }
 
 function getMetadata() {
-    let metadata = fs.readFileSync(`./${PYTHAGORA_METADATA_DIR}/${METADATA_FILENAME}`);
+    let metadata = fs.readFileSync(path.resolve(args.pythagora_root, PYTHAGORA_METADATA_DIR, METADATA_FILENAME));
     metadata = JSON.parse(metadata);
     return metadata;
 }
@@ -313,12 +314,12 @@ async function getFreePortInRange(minPort, maxPort) {
 
 function getAllGeneratedTests() {
     let allTests = [];
-    let files = fs.readdirSync(`./${PYTHAGORA_TESTS_DIR}/`);
+    let files = fs.readdirSync(path.resolve(args.pythagora_root, PYTHAGORA_TESTS_DIR));
 
     files = files.filter(f => f[0] !== '.' && f.indexOf(PYTHAGORA_DELIMITER) === 0);
 
     for (let file of files) {
-        let tests = JSON.parse(fs.readFileSync(`./${PYTHAGORA_TESTS_DIR}/${file}`));
+        let tests = JSON.parse(fs.readFileSync(path.resolve(args.pythagora_root, PYTHAGORA_TESTS_DIR, file)));
         allTests = allTests.concat(tests);
     }
 
@@ -337,7 +338,7 @@ function insertVariablesInText(text, variables) {
 }
 
 function updateMetadata(newMetadata) {
-    const dirPath = `./${PYTHAGORA_METADATA_DIR}`;
+    const dirPath = path.resolve(args.pythagora_root, PYTHAGORA_METADATA_DIR);
     const filePath = path.join(dirPath, METADATA_FILENAME);
     if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });

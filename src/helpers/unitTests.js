@@ -13,7 +13,7 @@ const {
     getRelatedFunctions,
     getModuleTypeFromFilePath
 } = require("../utils/code");
-const {getRelativePath, getFolderTreeItem, getTestFolderPath, checkPathType, isPathInside} = require("../utils/files");
+const {getRelativePath, getFolderTreeItem, getTestFolderPath, checkPathType, isPathInside, calculateDepth} = require("../utils/files");
 const {initScreenForUnitTests} = require("./cmdGUI");
 const {green, red, blue, bold, reset} = require('../utils/cmdPrint').colors;
 
@@ -150,7 +150,7 @@ async function reformatDataForPythagoraAPI(funcData, filePath, testFilePath) {
     return funcData;
 }
 
-async function createTests(filePath, prefix, funcToTest, processingFunction = 'getUnitTests') {
+async function createTests(filePath, funcToTest, processingFunction = 'getUnitTests') {
     try {
         let extension = path.extname(filePath);
         let ast = await getAstFromFilePath(filePath);
@@ -183,18 +183,18 @@ async function createTests(filePath, prefix, funcToTest, processingFunction = 'g
                 ))
         );
 
+        sortFolderTree();
+
         for (const [i, funcData] of uniqueFoundFunctions.entries()) {
-            let isLast = uniqueFoundFunctions.indexOf(funcData) === uniqueFoundFunctions.length - 1;
             let indexToPush = fileIndex + 1 + i;
+            let prefix = folderStructureTree[fileIndex].line.split(path.basename(folderStructureTree[fileIndex].absolutePath))[0];
             folderStructureTree.splice(
                 indexToPush,
                 0,
-                getFolderTreeItem(
-                    prefix,
-                    isLast,
-                    `${funcData.functionName}.test${extension}`,
-                    filePath + ':' + funcData.functionName
-                )
+                {
+                    line: " ".repeat(prefix.length) + "└───" + funcData.functionName,
+                    absolutePath: filePath + ':' + funcData.functionName
+                }
             );
             spinner.start(folderStructureTree, indexToPush);
 
@@ -234,7 +234,7 @@ async function createTests(filePath, prefix, funcToTest, processingFunction = 'g
         }
 
     } catch (e) {
-        if (!ignoreErrors.includes(e.code)) errors.push(e);
+        if (!ignoreErrors.includes(e.code)) errors.push(e.stack);
     }
 }
 
@@ -251,7 +251,7 @@ async function saveTests(filePath, name, testData) {
     return testPath;
 }
 
-async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', funcName, processingFunction) {
+async function traverseDirectory(file, onlyCollectFunctionData, funcName, processingFunction) {
     if (processedFiles.includes(file)) {
         return;
     }
@@ -261,13 +261,11 @@ async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', fun
         if (!processExtensions.includes(path.extname(file))) {
             throw new Error('File extension is not supported');
         }
-        const newPrefix = `|   ${prefix}|   `;
-        return await createTests(file, newPrefix, funcName, processingFunction);
+        return await createTests(file, funcName, processingFunction);
     }
 
     const absolutePath = path.resolve(file);
     const stat = fs.statSync(absolutePath);
-    const isLast = filesToProcess.length === 0;
 
     if (ignoreFilesEndingWith.some(ending => file.endsWith(ending))) return;
 
@@ -275,10 +273,9 @@ async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', fun
         if (ignoreFolders.includes(path.basename(absolutePath)) || path.basename(absolutePath).charAt(0) === '.') return;
 
         if (onlyCollectFunctionData && isPathInside(path.dirname(queriedPath), absolutePath)) {
-            updateFolderTree(prefix, isLast, absolutePath);
+            updateFolderTree(absolutePath);
         }
 
-        const newPrefix = isLast ? `${prefix}    ` : `${prefix}|   `;
         const directoryFiles = fs.readdirSync(absolutePath)
             .filter(f => {
                 const absoluteFilePath = path.join(absolutePath, f);
@@ -300,12 +297,11 @@ async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', fun
 
         if (onlyCollectFunctionData) {
             if (isPathInside(path.dirname(queriedPath), absolutePath)) {
-                updateFolderTree(prefix, isLast, absolutePath);
+                updateFolderTree(absolutePath);
             }
             await processFile(absolutePath, filesToProcess);
         } else {
-            const newPrefix = isLast ? `|   ${prefix}    ` : `|   ${prefix}|   `;
-            await createTests(absolutePath, newPrefix, funcName, processingFunction);
+            await createTests(absolutePath, funcName, processingFunction);
         }
     }
 
@@ -314,13 +310,42 @@ async function traverseDirectory(file, onlyCollectFunctionData, prefix = '', fun
         if (processedFiles.includes(nextFile)) {
             continue; // Skip processing if it has already been processed
         }
-        await traverseDirectory(nextFile, onlyCollectFunctionData, prefix, funcName, processingFunction);
+        await traverseDirectory(nextFile, onlyCollectFunctionData, funcName, processingFunction);
     }
 }
 
-function updateFolderTree(prefix, isLast, absolutePath) {
-    if (!folderStructureTree.find(fst => fst.absolutePath === absolutePath)) {
-        folderStructureTree.push(getFolderTreeItem(prefix, isLast, path.basename(absolutePath), absolutePath));
+function updateFolderTree(absolutePath) {
+    if (isPathInside(queriedPath, absolutePath) && !folderStructureTree.find(fst => fst.absolutePath === absolutePath)) {
+        let depth = calculateDepth(queriedPath, absolutePath);
+        let prefix = '';
+        for (let i = 1; i < depth; i++) {
+            prefix += '|    ';
+        }
+        folderStructureTree.push(getFolderTreeItem(prefix + "├───", absolutePath));
+    }
+}
+
+function sortFolderTree() {
+    // 1. Sort the folderStructureTree
+    folderStructureTree.sort((a, b) => {
+        if (a.absolutePath < b.absolutePath) {
+            return -1;
+        }
+        if (a.absolutePath > b.absolutePath) {
+            return 1;
+        }
+        return 0;
+    });
+
+    // 2. Set prefix according to the position in the directory
+    for (let i = 0; i < folderStructureTree.length; i++) {
+        // Get the current directory path
+        const currentDirPath = path.dirname(folderStructureTree[i].absolutePath);
+        // Check if it's the last file in the directory
+        if (i === folderStructureTree.length - 1 || path.dirname(folderStructureTree[i + 1].absolutePath) !== currentDirPath) {
+            // Update the prefix for the last file in the directory
+            folderStructureTree[i].line = folderStructureTree[i].line.replace("├───", "└───");
+        }
     }
 }
 
@@ -339,14 +364,14 @@ async function generateTestsForDirectory(args, processingFunction = 'getUnitTest
 
     API.checkForAPIKey();
     queriedPath = path.resolve(pathToProcess);
-    rootPath = process.cwd();
+    rootPath = args.pythagora_root;
     ({ screen, spinner, scrollableContent } = initScreenForUnitTests());
 
-    await traverseDirectory(queriedPath, true, undefined, funcName, processingFunction);
+    await traverseDirectory(queriedPath, true, funcName, processingFunction);
     processedFiles = [];
-    await traverseDirectory(queriedPath, true, undefined, funcName, processingFunction);
+    await traverseDirectory(queriedPath, true, funcName, processingFunction);
     processedFiles = [];
-    await traverseDirectory(queriedPath, false, undefined, funcName, processingFunction);
+    await traverseDirectory(queriedPath, false, funcName, processingFunction);
 
     screen.destroy();
     process.stdout.write('\x1B[2J\x1B[0f');

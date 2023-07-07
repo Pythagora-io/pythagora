@@ -17,16 +17,16 @@ function getRelativePath(filePath, referenceFolderPath) {
 }
 
 
-function getFolderTreeItem(prefix, isLast, name, absolutePath) {
+function getFolderTreeItem(prefix, absolutePath) {
     return {
-        line: `${prefix}${isLast ? '└───' : '├───'}${name}`,
-        absolutePath
-    };
+        line: `${prefix}${path.basename(absolutePath)}`,
+        absolutePath: absolutePath
+    }
 }
 
 function isPathInside(basePath, targetPath) {
     const relativePath = path.relative(basePath, targetPath);
-    return !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+    return !relativePath || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath));
 }
 
 function getTestFolderPath(filePath, rootPath) {
@@ -37,10 +37,19 @@ function getTestFolderPath(filePath, rootPath) {
     );
 }
 
+function calculateDepth(basePath, targetPath) {
+    const baseComponents = basePath.split(path.sep);
+    const targetComponents = targetPath.split(path.sep);
+
+    // The depth is the difference in the number of components
+    return targetComponents.length - baseComponents.length + 1;
+}
+
 module.exports = {
     checkPathType,
     getRelativePath,
     getFolderTreeItem,
     isPathInside,
-    getTestFolderPath
+    getTestFolderPath,
+    calculateDepth
 }

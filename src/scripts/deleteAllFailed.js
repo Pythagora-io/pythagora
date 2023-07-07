@@ -8,7 +8,7 @@ let args = require('../utils/getArgs.js');
 let metadata = fs.readFileSync(path.resolve(args.pythagora_root, PYTHAGORA_METADATA_DIR, METADATA_FILENAME));
 metadata = JSON.parse(metadata);
 if (!metadata || !metadata.runs || !metadata.runs.length ||
-    !metadata.runs[metadata.runs.length - 1].failed.length) return logAndExit('Previous test run had no failed tests. Nothing to delete, exiting...', 'log');
+    !metadata.runs[metadata.runs.length - 1].failed.length) logAndExit('Previous test run had no failed tests. Nothing to delete, exiting...', 'log');
 
 let deleteTests = metadata.runs[metadata.runs.length - 1].failed;
 let files = fs.readdirSync(path.resolve(args.pythagora_root, PYTHAGORA_TESTS_DIR));

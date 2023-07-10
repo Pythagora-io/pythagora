@@ -15,28 +15,28 @@ const hash = crypto.createHash('sha256');
 hash.update(installationDirectory);
 const pathId = hash.digest('hex');
 
-// Try to read the config file and get the userId
-let userId;
+let config;
 try {
-    const config = JSON.parse(fs.readFileSync(configPath));
-    userId = config.userId;
+    config = JSON.parse(fs.readFileSync(configPath));
 } catch (err) {
     // Config file doesn't exist or is not valid JSON
 }
 
+if (!config) config = {};
+
 // If there's no userId, generate one and save it to the config file
-if (!userId) {
-    userId = uuidv4();
+if (!config.userId) {
+    config.userId = uuidv4();
     const configDir = path.dirname(configPath);
     if (!fs.existsSync(configDir)) {
         fs.mkdirSync(configDir, { recursive: true });
     }
-    fs.writeFileSync(configPath, JSON.stringify({ userId }, null, 2));
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 }
 
 // Send the request to the telemetry endpoint
 const telemetryData = {
-    userId,
+    userId: config.userId,
     pathId,
     event: 'install',
     pythagoraVersion

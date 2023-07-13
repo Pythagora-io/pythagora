@@ -17,12 +17,13 @@ function getRelativePath(filePath, referenceFolderPath) {
     return relativePath;
 }
 
-
 function getFolderTreeItem(prefix, absolutePath) {
+    const isDirectory = absolutePath.includes(':') ? false : fsSync.statSync(absolutePath).isDirectory();
     return {
         line: `${prefix}${path.basename(absolutePath)}`,
-        absolutePath: absolutePath
-    }
+        absolutePath,
+        isDirectory
+    };
 }
 
 function isPathInside(basePath, targetPath) {

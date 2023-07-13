@@ -5,13 +5,13 @@ const _ = require('lodash');
 let args = require('../utils/getArgs.js');
 
 const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('../const/common.js');
-const { logChange } = require('../utils/cmdPrint.js');
+const { logChange, logAndExit } = require('../utils/cmdPrint.js');
 const { compareJson, getMetadata } = require('../utils/common.js');
 
 const reviewFilePath = path.resolve(args.pythagora_root, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME);
 const metadata = getMetadata();
 
-if (!fs.existsSync(reviewFilePath)) return console.log('There is no changes stored for review. Please run tests first.');
+if (!fs.existsSync(reviewFilePath)) logAndExit('There is no changes stored for review. Please run tests first.');
 
 const data = fs.readFileSync(reviewFilePath);
 const changes = JSON.parse(data);

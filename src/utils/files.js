@@ -17,11 +17,10 @@ function getRelativePath(filePath, referenceFolderPath) {
     return relativePath;
 }
 
-
-function getFolderTreeItem(prefix, isLast, name, absolutePath) {
+function getFolderTreeItem(prefix, absolutePath) {
     const isDirectory = absolutePath.includes(':') ? false : fsSync.statSync(absolutePath).isDirectory();
     return {
-        line: `${prefix}${isLast ? '└───' : '├───'}${name}`,
+        line: `${prefix}${path.basename(absolutePath)}`,
         absolutePath,
         isDirectory
     };
@@ -29,15 +28,23 @@ function getFolderTreeItem(prefix, isLast, name, absolutePath) {
 
 function isPathInside(basePath, targetPath) {
     const relativePath = path.relative(basePath, targetPath);
-    return !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+    return !relativePath || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath));
 }
 
 function getTestFolderPath(filePath, rootPath) {
     return path.join(
         path.resolve(PYTHAGORA_UNIT_DIR),
-        path.dirname(filePath).replace(rootPath, ''),
+        path.dirname(filePath).replace(path.resolve(rootPath), ''),
         path.basename(filePath, path.extname(filePath))
     );
+}
+
+function calculateDepth(basePath, targetPath) {
+    const baseComponents = basePath.split(path.sep);
+    const targetComponents = targetPath.split(path.sep);
+
+    // The depth is the difference in the number of components
+    return targetComponents.length - baseComponents.length + 1;
 }
 
 module.exports = {
@@ -45,5 +52,6 @@ module.exports = {
     getRelativePath,
     getFolderTreeItem,
     isPathInside,
-    getTestFolderPath
+    getTestFolderPath,
+    calculateDepth
 }

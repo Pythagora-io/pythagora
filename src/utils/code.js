@@ -211,7 +211,7 @@ function processAst(ast, cb) {
                 const expression = path.node.expression;
                 if (expression && expression.type === 'AssignmentExpression') {
                     const left = expression.left;
-                    if (left.object.type === 'MemberExpression' &&
+                    if (left.object && left.object.type === 'MemberExpression' &&
                         left.object.object.name === 'module' &&
                         left.object.property.name === 'exports') {
                         if (expression.right.type === 'Identifier') {
@@ -344,7 +344,6 @@ function collectTestRequires(node) {
     let requires = [];
     babelTraverse(node, {
         ImportDeclaration(path) {
-            //path.node.specifiers[0].local.name
             if (path.node && path.node.specifiers && path.node.specifiers.length > 0) {
                 const requireData = {
                     code: generator(path.node).code,
@@ -372,15 +371,6 @@ function getRelatedTestImports(ast, filePath, functionList) {
         
         _.forEach(requiresFromFile[fileImport].functionNames, (funcName) => {
             let functionFromList = functionList[requiredPath + ':' + funcName];
-            // let existingFile = relatedFunctions.find(f => f.filePath == functionFromList.filePath);
-
-            // if (existingFile) {
-            //     existingFile.code += `\n${functionFromList.code}`
-            // } else if (functionFromList) {
-            //     relatedFunctions.push(_.extend(functionFromList, {
-            //         fileName: requiredPath
-            //     }));
-            // }
             if (functionFromList) {
                 relatedFunctions.push(_.extend(functionFromList, {
                     fileName: requiredPath
@@ -390,6 +380,18 @@ function getRelatedTestImports(ast, filePath, functionList) {
     }
 
     return relatedFunctions;
+}
+
+function rearrangeImportsInCode(code) {
+    // Match both 'import' and 'require' statements, with or without semicolons
+    const importAndRequireRegex = /^(import .+ from .+;|const .+ = require\(.+\);?)[\r\n]*/gm;
+    let extractedStatements = code.match(importAndRequireRegex);
+    let codeExcludingStatements = code.replace(importAndRequireRegex, '');
+    extractedStatements = [...new Set(extractedStatements.map(statement => statement.trim()))];
+    let consolidatedStatements = extractedStatements.join('\n');
+    let codeWithReorderedStatements = `${consolidatedStatements}\n\n${codeExcludingStatements}`;
+
+    return codeWithReorderedStatements;
 }
 
 module.exports = {
@@ -402,5 +404,6 @@ module.exports = {
     processAst,
     getModuleTypeFromFilePath,
     getSourceCodeFromAst,
-    getRelatedTestImports
+    getRelatedTestImports,
+    rearrangeImportsInCode
 }

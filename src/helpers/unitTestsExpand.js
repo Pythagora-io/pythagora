@@ -11,7 +11,6 @@ const {
   getRelatedTestImports,
   getSourceCodeFromAst,
   getModuleTypeFromFilePath,
-  rearrangeImportsInCode,
   replaceRequirePaths
 } = require("../utils/code");
 const { getFunctionsForExport } = require("./unitTests");
@@ -35,15 +34,13 @@ let functionList = {},
   ignoreErrors = ["BABEL_PARSER_SYNTAX_ERROR"],
   force;
 
-async function saveTests(filePath, fileName, originalTests, newTests) {
+async function saveTests(filePath, fileName, newTests) {
   let dir = filePath.substring(0, filePath.lastIndexOf("/"));
   if (!await checkDirectoryExists(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
   let testPath = path.join(dir, `/${fileName}`);
-  let mergedTestCode = `${originalTests.trim()}\n\n${newTests.trim()}`;
-  mergedTestCode = rearrangeImportsInCode(mergedTestCode);
-  fs.writeFileSync(testPath, mergedTestCode);
+  fs.writeFileSync(testPath, newTests);
   return testPath;
 }
 
@@ -130,7 +127,7 @@ async function createAdditionalTests(filePath, prefix) {
     });
 
     if (tests) {
-      await saveTests(testPath, formattedData.testFileName, testCode, tests);
+      await saveTests(testPath, formattedData.testFileName, tests);
       testsGenerated.push(testPath);
       await spinner.stop();
       folderStructureTree[

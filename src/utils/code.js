@@ -382,18 +382,6 @@ function getRelatedTestImports(ast, filePath, functionList) {
     return relatedFunctions;
 }
 
-function rearrangeImportsInCode(code) {
-    // Match both 'import' and 'require' statements, with or without semicolons
-    const importAndRequireRegex = /^(import .+ from .+;|const .+ = require\(.+\);?)[\r\n]*/gm;
-    let extractedStatements = code.match(importAndRequireRegex);
-    let codeExcludingStatements = code.replace(importAndRequireRegex, '');
-    extractedStatements = [...new Set(extractedStatements.map(statement => statement.trim()))];
-    let consolidatedStatements = extractedStatements.join('\n');
-    let codeWithReorderedStatements = `${consolidatedStatements}\n\n${codeExcludingStatements}`;
-
-    return codeWithReorderedStatements;
-}
-
 module.exports = {
     replaceRequirePaths,
     getAstFromFilePath,
@@ -404,6 +392,5 @@ module.exports = {
     processAst,
     getModuleTypeFromFilePath,
     getSourceCodeFromAst,
-    getRelatedTestImports,
-    rearrangeImportsInCode
+    getRelatedTestImports
 }

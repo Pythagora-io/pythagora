@@ -66,7 +66,7 @@ async function processFile(filePath, filesToProcess) {
                 if (importedFile && !filesToProcess.includes(importedFile)) {
                     filesToProcess.push(importedFile);
                 }
-            } else if (node.type === "VariableDeclaration" && node.declarations[0].init.type === "CallExpression" && node.declarations[0].init.callee.name === "require") {
+            } else if (node.type === "VariableDeclaration" && node.declarations.length > 0 && node.declarations[0].init && node.declarations[0].init.type === "CallExpression" && node.declarations[0].init.callee.name === "require") {
                 let importedFile = path.resolve(path.dirname(filePath), node.declarations[0].init.arguments[0].value);
                 importedFile = resolveFilePath(importedFile, extension);
                 if (importedFile && !filesToProcess.includes(importedFile)) {
@@ -365,12 +365,14 @@ async function generateTestsForDirectory(args, processingFunction = 'getUnitTest
     API.checkForAPIKey();
     queriedPath = path.resolve(pathToProcess);
     rootPath = args.pythagora_root;
-    ({ screen, spinner, scrollableContent } = initScreenForUnitTests());
+    console.log('Processing folder structure...');
 
     await traverseDirectory(queriedPath, true, funcName, processingFunction);
     processedFiles = [];
     await traverseDirectory(queriedPath, true, funcName, processingFunction);
     processedFiles = [];
+    console.log('Generating tests...');
+    ({ screen, spinner, scrollableContent } = initScreenForUnitTests());
     await traverseDirectory(queriedPath, false, funcName, processingFunction);
 
     screen.destroy();

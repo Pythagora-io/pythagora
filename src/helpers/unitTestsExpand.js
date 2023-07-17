@@ -144,7 +144,7 @@ async function createAdditionalTests(filePath, prefix) {
       ].line = `${red}${folderStructureTree[fileIndex].line}${reset}`;
     }
   } catch (e) {
-    if (!ignoreErrors.includes(e.code)) errors.push(e);
+    if (!ignoreErrors.includes(e.code)) errors.push(e.stack);
   }
 }
 
@@ -196,7 +196,7 @@ async function expandTestsForDirectory(args) {
   checkForAPIKey();
   queriedPath = path.resolve(pathToProcess);
   rootPath = process.cwd();
-  ({ screen, spinner, scrollableContent } = initScreenForUnitTests());
+  console.log("Processing folder structure...");
 
   const exportData = await getFunctionsForExport(
     pathToProcess || rootPath,
@@ -209,6 +209,8 @@ async function expandTestsForDirectory(args) {
   folderStructureTree = folderStructureTree.filter(
     (i) => checkForTestFilePath(i.absolutePath) || i.isDirectory
   );
+
+  ({ screen, spinner, scrollableContent } = initScreenForUnitTests());
 
   await traverseDirectoryTests(queriedPath, false);
 

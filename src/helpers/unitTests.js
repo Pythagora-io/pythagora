@@ -154,7 +154,6 @@ async function createTests(filePath, funcToTest, processingFunction = 'getUnitTe
     try {
         let extension = path.extname(filePath);
         let ast = await getAstFromFilePath(filePath);
-        const fileIndex = folderStructureTree.findIndex(item => item.absolutePath === filePath);
 
         const foundFunctions = [];
 
@@ -184,6 +183,7 @@ async function createTests(filePath, funcToTest, processingFunction = 'getUnitTe
         );
 
         sortFolderTree();
+        const fileIndex = folderStructureTree.findIndex(item => item.absolutePath === filePath);
 
         for (const [i, funcData] of uniqueFoundFunctions.entries()) {
             let indexToPush = fileIndex + 1 + i;

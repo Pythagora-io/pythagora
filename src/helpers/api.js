@@ -58,6 +58,7 @@ async function makeRequest(data, options, customLogFunction) {
                     } catch (e) {}
 
                     gptResponse += stringified;
+                    if (gptResponse.indexOf('pythagora_end:') > -1) return;
                     if (customLogFunction) customLogFunction(gptResponse);
                     else process.stdout.write(stringified);
                 } catch (e) {}

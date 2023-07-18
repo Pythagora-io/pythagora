@@ -60,7 +60,7 @@ do
     exit 0
   elif [[ "${args[$i]}" == "--unit-tests" ]]
   then
-    echo "${green}${bold}Generating unit tests...${reset}"
+    echo "${green}${bold}Starting generation of unit tests...${reset}"
     PYTHAGORA_CONFIG="$@" node "${pythagora_dir}/src/scripts/unit.js"
     exit 0
   

@@ -26,7 +26,15 @@ npx pythagora --unit-tests --func <FUNCTION_NAME>
 
 Where `<FUNCTION_NAME>` is the name of the function you want to generate unit tests for. Just make sure that your function is exported from a file. You can see other options like generating tests for multiple files or folders [below in the Options section](#-options).
 
-<br>
+<br><br>
+If you wish to expand your current test suite with more tests to get better code coverage you can run:
+
+```bash
+npx pythagora --expand-unit-tests --path <PATH_TO_YOUR_TEST_SUITE>
+```
+for more details on expanding existing tests see [below in the Expanding existing tests section](#-expand-existing-tests).
+
+<br><br>
 
 **NOTE:** on Windows make sure to run all commands using `Git Bash` and not `Power Shell` or anything similiar
 
@@ -76,6 +84,16 @@ When Pythagora generates unit tests, it uses the following approach:
   - You can find the prompts [in this folder](https://github.com/Pythagora-io/api/tree/main/prompts) on the Pythagora server
     
 <br>
+
+# 📈 Expand existing tests
+If you already have generated tests for your codebase but you just want to increase your code coverage or cover more edge cases, simply run:
+
+```bash
+npx pythagora --expand-unit-tests --path <PATH_TO_YOUR_TEST_SUITE>
+```
+When running command `PATH_TO_YOUR_TEST_SUITE` can be path to a single test file or to a folder and all test files inside of that folder will be processed and expanded.
+
+That's all, enjoy your new code coverage!
 
 # 📖 Options
 - To generate unit tests for **one single function**, run:

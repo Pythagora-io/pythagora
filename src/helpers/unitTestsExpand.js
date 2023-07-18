@@ -100,11 +100,11 @@ async function createAdditionalTests(filePath, prefix) {
 
     sortFolderTree(folderStructureTree);
 
-    const relatedTestCode = getRelatedTestImports(ast, filePath, functionList);
+    const relatedCode = getRelatedTestImports(ast, filePath, functionList);
     const formattedData = reformatDataForPythagoraAPI(
       filePath,
       testCode,
-      relatedTestCode,
+      relatedCode,
       syntaxType
     );
 

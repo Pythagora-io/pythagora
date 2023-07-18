@@ -138,6 +138,7 @@ function getRelatedFunctions(node, ast, filePath, functionList) {
             }
 
             let requiredPath = requiresFromFile.find(require => require.includes(funcName));
+            const importPath = requiredPath;
             if (!requiredPath) {
                 requiredPath = filePath;
             } else {
@@ -147,7 +148,8 @@ function getRelatedFunctions(node, ast, filePath, functionList) {
             let functionFromList = functionList[requiredPath + ':' + funcName];
             if (functionFromList) {
                 relatedFunctions.push(_.extend(functionFromList, {
-                    fileName: requiredPath
+                    fileName: requiredPath,
+                    importPath
                 }));
             }
         }
@@ -362,7 +364,7 @@ function collectTestRequires(node) {
 }
 
 function getRelatedTestImports(ast, filePath, functionList) {
-    let relatedFunctions = [];
+    let relatedCode = [];
     let requiresFromFile = collectTestRequires(ast);
 
     for (let fileImport in requiresFromFile) {
@@ -372,14 +374,27 @@ function getRelatedTestImports(ast, filePath, functionList) {
         _.forEach(requiresFromFile[fileImport].functionNames, (funcName) => {
             let functionFromList = functionList[requiredPath + ':' + funcName];
             if (functionFromList) {
-                relatedFunctions.push(_.extend(functionFromList, {
+                relatedCode.push(_.extend(functionFromList, {
                     fileName: requiredPath
                 }));
             }
         })
     }
 
-    return relatedFunctions;
+    for (let relCode of relatedCode) {
+        let relatedCodeImports = '';
+        for (let func of relCode.relatedFunctions) {
+            if (func.importPath) {
+                relatedCodeImports += `${func.importPath}\n`;
+            }
+        }
+
+        if (relatedCodeImports) {
+            relCode.code = `${relatedCodeImports}\n${relCode.code}`;
+        }
+    }
+
+    return relatedCode;
 }
 
 module.exports = {

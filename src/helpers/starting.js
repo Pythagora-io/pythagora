@@ -7,7 +7,8 @@ const {
     EXPORTED_TESTS_DATA_DIR,
     PYTHAGORA_METADATA_DIR,
     METADATA_FILENAME,
-    EXPORT_METADATA_FILENAME
+    EXPORT_METADATA_FILENAME,
+    PYTHAGORA_UNIT_DIR
 } = require("../const/common");
 let args = require('../utils/getArgs.js');
 
@@ -91,10 +92,19 @@ function startPythagora(args, app) {
 
 function setUpPythagoraDirs() {
     let root = args.pythagora_root;
-    if (!fs.existsSync(path.resolve(root, PYTHAGORA_TESTS_DIR))) fs.mkdirSync(path.resolve(root, PYTHAGORA_TESTS_DIR));
-    if (!fs.existsSync(path.resolve(root, EXPORTED_TESTS_DIR))) fs.mkdirSync(path.resolve(root, EXPORTED_TESTS_DIR));
-    if (!fs.existsSync(path.resolve(root, EXPORTED_TESTS_DATA_DIR))) fs.mkdirSync(path.resolve(root, EXPORTED_TESTS_DATA_DIR));
-    if (!fs.existsSync(path.resolve(root, PYTHAGORA_METADATA_DIR))) fs.mkdirSync(path.resolve(root, PYTHAGORA_METADATA_DIR));
+    const directories = [
+        PYTHAGORA_TESTS_DIR,
+        EXPORTED_TESTS_DIR,
+        EXPORTED_TESTS_DATA_DIR,
+        PYTHAGORA_UNIT_DIR,
+        PYTHAGORA_METADATA_DIR
+    ];
+
+    directories.forEach(directory => {
+        const directoryPath = path.resolve(root, directory);
+        if (!fs.existsSync(directoryPath)) fs.mkdirSync(directoryPath);
+    });
+
     if (!fs.existsSync(path.resolve(root, PYTHAGORA_METADATA_DIR, METADATA_FILENAME))) fs.writeFileSync(path.resolve(root, PYTHAGORA_METADATA_DIR, METADATA_FILENAME), '{}');
     if (!fs.existsSync(path.resolve(root, PYTHAGORA_METADATA_DIR, EXPORT_METADATA_FILENAME))) fs.writeFileSync(path.resolve(root, PYTHAGORA_METADATA_DIR, EXPORT_METADATA_FILENAME), '{}');
 }

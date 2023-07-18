@@ -13,7 +13,7 @@ const {
   getModuleTypeFromFilePath,
   replaceRequirePaths
 } = require("../utils/code");
-const { getFunctionsForExport } = require("./unitTests");
+const { getFunctionsForExport, sortFolderTree } = require("./unitTests");
 const { checkPathType, getRelativePath, getTestFolderPath } = require("../utils/files");
 const { initScreenForUnitTests } = require("./cmdGUI");
 const { green, red, blue, bold, reset } = require("../utils/cmdPrint").colors;
@@ -97,6 +97,8 @@ async function createAdditionalTests(filePath, prefix) {
       path.dirname(filePath),
       testPath.substring(0, testPath.lastIndexOf("/"))
     );
+
+    sortFolderTree(folderStructureTree);
 
     const relatedTestCode = getRelatedTestImports(ast, filePath, functionList);
     const formattedData = reformatDataForPythagoraAPI(
@@ -195,11 +197,12 @@ async function expandTestsForDirectory(args) {
 
   checkForAPIKey();
   queriedPath = path.resolve(pathToProcess);
-  rootPath = process.cwd();
+  rootPath = args.pythagora_root;
   console.log("Processing folder structure...");
 
   const exportData = await getFunctionsForExport(
-    pathToProcess || rootPath,
+    queriedPath,
+    rootPath,
     (fileName) => {
       return !filesEndingWith.some((ending) => fileName.endsWith(ending));
     }

@@ -186,7 +186,7 @@ async function createTests(filePath, funcToTest, processingFunction = 'getUnitTe
                 ))
         );
 
-        sortFolderTree();
+        sortFolderTree(folderStructureTree);
 
         for (const [i, funcData] of uniqueFoundFunctions.entries()) {
             let indexToPush = fileIndex + 1 + i;
@@ -328,9 +328,9 @@ function updateFolderTree(absolutePath) {
     }
 }
 
-function sortFolderTree() {
+function sortFolderTree(tree) {
     // 1. Sort the folderStructureTree
-    folderStructureTree.sort((a, b) => {
+    tree.sort((a, b) => {
         if (a.absolutePath < b.absolutePath) {
             return -1;
         }
@@ -341,25 +341,28 @@ function sortFolderTree() {
     });
 
     // 2. Set prefix according to the position in the directory
-    for (let i = 0; i < folderStructureTree.length; i++) {
+    for (let i = 0; i < tree.length; i++) {
         // Get the current directory path
-        const currentDirPath = path.dirname(folderStructureTree[i].absolutePath);
+        const currentDirPath = path.dirname(tree[i].absolutePath);
         // Check if it's the last file in the directory
-        if (i === folderStructureTree.length - 1 || path.dirname(folderStructureTree[i + 1].absolutePath) !== currentDirPath) {
+        if (i === tree.length - 1 || path.dirname(tree[i + 1].absolutePath) !== currentDirPath) {
             // Update the prefix for the last file in the directory
-            folderStructureTree[i].line = folderStructureTree[i].line.replace("├───", "└───");
+            tree[i].line = tree[i].line.replace("├───", "└───");
         }
     }
 }
 
-async function getFunctionsForExport(dirPath, ignoreFilesRewrite) {
+async function getFunctionsForExport(path, pythagoraRoot, ignoreFilesRewrite) {
     if (ignoreFilesRewrite) {
         isFileToIgnore = ignoreFilesRewrite;
     }
-    rootPath = dirPath;
-    await traverseDirectory(rootPath, true);
+    queriedPath = path;
+    rootPath = pythagoraRoot;
+
+    await traverseDirectory(queriedPath, true);
     processedFiles = [];
-    await traverseDirectory(rootPath, true);
+    await traverseDirectory(queriedPath, true);
+    processedFiles = [];
     return {functionList, folderStructureTree};
 }
 
@@ -402,5 +405,6 @@ async function generateTestsForDirectory(args, processingFunction = 'getUnitTest
 
 module.exports = {
     getFunctionsForExport,
-    generateTestsForDirectory
+    generateTestsForDirectory,
+    sortFolderTree
 }

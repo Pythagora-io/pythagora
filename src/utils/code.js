@@ -358,6 +358,21 @@ function collectTestRequires(node) {
 
                 requires.push(requireData);
             }
+        },
+        CallExpression(path) {
+            if (path.node.callee.name === 'require' && path.node.arguments && path.node.arguments.length > 0) {
+                const requireData = {
+                    code: generator(path.node).code,
+                    functionNames: []
+                }
+
+                // In case of a CommonJS require, the function name is usually the variable identifier of the parent node
+                if (path.parentPath && path.parentPath.node.type === 'VariableDeclarator' && path.parentPath.node.id) {
+                    requireData.functionNames.push(path.parentPath.node.id.name)
+                }
+
+                requires.push(requireData);
+            }
         }
     });
     return requires;

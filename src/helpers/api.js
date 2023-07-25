@@ -41,13 +41,18 @@ function setOptions({path, method, headers}) {
 
 async function makeRequest(data, options, customLogFunction) {
     let gptResponse = '';
-    let end = false;
     let httpModule = options.protocol === 'http' ? require('http') : require('https');
+    let timeout;
 
     return new Promise((resolve, reject) => {
         const req = httpModule.request(_.omit(options, ['protocol']), function(res){
             res.on('data', (chunk) => {
                 try {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        reject(new Error("Request timeout"));
+                    }, 30000);
+
                     let stringified = chunk.toString();
                     try {
                         let json = JSON.parse(stringified);
@@ -58,11 +63,14 @@ async function makeRequest(data, options, customLogFunction) {
                     } catch (e) {}
 
                     gptResponse += stringified;
+                    if (gptResponse.indexOf('pythagora_end:') > -1) return;
                     if (customLogFunction) customLogFunction(gptResponse);
                     else process.stdout.write(stringified);
                 } catch (e) {}
             });
             res.on('end', async function ()  {
+                clearTimeout(timeout);
+
                 process.stdout.write('\n');
                 if (res.statusCode >= 400) return reject(new Error(`Response status code: ${res.statusCode}. Error message: ${gptResponse}`));
                 if (gptResponse.error) return reject(new Error(`Error: ${gptResponse.error.message}. Code: ${gptResponse.error.code}`));
@@ -73,6 +81,7 @@ async function makeRequest(data, options, customLogFunction) {
         });
 
         req.on('error', (e) => {
+            clearTimeout(timeout);
             console.error("problem with request:"+e.message);
             reject(e);
         });

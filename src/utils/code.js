@@ -85,7 +85,6 @@ async function getModuleTypeFromFilePath(ast) {
     return moduleType;
 }
 
-
 function collectTopRequires(node) {
     let requires = [];
     babelTraverse(node, {
@@ -139,6 +138,7 @@ function getRelatedFunctions(node, ast, filePath, functionList) {
             }
 
             let requiredPath = requiresFromFile.find(require => require.includes(funcName));
+            const importPath = requiredPath;
             if (!requiredPath) {
                 requiredPath = filePath;
             } else {
@@ -148,7 +148,8 @@ function getRelatedFunctions(node, ast, filePath, functionList) {
             let functionFromList = functionList[requiredPath + ':' + funcName];
             if (functionFromList) {
                 relatedFunctions.push(_.extend(functionFromList, {
-                    fileName: requiredPath
+                    fileName: requiredPath,
+                    importPath
                 }));
             }
         }
@@ -337,6 +338,80 @@ function processAst(ast, cb) {
     });
 }
 
+function getSourceCodeFromAst (ast) {
+    return generator(ast).code;
+}
+
+function collectTestRequires(node) {
+    let requires = [];
+    babelTraverse(node, {
+        ImportDeclaration(path) {
+            if (path.node && path.node.specifiers && path.node.specifiers.length > 0) {
+                const requireData = {
+                    code: generator(path.node).code,
+                    functionNames: []
+                }
+
+                _.forEach(path.node.specifiers, (s) => {
+                    if (s.local && s.local.name) requireData.functionNames.push(s.local.name)
+                })
+
+                requires.push(requireData);
+            }
+        },
+        CallExpression(path) {
+            if (path.node.callee.name === 'require' && path.node.arguments && path.node.arguments.length > 0) {
+                const requireData = {
+                    code: generator(path.node).code,
+                    functionNames: []
+                }
+
+                // In case of a CommonJS require, the function name is usually the variable identifier of the parent node
+                if (path.parentPath && path.parentPath.node.type === 'VariableDeclarator' && path.parentPath.node.id) {
+                    requireData.functionNames.push(path.parentPath.node.id.name)
+                }
+
+                requires.push(requireData);
+            }
+        }
+    });
+    return requires;
+}
+
+function getRelatedTestImports(ast, filePath, functionList) {
+    let relatedCode = [];
+    let requiresFromFile = collectTestRequires(ast);
+
+    for (let fileImport in requiresFromFile) {
+        let requiredPath = getPathFromRequireOrImport(requiresFromFile[fileImport].code);
+        requiredPath = getFullPathFromRequireOrImport(requiredPath, filePath);
+        
+        _.forEach(requiresFromFile[fileImport].functionNames, (funcName) => {
+            let functionFromList = functionList[requiredPath + ':' + funcName];
+            if (functionFromList) {
+                relatedCode.push(_.extend(functionFromList, {
+                    fileName: requiredPath
+                }));
+            }
+        })
+    }
+
+    for (let relCode of relatedCode) {
+        let relatedCodeImports = '';
+        for (let func of relCode.relatedFunctions) {
+            if (func.importPath) {
+                relatedCodeImports += `${func.importPath}\n`;
+            }
+        }
+
+        if (relatedCodeImports) {
+            relCode.code = `${relatedCodeImports}\n${relCode.code}`;
+        }
+    }
+
+    return relatedCode;
+}
+
 module.exports = {
     replaceRequirePaths,
     getAstFromFilePath,
@@ -345,5 +420,7 @@ module.exports = {
     getRelatedFunctions,
     stripUnrelatedFunctions,
     processAst,
-    getModuleTypeFromFilePath
+    getModuleTypeFromFilePath,
+    getSourceCodeFromAst,
+    getRelatedTestImports
 }

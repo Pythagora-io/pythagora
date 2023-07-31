@@ -33,7 +33,10 @@ let functionList = {},
     ignoreFilesEndingWith = [".test.js", ".test.ts", ".test.tsx"],
     processExtensions = ['.js', '.ts', '.tsx'],
     ignoreErrors = ['BABEL_PARSER_SYNTAX_ERROR'],
-    force
+    force,
+    isFileToIgnore = (fileName) => {
+        return ignoreFilesEndingWith.some(ending => fileName.endsWith(ending))
+    }
 ;
 
 function resolveFilePath(filePath, extension) {
@@ -182,9 +185,9 @@ async function createTests(filePath, funcToTest, processingFunction = 'getUnitTe
                 ))
         );
 
-        sortFolderTree();
-        const fileIndex = folderStructureTree.findIndex(item => item.absolutePath === filePath);
+        sortFolderTree(folderStructureTree);
 
+        const fileIndex = folderStructureTree.findIndex(item => item.absolutePath === filePath);
         for (const [i, funcData] of uniqueFoundFunctions.entries()) {
             let indexToPush = fileIndex + 1 + i;
             let prefix = folderStructureTree[fileIndex].line.split(path.basename(folderStructureTree[fileIndex].absolutePath))[0];
@@ -267,7 +270,7 @@ async function traverseDirectory(file, onlyCollectFunctionData, funcName, proces
     const absolutePath = path.resolve(file);
     const stat = fs.statSync(absolutePath);
 
-    if (ignoreFilesEndingWith.some(ending => file.endsWith(ending))) return;
+    if (!stat.isDirectory() && isFileToIgnore(file)) return;
 
     if (stat.isDirectory()) {
         if (ignoreFolders.includes(path.basename(absolutePath)) || path.basename(absolutePath).charAt(0) === '.') return;
@@ -285,7 +288,7 @@ async function traverseDirectory(file, onlyCollectFunctionData, funcName, proces
                     return !ignoreFolders.includes(baseName) && !baseName.startsWith('.');
                 } else {
                     const ext = path.extname(f);
-                    return processExtensions.includes(ext) && !ignoreFilesEndingWith.some(ending => f.endsWith(ending));
+                    return processExtensions.includes(ext) && !isFileToIgnore(f);
                 }
             })
             .map(f => path.join(absolutePath, f));
@@ -325,9 +328,9 @@ function updateFolderTree(absolutePath) {
     }
 }
 
-function sortFolderTree() {
+function sortFolderTree(tree) {
     // 1. Sort the folderStructureTree
-    folderStructureTree.sort((a, b) => {
+    tree.sort((a, b) => {
         if (a.absolutePath < b.absolutePath) {
             return -1;
         }
@@ -338,23 +341,29 @@ function sortFolderTree() {
     });
 
     // 2. Set prefix according to the position in the directory
-    for (let i = 0; i < folderStructureTree.length; i++) {
+    for (let i = 0; i < tree.length; i++) {
         // Get the current directory path
-        const currentDirPath = path.dirname(folderStructureTree[i].absolutePath);
+        const currentDirPath = path.dirname(tree[i].absolutePath);
         // Check if it's the last file in the directory
-        if (i === folderStructureTree.length - 1 || path.dirname(folderStructureTree[i + 1].absolutePath) !== currentDirPath) {
+        if (i === tree.length - 1 || path.dirname(tree[i + 1].absolutePath) !== currentDirPath) {
             // Update the prefix for the last file in the directory
-            folderStructureTree[i].line = folderStructureTree[i].line.replace("├───", "└───");
+            tree[i].line = tree[i].line.replace("├───", "└───");
         }
     }
 }
 
-async function getFunctionsForExport(dirPath) {
-    rootPath = dirPath;
-    await traverseDirectory(rootPath, true);
+async function getFunctionsForExport(path, pythagoraRoot, ignoreFilesRewrite) {
+    if (ignoreFilesRewrite) {
+        isFileToIgnore = ignoreFilesRewrite;
+    }
+    queriedPath = path;
+    rootPath = pythagoraRoot;
+
+    await traverseDirectory(queriedPath, true);
     processedFiles = [];
-    await traverseDirectory(rootPath, true);
-    return functionList;
+    await traverseDirectory(queriedPath, true);
+    processedFiles = [];
+    return {functionList, folderStructureTree};
 }
 
 async function generateTestsForDirectory(args, processingFunction = 'getUnitTests') {
@@ -390,10 +399,12 @@ async function generateTestsForDirectory(args, processingFunction = 'getUnitTest
         console.log(`Tests are saved in the following directories:${testsGenerated.reduce((acc, item) => acc + '\n' + blue + item, '')}`);
         console.log(`${bold+green}${testsGenerated.length} unit tests generated!${reset}`);
     }
+    
     process.exit(0);
 }
 
 module.exports = {
     getFunctionsForExport,
-    generateTestsForDirectory
+    generateTestsForDirectory,
+    sortFolderTree
 }

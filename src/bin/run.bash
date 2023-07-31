@@ -63,6 +63,13 @@ do
     echo "${green}${bold}Starting generation of unit tests...${reset}"
     PYTHAGORA_CONFIG="$@" node "${pythagora_dir}/src/scripts/unit.js"
     exit 0
+  
+  elif [[ "${args[$i]}" == "--expand-unit-tests" ]]
+  then
+    echo "${green}${bold}Expanding unit tests...${reset}"
+    PYTHAGORA_CONFIG="$@" node "${pythagora_dir}/src/scripts/unitExpand.js"
+    exit 0
+
   elif [[ "${args[$i]}" == "--export-setup" ]]
   then
     PYTHAGORA_CONFIG="$@" node "${pythagora_dir}/src/scripts/enterData.js"

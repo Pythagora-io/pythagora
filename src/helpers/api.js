@@ -104,6 +104,18 @@ async function getUnitTests(data, customLogFunction) {
     }
 }
 
+async function expandUnitTests(data, customLogFunction) {
+    let options = setOptions({path: '/api/expand-unit-tests'});
+    let tests, error;
+    try {
+        tests = await makeRequest(JSON.stringify(data), options, customLogFunction);
+    } catch (e) {
+        error = e;
+    } finally {
+        return {tests, error};
+    }
+}
+
 async function getJestAuthFunction(loginMongoQueriesArray, loginRequestBody, loginEndpointPath) {
     jestAuthFileGenerationLog();
 
@@ -157,5 +169,6 @@ module.exports = {
     getJestTestName,
     isEligibleForExport,
     getUnitTests,
+    expandUnitTests,
     checkForAPIKey
 }

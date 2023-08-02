@@ -1,7 +1,7 @@
 const {loginRouteEnteredLog} = require("../utils/cmdPrint");
 const {updateMetadata} = require("../utils/common");
 const {setUpPythagoraDirs} = require("../helpers/starting");
-const {METADATA_FILENAME, SRC_TO_ROOT} = require("../const/common");
+const { METADATA_FILENAME, SRC_TO_ROOT } = require('@pythagora.io/js-code-processing').common;
 // TODO make require path better!!
 const readline = require("readline");
 const _ = require("lodash");

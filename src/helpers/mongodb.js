@@ -16,7 +16,8 @@ const {
 const {v4} = require("uuid");
 const _ = require("lodash");
 const { MONGO_METHODS, PYTHAGORA_DB } = require("../const/mongodb");
-const { PYTHAGORA_ASYNC_STORE } = require('../const/common');
+const { PYTHAGORA_ASYNC_STORE } = require('@pythagora.io/js-code-processing').common;
+
 let unsupportedMethods = ['aggregate'];
 
 // todo remove this methods?

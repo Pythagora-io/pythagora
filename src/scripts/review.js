@@ -4,7 +4,11 @@ const readline = require('readline');
 const _ = require('lodash');
 let args = require('../utils/getArgs.js');
 
-const { PYTHAGORA_TESTS_DIR, PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME } = require('../const/common.js');
+const {
+      PYTHAGORA_TESTS_DIR,
+      PYTHAGORA_METADATA_DIR,
+      REVIEW_DATA_FILENAME,
+  } = require('@pythagora.io/js-code-processing').common;
 const { logChange, logAndExit } = require('../utils/cmdPrint.js');
 const { compareJson, getMetadata } = require('../utils/common.js');
 

@@ -5,8 +5,7 @@ const {convertOldTestForGPT} = require("../utils/legacy");
 const {testEligibleForExportLog} = require("../utils/cmdPrint");
 const {isEligibleForExport} = require("../helpers/api");
 const args = require("../utils/getArgs");
-const {getFunctionsForExport} = require("../helpers/unitTests");
-
+const { UnitTestsCommon } = require('@pythagora.io/js-code-processing');
 
 async function testsEligibleForExport() {
     let csvData = 'endpoint,testId,tokens\n';
@@ -25,7 +24,11 @@ async function testsEligibleForExport() {
 }
 
 async function unitTestsEligibleForExport() {
-    let tests = await getFunctionsForExport(args.dir);
+    const { path: pathToProcess, pythagora_root: pythagoraRoot, func: funcName, force } = args;
+    const unitTestsCommon = new UnitTestsCommon({ pathToProcess, pythagoraRoot, funcName, force });
+    unitTestsCommon.traverseAllDirectories
+
+    let tests = unitTestsCommon.traverseAllDirectories();
     let csvData = 'fileName,functionName,relatedFunctions\n';
     for (let path in tests) {
         let funcName = path.substring(path.lastIndexOf(':') + 1);

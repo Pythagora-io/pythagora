@@ -6,13 +6,11 @@ const { getPythagoraVersion, setUpPythagoraDirs } = require("./helpers/starting.
 const { logCaptureFinished, pythagoraFinishingUp } = require('./utils/cmdPrint.js');
 const { getCircularReplacer, getMetadata, getFreePortInRange } = require('./utils/common.js');
 const {
-    PYTHAGORA_TESTS_DIR,
-    PYTHAGORA_METADATA_DIR,
-    METADATA_FILENAME,
-    PYTHAGORA_DELIMITER,
-    EXPORTED_TESTS_DIR,
-    EXPORTED_TESTS_DATA_DIR
-} = require('./const/common.js');
+      PYTHAGORA_TESTS_DIR,
+      PYTHAGORA_METADATA_DIR,
+      METADATA_FILENAME,
+      PYTHAGORA_DELIMITER 
+  } = require('@pythagora.io/js-code-processing').common;
 
 let  { BatchInterceptor } = require('@mswjs/interceptors');
 let  nodeInterceptors = require('@mswjs/interceptors/lib/presets/node.js');

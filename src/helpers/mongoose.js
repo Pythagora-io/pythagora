@@ -1,6 +1,7 @@
 const pythagoraErrors = require("../const/errors");
 const MODES = require("../const/modes.json");
-const { PYTHAGORA_ASYNC_STORE } = require("../const/common");
+const { PYTHAGORA_ASYNC_STORE } = require('@pythagora.io/js-code-processing').common;
+
 const { mongoObjToJson, compareJson, jsonObjToMongo, noUndefined } = require("../utils/common.js");
 const { logWithStoreId } = require("../utils/cmdPrint.js");
 

@@ -1,10 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 const {
-    EXPORTED_TESTS_DIR,
-    PYTHAGORA_METADATA_DIR,
-    EXPORT_METADATA_FILENAME,
-} = require('../const/common');
+      PYTHAGORA_METADATA_DIR,
+      EXPORT_METADATA_FILENAME,
+      EXPORTED_TESTS_DIR,
+  } = require('@pythagora.io/js-code-processing').common;
+  
 const { getAllGeneratedTests } = require("../utils/common");
 const { convertOldTestForGPT } = require("../utils/legacy");
 const { setUpPythagoraDirs } = require("../helpers/starting");

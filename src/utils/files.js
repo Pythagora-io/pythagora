@@ -1,5 +1,5 @@
 const path = require("path");
-const {PYTHAGORA_UNIT_DIR} = require("../const/common");
+const { PYTHAGORA_UNIT_DIR } = require('@pythagora.io/js-code-processing').common;
 const fs = require("fs").promises;
 const fsSync = require("fs");
 

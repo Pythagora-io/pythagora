@@ -2,14 +2,15 @@ const path = require('path');
 const fs = require('fs');
 const tryrequire = require('tryrequire');
 const {
-    PYTHAGORA_TESTS_DIR,
-    EXPORTED_TESTS_DIR,
-    EXPORTED_TESTS_DATA_DIR,
-    PYTHAGORA_METADATA_DIR,
-    METADATA_FILENAME,
-    EXPORT_METADATA_FILENAME,
-    PYTHAGORA_UNIT_DIR
-} = require("../const/common");
+      PYTHAGORA_TESTS_DIR,
+      PYTHAGORA_METADATA_DIR,
+      METADATA_FILENAME,
+      EXPORT_METADATA_FILENAME,
+      EXPORTED_TESTS_DIR,
+      EXPORTED_TESTS_DATA_DIR,
+      PYTHAGORA_UNIT_DIR,
+  } = require('@pythagora.io/js-code-processing').common;
+
 let args = require('../utils/getArgs.js');
 
 

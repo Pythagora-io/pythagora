@@ -1,5 +1,5 @@
-const {delay} = require("./common");
-const {bold, yellow, reset} = require('./cmdPrint').colors;
+const { delay } = require("./common");
+const { bold, yellow, reset } = require('./cmdPrint').colors;
 
 class Spinner {
     constructor(panel, screen) {

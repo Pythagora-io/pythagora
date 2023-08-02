@@ -1,4 +1,4 @@
-const {PYTHAGORA_METADATA_DIR, CONFIG_FILENAME} = require("../const/common");
+const { PYTHAGORA_METADATA_DIR, CONFIG_FILENAME } = require('@pythagora.io/js-code-processing').common;
 const tryrequire = require("tryrequire");
 const path = require('path');
 const argsStr = process.env.PYTHAGORA_CONFIG || '';

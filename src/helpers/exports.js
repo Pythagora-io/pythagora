@@ -1,13 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const {
-    EXPORTED_TESTS_DIR,
-    EXPORTED_TESTS_DATA_DIR,
-    PYTHAGORA_METADATA_DIR,
-    METADATA_FILENAME,
-    EXPORT_METADATA_FILENAME,
-    SRC_TO_ROOT
-} = require('../const/common');
+      PYTHAGORA_METADATA_DIR,
+      METADATA_FILENAME,
+      EXPORT_METADATA_FILENAME,
+      EXPORTED_TESTS_DIR,
+      EXPORTED_TESTS_DATA_DIR,
+      SRC_TO_ROOT,
+  } = require('@pythagora.io/js-code-processing').common;
 const { updateMetadata } = require("../utils/common");
 const { convertOldTestForGPT } = require("../utils/legacy");
 const {

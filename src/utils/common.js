@@ -2,11 +2,12 @@ const _ = require("lodash");
 const fs = require("fs");
 const net = require('net');
 const {
-    PYTHAGORA_METADATA_DIR,
-    METADATA_FILENAME,
-    PYTHAGORA_TESTS_DIR,
-    PYTHAGORA_DELIMITER
-} = require("../const/common");
+      PYTHAGORA_TESTS_DIR,
+      PYTHAGORA_METADATA_DIR,
+      METADATA_FILENAME,
+      PYTHAGORA_DELIMITER,
+  } = require('@pythagora.io/js-code-processing').common;
+
 const path = require('path');
 const args = require('./getArgs.js');
 let mongodb;
@@ -354,22 +355,7 @@ function comparePaths(path1, path2) {
     return path1 === path2;
 }
 
-async function checkDirectoryExists(directoryPath) {
-    try {
-        const stats = await fs.promises.stat(directoryPath);
-        return stats.isDirectory();
-    } catch (error) {
-        if (error.code === 'ENOENT') {
-            // Directory does not exist
-            return false;
-        }
-        // Other error occurred
-        throw error;
-    }
-}
-
 module.exports = {
-    checkDirectoryExists,
     compareJson,
     compareJsonDetailed,
     comparePaths,

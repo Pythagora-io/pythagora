@@ -40,7 +40,8 @@ exec(bashCommand, (error, stdout, stderr) => {
   const bashScript = winOS ? process.argv[1].replace('run.js', 'run.bash') : path.join(__dirname, 'run.bash');
   const scriptDir = path.dirname(bashScript);  // Get the directory of the bash script
   const pythagoraDir = path.dirname(path.dirname(scriptDir)); // Get the pythagora directory
-  const pythagoraRoot = process.argv[1].split('node_modules')[0];
+  // const pythagoraRoot = process.argv[1].split('node_modules')[0];
+  const pythagoraRoot = '/Users/pv/projects/pythagora/pythagora-demo-node-express-boilerplate/';
   const args = process.argv.slice(2);
 
   // Run the bash script and forward all arguments

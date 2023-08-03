@@ -1,4 +1,5 @@
 const args = require('../utils/getArgs.js');
+const {PYTHAGORA_API_SERVER} = require("@pythagora.io/js-code-processing").common;
 
 function getApiConfig() {
     return {

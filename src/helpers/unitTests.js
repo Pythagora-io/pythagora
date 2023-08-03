@@ -1,15 +1,13 @@
 const fs = require('fs');
 const path = require('path');
-const {PYTHAGORA_UNIT_DIR, PYTHAGORA_API_SERVER} = require("@pythagora.io/js-code-processing").common;
+const {PYTHAGORA_UNIT_DIR} = require("@pythagora.io/js-code-processing").common;
+const {getApiConfig} = require("../helpers/api");
 const { UnitTests, API } = require("@pythagora.io/js-code-processing");
 const {initScreenForUnitTests} = require("./cmdGUI");
 const {green, red, blue, bold, reset} = require('../utils/cmdPrint').colors;
-const processArgs = require('../utils/getArgs.js');
 
 async function generateTestsForDirectory(args) {
-    const apiUrl = processArgs.pythagora_api_server || PYTHAGORA_API_SERVER;
-    const apiKey = processArgs.openai_api_key || args.pythagora_api_key;
-    const apiKeyType = processArgs.openai_api_key ? 'openai' : 'pythagora';
+    const { apiUrl, apiKey, apiKeyType } = getApiConfig();
     const Api = new API(apiUrl, apiKey, apiKeyType);
 
     console.log('Processing folder structure...');

@@ -16,14 +16,10 @@ const {
     enterLoginRouteLog,
     testExportStartedLog
 } = require("../utils/cmdPrint");
-const {
-    getJestAuthFunction,
-    getJestTest,
-    getJestTestName,
-    cleanupGPTResponse,
-} = require("./api");
+const {getApiConfig} = require("./api");
 const _ = require('lodash');
 const args = require('../utils/getArgs.js');
+const {API} = require("@pythagora.io/js-code-processing");
 
 async function createDefaultFiles(generatedTests) {
     if (!fs.existsSync('jest.config.js')) {
@@ -40,6 +36,9 @@ async function createDefaultFiles(generatedTests) {
 }
 
 async function configureAuthFile(generatedTests) {
+    const { apiUrl, apiKey, apiKeyType } = getApiConfig();
+    const Api = new API(apiUrl, apiKey, apiKeyType);
+
     // TODO make require path better
     let pythagoraMetadata = require(`../${SRC_TO_ROOT}.pythagora/${METADATA_FILENAME}`);
     let loginPath = _.get(pythagoraMetadata, 'exportRequirements.login.endpointPath');
@@ -64,7 +63,7 @@ async function configureAuthFile(generatedTests) {
     }
 
     let loginData = pythagoraMetadata.exportRequirements.login;
-    let code = await getJestAuthFunction(loginData.mongoQueriesArray, loginData.requestBody, loginData.endpointPath);
+    let code = await Api.getJestAuthFunction(loginData.mongoQueriesArray, loginData.requestBody, loginData.endpointPath);
 
     fs.writeFileSync(path.resolve(args.pythagora_root, EXPORTED_TESTS_DIR, 'auth.js'), code);
 }
@@ -97,10 +96,13 @@ function cleanupDataFolder() {
 }
 
 async function exportTest(originalTest, exportsMetadata) {
+    const { apiUrl, apiKey, apiKeyType } = getApiConfig();
+    const Api = new API(apiUrl, apiKey, apiKeyType);
+
     testExportStartedLog();
     let test = convertOldTestForGPT(originalTest);
-    let jestTest = await getJestTest(test);
-    let testName = await getJestTestName(jestTest, Object.values(exportsMetadata).map(obj => obj.testName));
+    let jestTest = await Api.getJestTest(test);
+    let testName = await Api.getJestTestName(jestTest, Object.values(exportsMetadata).map(obj => obj.testName));
     if (!jestTest && !testName) return console.error('There was issue with getting GPT response. Make sure you have access to GPT4 with your API key.');
 
     fs.writeFileSync(`./${EXPORTED_TESTS_DATA_DIR}/${testName.replace('.test.js', '.json')}`, JSON.stringify(test.mongoQueries, null, 2));

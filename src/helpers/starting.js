@@ -9,7 +9,7 @@ const {
     METADATA_FILENAME,
     EXPORT_METADATA_FILENAME,
     PYTHAGORA_UNIT_DIR
-} = require("../const/common");
+} = require("@pythagora.io/js-code-processing").common;
 let args = require('../utils/getArgs.js');
 
 

@@ -3,7 +3,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const {PYTHAGORA_METADATA_DIR, CONFIG_FILENAME, PYTHAGORA_API_SERVER} = require("../const/common");
+const {PYTHAGORA_METADATA_DIR, CONFIG_FILENAME, PYTHAGORA_API_SERVER} = require("@pythagora.io/js-code-processing").common;
 const packageJson = require('../../package.json');
 
 const pythagoraVersion = packageJson.version;

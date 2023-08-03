@@ -7,7 +7,7 @@ const {
     METADATA_FILENAME,
     EXPORT_METADATA_FILENAME,
     SRC_TO_ROOT
-} = require('../const/common');
+} = require("@pythagora.io/js-code-processing").common;
 const { updateMetadata } = require("../utils/common");
 const { convertOldTestForGPT } = require("../utils/legacy");
 const {

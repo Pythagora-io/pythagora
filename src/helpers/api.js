@@ -3,7 +3,7 @@ const axios = require('axios');
 const { jestAuthFileGenerationLog } = require('../utils/cmdPrint');
 const { bold, reset, red, blue } = require('../utils/cmdPrint').colors;
 const args = require('../utils/getArgs.js');
-const {PYTHAGORA_UNIT_TESTS_VERSION,PYTHAGORA_API_SERVER} = require('../const/common');
+const {PYTHAGORA_UNIT_TESTS_VERSION,PYTHAGORA_API_SERVER} = require("@pythagora.io/js-code-processing").common;
 const API_SERVER = args.pythagora_api_server || PYTHAGORA_API_SERVER;
 
 function extractGPTMessageFromStreamData(input) {

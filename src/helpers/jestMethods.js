@@ -1,6 +1,6 @@
 const { cleanupDb, jsonObjToMongo } = require("./mongodb");
 const {PYTHAGORA_JEST_DB} = require("../const/mongodb");
-const {EXPORTED_TESTS_DATA_DIR, SRC_TO_ROOT} = require("../const/common");
+const {EXPORTED_TESTS_DATA_DIR, SRC_TO_ROOT} = require("@pythagora.io/js-code-processing").common;
 const _ = require('lodash');
 
 // TODO can we merge this with the other prepareDB?

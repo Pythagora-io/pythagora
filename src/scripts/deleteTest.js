@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { PYTHAGORA_TESTS_DIR, PYTHAGORA_DELIMITER } = require('../const/common.js');
+const { PYTHAGORA_TESTS_DIR, PYTHAGORA_DELIMITER } = require("@pythagora.io/js-code-processing").common;
 const { getCircularReplacer } = require('../utils/common.js');
 const { logAndExit } = require('../utils/cmdPrint.js');
 const args = require('../utils/getArgs.js');

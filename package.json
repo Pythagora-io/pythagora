@@ -27,11 +27,8 @@
     "node": ">=14.x"
   },
   "dependencies": {
-    "@babel/generator": "^7.22.3",
-    "@babel/parser": "^7.22.3",
-    "@babel/traverse": "^7.22.1",
     "@mswjs/interceptors": "^0.19.2",
-    "@pythagora.io/js-code-processing": "0.0.3",
+    "@pythagora.io/js-code-processing": "^0.0.4",
     "axios": "^1.2.2",
     "blessed": "^0.1.81",
     "body-parser": "^1.20.1",

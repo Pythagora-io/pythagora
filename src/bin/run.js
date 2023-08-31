@@ -43,6 +43,7 @@ exec(bashCommand, (error, stdout, stderr) => {
   const pythagoraRoot = process.argv[1].split('node_modules')[0];
   const args = process.argv.slice(2);
 
+
   // Run the bash script and forward all arguments
   const child = spawn(bashPath, [bashScript, ...['--pythagora-dir', pythagoraDir, '--pythagora-root', pythagoraRoot, ...args]], { stdio: 'inherit' });
 

@@ -4,7 +4,7 @@ const {
     EXPORTED_TESTS_DIR,
     PYTHAGORA_METADATA_DIR,
     EXPORT_METADATA_FILENAME,
-} = require('../const/common');
+} = require("@pythagora.io/js-code-processing").common;
 const { getAllGeneratedTests } = require("../utils/common");
 const { convertOldTestForGPT } = require("../utils/legacy");
 const { setUpPythagoraDirs } = require("../helpers/starting");
@@ -12,10 +12,8 @@ const {
     logAndExit,
     testEligibleForExportLog,
 } = require("../utils/cmdPrint");
-const {
-    isEligibleForExport,
-    checkForAPIKey
-} = require("../helpers/api");
+const {getApiConfig} = require("../helpers/api");
+const {API} = require("@pythagora.io/js-code-processing");
 const args = require('../utils/getArgs.js');
 const {
     createDefaultFiles,
@@ -25,7 +23,6 @@ const {
 } = require('../helpers/exports');
 
 async function runExport() {
-    checkForAPIKey();
     setUpPythagoraDirs();
     cleanupDataFolder();
     let exportsMetadata = JSON.parse(fs.readFileSync(path.resolve(args.pythagora_root, PYTHAGORA_METADATA_DIR, EXPORT_METADATA_FILENAME)));
@@ -42,6 +39,9 @@ async function runExport() {
         await exportTest(originalTest, exportsMetadata);
     }
     else {
+        const { apiUrl, apiKey, apiKeyType } = getApiConfig();
+        const Api = new API(apiUrl, apiKey, apiKeyType);
+
         for (let originalTest of generatedTests) {
             if (originalTest.method === 'OPTIONS') continue;
             if (testExists(exportsMetadata, originalTest.id)) {
@@ -50,7 +50,7 @@ async function runExport() {
             }
 
             let test = convertOldTestForGPT(originalTest);
-            const isEligible = await isEligibleForExport(test);
+            const isEligible = await Api.isEligibleForExport(test);
 
             if (isEligible) {
                 await exportTest(originalTest, exportsMetadata);

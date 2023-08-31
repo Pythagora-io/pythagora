@@ -1,14 +1,8 @@
 let { cutWithDots, compareJson, compareJsonDetailed } = require('./common');
 let pythagoraErrors = require('../const/errors');
 let args = require('../utils/getArgs.js');
-let { PYTHAGORA_DELIMITER } = require('../const/common');
-
-let red = '\x1b[31m',
-    yellow = '\x1b[33m',
-    green = '\x1b[32m',
-    blue = '\x1b[34m',
-    reset = '\x1b[0m',
-    bold = '\x1b[1m';
+let { PYTHAGORA_DELIMITER } = require("@pythagora.io/js-code-processing").common;
+const {red, yellow, green, blue, reset, bold } = require("@pythagora.io/js-code-processing").colors;
 
 let logWithStoreId = (msg) => {
     const id = global.asyncLocalStorage.getStore();

@@ -1,5 +1,5 @@
 const jest = require('jest');
-const {EXPORTED_TESTS_DIR, EXPORTED_TESTS_DATA_DIR, SRC_TO_ROOT} = require("../const/common");
+const {EXPORTED_TESTS_DIR, EXPORTED_TESTS_DATA_DIR, SRC_TO_ROOT} = require("@pythagora.io/js-code-processing").common;
 let fs = require('fs');
 const pythagoraJestMethods = require("../helpers/jestMethods");
 const {primeJestLog} = require("../utils/cmdPrint");

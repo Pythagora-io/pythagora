@@ -3,17 +3,21 @@ const path = require("path");
 const {getAllGeneratedTests} = require("../utils/common");
 const {convertOldTestForGPT} = require("../utils/legacy");
 const {testEligibleForExportLog} = require("../utils/cmdPrint");
-const {isEligibleForExport} = require("../helpers/api");
+const {getApiConfig} = require("../helpers/api");
+const {API} = require("@pythagora.io/js-code-processing");
 const args = require("../utils/getArgs");
-const {getFunctionsForExport} = require("../helpers/unitTests");
+const {UnitTestsCommon} = require("@pythagora.io/js-code-processing");
 
 
 async function testsEligibleForExport() {
+    const { apiUrl, apiKey, apiKeyType } = getApiConfig();
+    const Api = new API(apiUrl, apiKey, apiKeyType);
+
     let csvData = 'endpoint,testId,tokens\n';
     let tests = getAllGeneratedTests();
     for (let test of tests) {
         test = convertOldTestForGPT(test);
-        let isEligible = await isEligibleForExport(test);
+        let isEligible = await Api.isEligibleForExport(test);
         testEligibleForExportLog(test.endpoint, test.testId, isEligible);
         csvData += `${test.endpoint},${test.testId},${isEligible ? 'TRUE' : 'FALSE'}\n`;
     }
@@ -25,7 +29,13 @@ async function testsEligibleForExport() {
 }
 
 async function unitTestsEligibleForExport() {
-    let tests = await getFunctionsForExport(args.dir);
+    const unitTestsCommon = new UnitTestsCommon({
+        pathToProcess: args.path,
+        pythagoraRoot: args.pythagora_root
+    });
+    await unitTestsCommon.traverseAllDirectories();
+
+    let tests = unitTestsCommon.functionList;
     let csvData = 'fileName,functionName,relatedFunctions\n';
     for (let path in tests) {
         let funcName = path.substring(path.lastIndexOf(':') + 1);

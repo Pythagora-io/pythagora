@@ -1,7 +1,7 @@
 const { logTestsFinished, logTestStarting, logTestsStarting } = require('./utils/cmdPrint.js');
 const { makeTestRequest } = require('./helpers/testing.js');
 const { getCircularReplacer } = require('./utils/common.js')
-const { PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHAGORA_DELIMITER, PYTHAGORA_TESTS_DIR } = require('./const/common.js');
+const { PYTHAGORA_METADATA_DIR, REVIEW_DATA_FILENAME, PYTHAGORA_DELIMITER, PYTHAGORA_TESTS_DIR } = require("@pythagora.io/js-code-processing").common;
 
 const fs = require('fs');
 const path = require('path');

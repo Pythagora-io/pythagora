@@ -12,6 +12,10 @@ The following details are for generating unit tests. To view the docs on how to 
 
 <br>
 
+# <img src="https://s3.amazonaws.com/assets.pythagora.ai/vscode/vscode_icon.png" alt="Visual Studio Code Logo" width="24" height="24"> Visual Studio Code Extension
+
+If you want to try out Pythagora using Visual Studio Code extension you can download it <a href="https://marketplace.visualstudio.com/items?itemName=PythagoraTechnologies.pythagora-vscode-extension">here</a>.
+
 # 🏃💨️ Quickstart
 
 To install Pythagora run:

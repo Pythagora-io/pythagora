@@ -50,11 +50,9 @@ Here are some demo videos that can help you get started.
 <div align="center">
   <a href="https://youtu.be/NNd08XgFFw4"><img src="https://github-production-user-asset-6210df.s3.amazonaws.com/10895136/244031887-02f19eb9-dba1-4e62-a670-744c7d3423ae.gif" alt="Pythagora Alpha Demo"></a>
 </div>
-
 <p align=center>
   <a target="_blank" href="https://youtu.be/NNd08XgFFw4">Pythagora Unit Tests Demo (2 min)</a>
 </p>
-
 <br>
 
 # 🔎 Examples
@@ -182,8 +180,27 @@ or to run tests from a specific file or a folder, run `npx jest <PATH_TO_FILE_OR
 <br><br>
 - **Tests help me think about my code - I don't want to generate them automatically**
     - That's the best thing about Pythagora - it actually does help you think about the code. Just, you don't need to spend time writing tests. This happened to us, who created Pythagora - we coded it as fast as possible but when we added unit test generation, we realized that it cannot create tests for some functions. So, we refactored the code and made it more modular so that unit tests can be generated for it. 
+<br><br>
+- **Is Pythagora limited to a specific programming language or framework?**
+  - Pythagora primarily generates unit tests for JavaScript code. However, it's designed to work with code written in JavaScript, TypeScript, and similar languages. If you'd like to see support for other languages or frameworks, please let us know at hi@pythagora.ai.
+<br><br>
 
-<br>
+- **Can Pythagora generate integration tests as well?**
+  - Pythagora is currently focused on generating unit tests. For generating integration tests, you might need to combine the recordings from integration tests to generate proper mocks. We are actively exploring options to expand its capabilities in the future.
+<br><br>
+
+- **Is Pythagora compatible with all JavaScript testing frameworks?**
+  - Currently, Pythagora generates tests using the Jest testing framework. While we are open to expanding compatibility to other testing frameworks, Jest is the primary framework supported at the moment. If you have a specific framework in mind, feel free to share your suggestions with us.
+<br><br>
+
+- **How does Pythagora handle sensitive or proprietary code?**
+  - Pythagora doesn't store your code on its servers, but it sends code to GPT and OpenAI for test generation. It's essential to review the generated tests, especially if your code contains sensitive or proprietary information, before committing them to your repository. Be cautious when using Pythagora with sensitive code.
+<br><br>
+
+- **Is Pythagora suitable for all types of projects?**
+  - Pythagora works best for projects with well-structured code and standalone functions (such as helper functions). It excels at generating tests for these types of code. For more complex or non-standalone functions, manual review and modifications may be necessary.
+
+
 
 # 🏁 Alpha version
 This is an alpha version of Pythagora. To get an update about the beta release or to give a <b>suggestion on tech (framework / database) you want Pythagora to support</b> you can 👉 <a href="http://eepurl.com/ikg_nT" target="_blank">add your email / comment here</a> 👈 .

@@ -1,11 +1,10 @@
 module.exports = async () => {
+    // Check if the developer has opted out of telemetry and set the environment variable accordingly
+    const optOutTelemetry = process.env.PYTHAGORA_TELEMETRY_ENABLED === 'false';
 
-    // function that sets up Mongo to be used in tests
-    // global.setUpDb = () => {};
+    if (optOutTelemetry) {
+        process.env.PYTHAGORA_TELEMETRY_ENABLED = 'false';
+    }
 
-    // function that cleans up the database after tests are done
-    // global.cleanUpDb = () => {};
-
-    // function that returns a Mongo collection so that tests can query the database
-    // global.getMongoCollection = (collection) => {};
+    console.log(`Telemetry is ${optOutTelemetry ? 'disabled' : 'enabled'}`);
 };

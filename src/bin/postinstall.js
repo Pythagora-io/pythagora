@@ -10,7 +10,7 @@ const pythagoraVersion = packageJson.version;
 const configPath = path.join(process.cwd(), '../..', PYTHAGORA_METADATA_DIR, CONFIG_FILENAME);
 
 // Check if telemetry is enabled using an environment variable
-const telemetryEnabled = process.env.PYTHAGORA_TELEMETRY_ENABLED !== 'false';
+const telemetryEnabled = process.env.PYTHAGORA_TELEMETRY_ENABLED == 'true';
 
 // Calculate the SHA-256 hash of the installation directory
 const installationDirectory = path.join(process.cwd(), '../..');

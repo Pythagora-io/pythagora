@@ -23,7 +23,8 @@ try {
     config = JSON.parse(fs.readFileSync(configPath));
 } catch (err) {
     console.error('Config file does not exist or is not valid JSON. Creating a new one.');
-    config = {};
+    // logging the error message
+    console.log(err);
 }
 
 // If there's no userId, generate one and save it to the config file

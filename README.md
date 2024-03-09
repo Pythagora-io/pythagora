@@ -1,3 +1,6 @@
+<h1 align="center">This repo is deprecated - we're working on <a href="https://github.com/Pythagora-io/gpt-pilot">GPT Pilot</h1>
+
+
 <p align=center>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/10895136/228003796-7e3319ad-f0b1-4da9-a2d0-6cf67ccc7a32.png">

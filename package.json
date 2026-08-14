@@ -1,0 +1,75 @@
+{
+  "name": "pythagora",
+  "version": "0.0.79",
+  "author": {
+    "name": "Zvonimir Sabljic",
+    "email": "hi@pythagora.ai"
+  },
+  "license": "ISC",
+  "description": "Generate integration tests by recording server activity without writing a single line of code.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pythagora-io/pythagora"
+  },
+  "homepage": "https://pythagora.ai/",
+  "main": "src/Pythagora.js",
+  "scripts": {
+    "publish-pythagora": "src/bin/publish.bash",
+    "prepublishOnly": "node src/bin/prepublish.js",
+    "postinstall": "node src/bin/postinstall.js",
+    "test": "npx jest ./pythagora_tests/ --coverage",
+    "generate-unit-tests": "npx pythagora --unit-tests --path ./src"
+  },
+  "bin": {
+    "pythagora": "src/bin/run.js"
+  },
+  "engines": {
+    "node": ">=14.x"
+  },
+  "dependencies": {
+    "@mswjs/interceptors": "^0.19.2",
+    "@pythagora.io/js-code-processing": "^0.0.4",
+    "axios": "^1.2.2",
+    "blessed": "^0.1.81",
+    "body-parser": "^1.20.1",
+    "handlebars": "^4.7.7",
+    "jest": "^29.5.0",
+    "lodash": "^4.17.21",
+    "nyc": "^15.1.0",
+    "tryrequire": "^3.0.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "mongodb": "^5.6.0"
+  },
+  "contributors": [
+    {
+      "name": "Zvonimir Sabljic",
+      "email": "hi@pythagora.ai"
+    },
+    {
+      "name": "Leon Ostrez",
+      "email": "hi@pythagora.ai"
+    }
+  ],
+  "keywords": [
+    "test",
+    "testing",
+    "automation",
+    "automated testing",
+    "unit",
+    "unit testing",
+    "GPT",
+    "integration",
+    "integration testing",
+    "mock",
+    "api",
+    "http",
+    "MERN",
+    "MEAN",
+    "mongoose",
+    "mongodb",
+    "redis",
+    "express"
+  ]
+}

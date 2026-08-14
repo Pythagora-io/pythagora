@@ -1,0 +1,387 @@
+const MODES = require("../const/modes.json");
+const { getCircularReplacer, compareResponse, compareJson, updateMetadata, comparePaths } = require("../utils/common.js");
+const pythagoraErrors = require("../const/errors");
+const { logEndpointNotCaptured, logEndpointCaptured, logWithStoreId } = require("../utils/cmdPrint.js");
+const { prepareDB } = require("./mongodb.js");
+const { PYTHAGORA_TESTS_DIR, PYTHAGORA_DELIMITER } = require("@pythagora.io/js-code-processing").common;
+
+const bodyParser = require("body-parser");
+const {v4} = require("uuid");
+const _ = require("lodash");
+let  { executionAsyncId } = require('node:async_hooks');
+const fs = require('fs');
+const {logLoginEndpointCaptured} = require("../utils/cmdPrint");
+const path = require('path');
+
+function setUpExpressMiddlewares(app) {
+
+    const pythagoraMiddlwares = {
+        ignoreMiddleware: (req, res, next) => {
+            let ignoreFiles = ['.svg', '.jpg', '.jpeg', '.png', '.ico'];
+
+            if (!global.Pythagora ||
+                !app.isPythagoraExpressInstance ||
+                ignoreFiles.some((substring) => req.url.endsWith(substring)) ||
+                req.url.match(/(.*)\.[a-zA-Z0-9]{0,5}$/)) req.pythagoraIgnore = true;
+
+            if (global.Pythagora.mode === MODES.capture &&
+                global.Pythagora.pick &&
+                !global.Pythagora.pick.includes(req.url)) req.pythagoraIgnore = true;
+
+            if (global.Pythagora.mode === MODES.capture &&
+                global.Pythagora.ignore &&
+                global.Pythagora.ignore.includes(req.url)) req.pythagoraIgnore = true;
+
+            return next();
+        },
+
+        prepareTestingMiddleware: async (req, res, next) => {
+            if (global.Pythagora.mode === MODES.test) resetGlobalRequest();
+
+            if (!req.pythagoraIgnore && global.Pythagora.mode === MODES.test) {
+                await prepareDB(global.Pythagora, req);
+            }
+
+            next();
+        },
+
+        setUpPythagoraDataMiddleware: (req, res, next) => {
+            if (req.pythagoraIgnore || global.Pythagora.mode !== MODES.capture) return next();
+            // if (Object.keys(pythagora.requests).length === 0) pythagora.setExitListener();
+            if (!req.id) req.id = v4();
+            let eid = executionAsyncId();
+            if (!global.Pythagora.requests[req.id]) global.Pythagora.requests[req.id] = {
+                id: req.id,
+                endpoint: req.path,
+                url: 'http://' + req.headers.host + req.url,
+                body: req.body,
+                method: req.method,
+                headers: req.headers,
+                responseData: null,
+                traceId: eid,
+                trace: [eid],
+                intermediateData: [],
+                query: req.query,
+                params: req.params,
+                asyncStore: global.Pythagora.idSeq,
+                mongoQueriesCapture: 0
+            };
+
+            if (req.is('multipart/form-data')) global.Pythagora.requests[req.id].error = "Uploading multipart/form-data is not supported yet!";
+
+            // if (!req.is('multipart/form-data')) {
+            //     let data = '';
+            //     const inputStream = req;
+            //     const duplexStream = duplexify();
+            //
+            //     duplexStream.setReadable(inputStream);
+            //     req.duplexStream = duplexStream;
+            //     duplexStream.on('data', (chunk) => {
+            //         data+=chunk.toString();
+            //     });
+            //     duplexStream.on('end', () => {
+            //         pythagora.requests[req.id].body = data;
+            //     });
+            // }
+            next();
+        },
+
+        setUpInterceptorMiddleware: async (req, res, next) => {
+            if (req.pythagoraIgnore || global.Pythagora.mode === 'jest') return next();
+            if (!global.Pythagora.ignoreRedis) global.Pythagora.RedisInterceptor.setMode(global.Pythagora.mode);
+            if (global.Pythagora.mode === MODES.capture) await apiCaptureInterceptor(req, res, next, global.Pythagora);
+            else if (global.Pythagora.mode === MODES.test) await apiTestInterceptor(req, res, next, global.Pythagora);
+        }
+
+    };
+    app.use(pythagoraMiddlwares.ignoreMiddleware);
+
+    app.use(pythagoraMiddlwares.prepareTestingMiddleware);
+
+    app.use(bodyParser.json());
+    app.use(bodyParser.urlencoded({
+        extended: true
+    }));
+
+    app.use(pythagoraMiddlwares.setUpPythagoraDataMiddleware);
+
+    app.use(pythagoraMiddlwares.setUpInterceptorMiddleware);
+}
+
+async function apiCaptureInterceptor(req, res, next, pythagora) {
+    //todo check what else needs to be added eg. res.json, res.end, res.write,...
+    const _send = res.send;
+    const _sendFile = res.sendFile;
+    const _end = res.end;
+    const _redirect = res.redirect;
+    const _status = res.status;
+    const _json = res.json;
+    const finishCapture = (request, responseBody) => {
+        if (request.error) {
+            return logEndpointNotCaptured(req.originalUrl, req.method, request.error);
+        }
+        if (pythagora.loggingEnabled) saveCaptureToFile(pythagora.requests[req.id], pythagora);
+        logEndpointCaptured(req.originalUrl, req.method, req.body, req.query, responseBody);
+        let loginEndpointPath = _.get(pythagora.metadata, 'exportRequirements.login.endpointPath')
+        if (loginEndpointPath &&
+            comparePaths(loginEndpointPath, req.originalUrl) &&
+            req.method !== 'OPTIONS' &&
+            !_.get(pythagora.metadata, 'exportRequirements.login.requestBody')) {
+            logLoginEndpointCaptured();
+            _.set(
+                pythagora.metadata,
+                'exportRequirements.login.mongoQueriesArray',
+                pythagora.requests[req.id].intermediateData.filter(d => d.type === 'mongodb')
+            );
+            _.set(pythagora.metadata, 'exportRequirements.login.requestBody', pythagora.requests[req.id].body);
+            updateMetadata(pythagora.metadata);
+        }
+    }
+    const storeRequestData = (statusCode, id, body) => {
+        pythagora.requests[id].responseData = !body || statusCode === 204 ? '' :
+            typeof body === 'string' ? body : JSON.stringify(body);
+        pythagora.requests[id].traceLegacy = pythagora.requests[req.id].trace;
+        pythagora.requests[id].statusCode = statusCode;
+        pythagora.requests[id].trace = [];
+    }
+
+    res.status = function(code) {
+        logWithStoreId('status');
+        pythagora.requests[req.id].statusCode = code;
+        return _status.apply(this, arguments);
+    }
+
+    res.json = function(resJson) {
+        let json, statusCode;
+        // allow status / body
+        if (arguments.length === 2) {
+            // res.json(body, status) backwards compat
+            if (typeof arguments[1] === 'number') {
+                json = arguments[0];
+                statusCode = arguments[1];
+            } else {
+                statusCode = arguments[0];
+                json = arguments[1];
+            }
+        }
+        json = json || resJson;
+        pythagora.requests[req.id].statusCode = statusCode || res.statusCode;
+
+        logWithStoreId('json');
+        if (pythagora.requests[req.id].finished) return _json.apply(this, arguments);
+        storeRequestData(res.statusCode, req.id, json);
+        if (!pythagora.requests[req.id].finished) finishCapture(pythagora.requests[req.id], json);
+        pythagora.requests[req.id].finished = true;
+        return _json.apply(this, arguments);
+    }
+
+    res.end = function() {
+        let body = arguments[0];
+        logWithStoreId('end');
+        if (pythagora.requests[req.id].finished) return _end.apply(this, arguments);
+        let path = '.' + this.req.originalUrl;
+        //todo find better solution for storing static files to body
+        if (body === undefined && fs.existsSync(path) && fs.lstatSync(path).isFile()) {
+            body = fs.readFileSync(path);
+            body = body.toString();
+        }
+        storeRequestData(res.statusCode, req.id, body);
+        if (!pythagora.requests[req.id].finished) finishCapture(pythagora.requests[req.id], body);
+        pythagora.requests[req.id].finished = true;
+        _end.apply(this, arguments);
+    };
+
+    res.send = function(resBody) {
+        let statusCode, body;
+        // allow status / body
+        if (arguments.length === 2) {
+            // res.send(body, status) backwards compat
+            if (typeof arguments[0] !== 'number' && typeof arguments[1] === 'number') {
+                body = arguments[0];
+                statusCode = arguments[1];
+            } else {
+                statusCode = arguments[0];
+                body = arguments[1];
+            }
+        }
+        body = body || resBody;
+        pythagora.requests[req.id].statusCode = statusCode || res.statusCode;
+
+        logWithStoreId('send');
+        if (pythagora.requests[req.id].finished) return _send.apply(this, arguments);
+        storeRequestData(res.statusCode, req.id, body);
+        if (!pythagora.requests[req.id].finished) finishCapture(pythagora.requests[req.id], body);
+        pythagora.requests[req.id].finished = true;
+        _send.apply(this, arguments);
+    };
+
+    res.sendFile = function(path) {
+        let file;
+        logWithStoreId('sendFile');
+        if (path && fs.existsSync(path) && fs.lstatSync(path).isFile()) {
+            file = fs.readFileSync(path);
+            if (file) file = file.toString();
+        }
+        storeRequestData(res.statusCode, req.id, file);
+        if (!pythagora.requests[req.id].finished) finishCapture(pythagora.requests[req.id], file);
+        pythagora.requests[req.id].finished = true;
+        _sendFile.apply(this, arguments);
+    };
+
+    res.redirect = function(url) {
+        let statusCode, redirectUrl;
+        if (arguments.length === 2) {
+            if (typeof arguments[0] === 'number' && typeof arguments[1] === 'string') {
+                statusCode = arguments[0];
+                redirectUrl = arguments[1];
+            }
+        }
+        redirectUrl = redirectUrl || url;
+        pythagora.requests[req.id].statusCode = statusCode || res.statusCode;
+
+        logWithStoreId('redirect');
+        if (pythagora.requests[req.id].finished) return _redirect.apply(this, arguments);
+        pythagora.requests[req.id].responseData = {
+            'type': 'redirect',
+            'url': redirectUrl
+        };
+        finishCapture(pythagora.requests[req.id]);
+        pythagora.requests[req.id].finished = true;
+        _redirect.apply(this, arguments);
+    };
+
+
+    global.asyncLocalStorage.run(pythagora.idSeq++, () => {
+        logWithStoreId('start');
+        next();
+    });
+}
+
+async function apiTestInterceptor(req, res, next, pythagora) {
+    let request = await pythagora.getRequestMockDataById(req);
+    if (!request) {
+        // TODO we're overwriting requests during the capture phase so this might happen durign the final filtering of the capture
+        console.error('No request found for', req.path, req.method, req.body, req.query, req.params);
+        return res.status(404).send(); //todo check if this is ok for requests that we cant find. Reason not to let them process is so that they cant crash server
+    }
+
+    let timestamp = new Date(request.createdAt).getTime();
+    pythagora.tempVars.clockTimestamp = timestamp;
+
+    if (!global.Pythagora.ignoreRedis) pythagora.RedisInterceptor.setIntermediateData(request.intermediateData);
+    let reqId = pythagora.idSeq++;
+    pythagora.testingRequests[reqId] = _.extend({
+        mongoQueriesTest: [],
+        errors: [],
+        testIntermediateData: []
+    }, request);
+
+    //todo check what else needs to be added eg. res.json, res.end, res.write,...
+    const _end = res.end;
+    const _send = res.send;
+    const _redirect = res.redirect;
+
+    res.end = function() {
+        logWithStoreId('testing end');
+        checkForFinalErrors(reqId, pythagora);
+        setGlobalRequest(reqId, pythagora);
+        _end.apply(this, arguments);
+    };
+
+    res.send = function() {
+        logWithStoreId('testing send');
+        checkForFinalErrors(reqId, pythagora);
+        setGlobalRequest(reqId, pythagora);
+        _send.apply(this, arguments);
+    };
+
+    res.redirect = function() {
+        logWithStoreId('testing redirect');
+        checkForFinalErrors(reqId, pythagora);
+        setGlobalRequest(reqId, pythagora);
+        _redirect.apply(this, arguments);
+    };
+
+    global.asyncLocalStorage.run(reqId, () => {
+        logWithStoreId('Starting testing...');
+        next();
+    });
+}
+
+function resetGlobalRequest() {
+    global.Pythagora.request = undefined;
+}
+
+function setGlobalRequest(reqId, pythagora) {
+    let req = pythagora.testingRequests[reqId];
+    req.testIntermediateData.forEach((obj) => { delete obj.processed });
+
+    global.Pythagora.request = {
+        id: req.id,
+        errors: _.clone(req.errors),
+        intermediateData: req.testIntermediateData
+    };
+}
+
+function checkForFinalErrors(reqId, pythagora) {
+    let req = pythagora.testingRequests[reqId];
+    if (req.checkedForFinalErrors) return;
+
+    let intData = req.intermediateData;
+    let testIntData = req.testIntermediateData;
+    let mongoNotExecuted = intData.filter(obj1 => !testIntData.find((obj2, i) =>{
+            let compare = !obj2.processed &&
+                obj1.collection === obj2.collection &&
+                obj1.op === obj2.op &&
+                compareJson(obj1.query, obj2.query, true) &&
+                compareJson(obj1.options, obj2.options, true) &&
+                compareJson(obj1.otherArgs, obj2.otherArgs, true);
+
+            if (compare) testIntData[i].processed = true;
+            return compare
+        }
+    ));
+
+    mongoNotExecuted.forEach((q) => {
+        req.errors.push({
+            type: 'mongoNotExecuted',
+            collection: q.collection,
+            op: q.op,
+            query: q.query,
+            options: q.options
+        });
+    });
+    req.checkedForFinalErrors = true;
+}
+
+function saveCaptureToFile(reqData, pythagora) {
+    reqData.pythagoraVersion = pythagora.version;
+    reqData.pythagoraDevVersion = pythagora.devVersion;
+    reqData.createdAt = new Date().toISOString();
+    let endpointFileName = path.resolve(pythagora.pythagora_root, PYTHAGORA_TESTS_DIR, `${reqData.endpoint.replace(/\//g, PYTHAGORA_DELIMITER)}.json`);
+    if (!fs.existsSync(endpointFileName)) fs.writeFileSync(endpointFileName, JSON.stringify([reqData], getCircularReplacer(), 2));
+    else {
+        let fileContent = JSON.parse(fs.readFileSync(endpointFileName));
+        let identicalRequestIndex = fileContent.findIndex(req => {
+            return req && _.isEqual(req.body, reqData.body) &&
+                req.method === reqData.method &&
+                _.isEqual(req.query, reqData.query) &&
+                _.isEqual(req.params, reqData.params) &&
+                _.isEqual(req.statusCode, reqData.statusCode) &&
+                compareResponse(req.responseData, reqData.responseData);
+        });
+
+        if (identicalRequestIndex === -1) {
+            fs.writeFileSync(endpointFileName, JSON.stringify(fileContent.concat([reqData]), getCircularReplacer(), 2));
+        } else {
+            if (pythagora.requests[fileContent[identicalRequestIndex].id]) delete pythagora.requests[fileContent[identicalRequestIndex].id];
+            fileContent[identicalRequestIndex] = reqData;
+            let storeData = typeof fileContent === 'string' ? fileContent : JSON.stringify(fileContent, getCircularReplacer(), 2);
+            fs.writeFileSync(endpointFileName, storeData);
+        }
+    }
+}
+
+module.exports = {
+    setUpExpressMiddlewares
+}

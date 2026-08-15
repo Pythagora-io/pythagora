@@ -43,7 +43,7 @@ for more details on expanding existing tests see [below in the Expanding existin
 
 <br><br>
 
-**NOTE:** on Windows make sure to run all commands using `Git Bash` and not `Power Shell` or anything similiar
+**NOTE:** on Windows make sure to run all commands using `Git Bash` and not `Power Shell` or anything similar
 
 <br>
 
@@ -175,7 +175,7 @@ or to run tests from a specific file or a folder, run `npx jest <PATH_TO_FILE_OR
   - The best unit tests that Pythagora generates are the ones that are standalone functions. Basically, the parts of the code that actually can be unit tested. For example, take a look at this [Pythagora file](./src/utils/common.js) - it contains helper functions that are a perfect candidate for unit tests. When we ran `npx pythagora --unit-tests --path ./src/utils/common.js` - it generated 145 tests from which only 17 failed. What is amazing is that only 6 tests failed because they were incorrectly written and the other 11 tests caught bugs in the code itself. You can view these tests [here](./pythagora_tests/unit/src/utils/common/).
   - Here are a couple of observations we've made while testing Pythagora:
     1. It does a great job at testing edge cases. For many repos we created tests for, the tests found bugs right away by testing edge cases.
-    2. It works best for testing standalone helper functions. For example, we tried generating tests for the Lodash repo and it create 1000 tests from which only 40 needed additional review. For other, non standalone functions, we're planning to combine recordings from integration tests to generate proper mocks so that should expand Pythagora's test palette.
+    2. It works best for testing standalone helper functions. For example, we tried generating tests for the Lodash repo and it created 1000 tests from which only 40 needed additional review. For other, non standalone functions, we're planning to combine recordings from integration tests to generate proper mocks so that should expand Pythagora's test palette.
     3. It's definitely not perfect but the tests it created I wanted to keep and commit them. So, I encourage you to try it out and see how it works for you. If you do that, please let us know via [email](mailto:hi@pythagora.ai) or [Discord](https://discord.gg/npC5TAfj6e). We're super excited to hear how it went for you.
 <br><br>
 - **Should I review generated tests?**
